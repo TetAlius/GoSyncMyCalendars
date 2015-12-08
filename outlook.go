@@ -20,6 +20,17 @@ type OutlookConfig struct {
 	RedirectURI string `json:"redirect_uri"`
 	LoginURI    string `json:"login_uri"`
 	Version     string `json:"version"`
+	Scope       string `json:"scope"`
+}
+
+type OutlookResp struct {
+	TokenType        string `json:"token_type"`
+	ExpiresIn        string `json:"expires_in"`
+	Scope            string `json:"scope"`
+	AccessToken      string `json:"access_token"`
+	RefreshToken     string `json:"refresh_token"`
+	IdToken          string `json:"id_token"`
+	IdTokenExpiresIn string `json:"id_token_expires_in"`
 }
 
 func welcomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,35 +38,76 @@ func welcomeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("Hola\n")
 	http.Redirect(w, r,
 		outlook.LoginURI+outlook.Version+
 			"/authorize?client_id="+outlook.Id+
 			"&redirect_uri="+outlook.RedirectURI+
-			"&response_type=code&scope=https://outlook.office.com/Calendars.ReadWrite", 301)
+			"&response_type=code&scope="+outlook.Scope, 301)
 }
 
+//TODO handle errors
 func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	client := http.Client{}
 	code := r.URL.Query().Get("code")
-	fmt.Printf("%s\n", code)
 
 	req, _ := http.NewRequest("POST",
 		outlook.LoginURI+outlook.Version+
 			"/token",
-		strings.NewReader("grant_type=authorization_code&code="+code+
+		strings.NewReader("grant_type=authorization_code"+
+			"&code="+code+
 			"&redirect_uri="+outlook.RedirectURI+
 			"&client_id="+outlook.Id+
 			"&client_secret="+outlook.Secret))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Type",
+		"application/x-www-form-urlencoded")
 
 	resp, _ := client.Do(req)
+	var outlookResp OutlookResp
 
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
-	fmt.Printf("%s\n", string(contents))
+	err := json.Unmarshal(contents, &outlookResp)
+	//TODO save info
+	if err != nil {
+		fmt.Println(err)
+	}
+	//fmt.Printf("Token:%s\n", string(contents))
+
+	//TODO remove this call!
+	outlookTokenRefresh(outlookResp.RefreshToken)
 
 	http.Redirect(w, r, "/", 301)
+
+}
+
+func outlookTokenRefresh(oldToken string) {
+	client := http.Client{}
+	//check if token is DEAD!!!
+
+	req, err := http.NewRequest("POST",
+		outlook.LoginURI+outlook.Version+"/token",
+		strings.NewReader("grant_type=refresh_token"+
+			"&client_id="+outlook.Id+
+			"&scope="+outlook.Scope+
+			"&refresh_token="+oldToken+
+			"&client_secret="+outlook.Secret))
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	req.Header.Set("Content-Type",
+		"application/x-www-form-urlencoded")
+
+	resp, _ := client.Do(req)
+	var outlookResp OutlookResp
+	defer resp.Body.Close()
+	contents, _ := ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal(contents, &outlookResp)
+	if err != nil {
+		fmt.Println(err)
+	}
+	//TODO save info
 
 }
 
