@@ -23,6 +23,13 @@ type OutlookConfig struct {
 	Scope       string `json:"scope"`
 }
 
+type OutlookRequests struct {
+	RootUri         string `json:"root_uri"`
+	Version         string `json:"version"`
+	UserContext     string `json:"user_context"`
+	GetAllCalendars string `json:"get_calendars"`
+}
+
 type OutlookResp struct {
 	TokenType        string `json:"token_type"`
 	ExpiresIn        string `json:"expires_in"`
@@ -31,6 +38,20 @@ type OutlookResp struct {
 	RefreshToken     string `json:"refresh_token"`
 	IdToken          string `json:"id_token"`
 	IdTokenExpiresIn string `json:"id_token_expires_in"`
+	AnchorMailbox    string `json:"anchor_mailbox"`
+}
+
+type OutlookCalendarResponse struct {
+	OdataContext string                `json:"@odata.context"`
+	value        []OutlookCalendarInfo `json:"value"`
+}
+
+type OutlookCalendarInfo struct {
+	OdataId   string `json:"@odata.id"`
+	Id        string `json:"Id"`
+	Name      string `json:"Name"`
+	Color     string `json:"Color"`
+	ChangeKey string `json:"ChangeKey"`
 }
 
 func welcomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -108,15 +129,56 @@ func outlookTokenRefresh(oldToken string) {
 		fmt.Println(err)
 	}
 	//TODO save info
+	getAllCalendars()
+
+}
+
+func getAllCalendars() {
+	fmt.Println("All Calendars")
+	client := http.Client{}
+
+	req, err := http.NewRequest("GET",
+
+		"https://outlook.office.com/api/v2.0/me/calendars",
+		strings.NewReader(""))
+
+	req.Header.Set("Authorization",
+		outlookResp.TokenType+" "+outlookResp.AccessToken)
+	//req.Header.Set("X-AnchorMailbox", outlookResp.AnchorMailbox)
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer resp.Body.Close()
+	//TODO parse errors and content
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("%s\n", contents)
 
 }
 
 func main() {
+	//Parse configuration of outlook and gmail
 	file, err := ioutil.ReadFile("./config.json")
 	if err != nil {
 		fmt.Println(err)
 	}
 	err = json.Unmarshal(file, &outlook)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	//Parse all requests for outlook
+	file, err = ioutil.ReadFile("./outlook.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = json.Unmarshal(file, &outlookRequests)
 	if err != nil {
 		fmt.Println(err)
 	}
