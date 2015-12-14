@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,11 @@ import (
 )
 
 var outlook Outlook
+
+//TODO this will be removed when I store the access_token on the BD
+var outlookResp OutlookResp
+
+var outlookRequests OutlookRequests
 
 type Outlook struct {
 	OutlookConfig `json:"outlook"`
@@ -83,7 +89,6 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		"application/x-www-form-urlencoded")
 
 	resp, _ := client.Do(req)
-	var outlookResp OutlookResp
 
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
@@ -92,7 +97,27 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	//fmt.Printf("Token:%s\n", string(contents))
+
+	tokens := strings.Split(outlookResp.IdToken, ".")
+
+	//According to Outlook example, this replaces must be done
+	encodedToken := strings.Replace(
+		strings.Replace(tokens[1], "-", "_", -1),
+		"+", "/", -1)
+
+	//TODO create evaluation of last two ==
+	//Go must have the == at the end of base64 decode
+	//in order to decode it without errors
+	encodedToken = encodedToken + "=="
+	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
+	if err != nil {
+		fmt.Printf("Decoding token: %s\n", err)
+	}
+
+	var f interface{}
+	err = json.Unmarshal(decodedToken, &f)
+	m := f.(map[string]interface{})
+	outlookResp.AnchorMailbox = m["preferred_username"].(string)
 
 	//TODO remove this call!
 	outlookTokenRefresh(outlookResp.RefreshToken)
@@ -121,7 +146,6 @@ func outlookTokenRefresh(oldToken string) {
 		"application/x-www-form-urlencoded")
 
 	resp, _ := client.Do(req)
-	var outlookResp OutlookResp
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(contents, &outlookResp)
