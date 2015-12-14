@@ -1,0 +1,7 @@
+{
+"root_uri": "https://outlook.office.com/api",
+"version": "/v2.0",
+"user_context": "/me",
+"get_calendars": "/calendars"
+
+}
