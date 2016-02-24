@@ -63,6 +63,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
 	err := json.Unmarshal(contents, &outlookResp)
+
 	//TODO save info
 	if err != nil {
 		fmt.Println(err)
@@ -90,7 +91,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	outlookResp.AnchorMailbox = m["preferred_username"].(string)
 
 	//TODO remove this call!
-	outlookTokenRefresh(outlookResp.RefreshToken)
+	//outlookTokenRefresh(outlookResp.RefreshToken)
 
 	http.Redirect(w, r, "/", 301)
 

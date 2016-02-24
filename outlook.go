@@ -31,14 +31,13 @@ type OutlookRequests struct {
 }
 
 type OutlookResp struct {
-	TokenType        string `json:"token_type"`
-	ExpiresIn        string `json:"expires_in"`
-	Scope            string `json:"scope"`
-	AccessToken      string `json:"access_token"`
-	RefreshToken     string `json:"refresh_token"`
-	IdToken          string `json:"id_token"`
-	IdTokenExpiresIn string `json:"id_token_expires_in"`
-	AnchorMailbox    string `json:"anchor_mailbox"`
+	TokenType     string `json:"token_type"`
+	ExpiresIn     string `json:"expires_in"`
+	Scope         string `json:"scope"`
+	AccessToken   string `json:"access_token"`
+	RefreshToken  string `json:"refresh_token"`
+	IdToken       string `json:"id_token"`
+	AnchorMailbox string
 }
 
 type outlookEvent struct {
