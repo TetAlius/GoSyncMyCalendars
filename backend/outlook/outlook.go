@@ -1,16 +1,14 @@
 package outlook
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
-
-	"github.com/TetAlius/GoSyncMyCalendars/backend"
 )
 
+//TODO: improve this calls
 var Outlook struct {
 	OutlookConfig `json:"outlook"`
 }
@@ -34,13 +32,14 @@ var OutlookRequests struct {
 
 // TODO: this will be change to type and not var when I store the access_token on the BD
 var OutlookResp struct {
-	TokenType     string `json:"token_type"`
-	ExpiresIn     string `json:"expires_in"`
-	Scope         string `json:"scope"`
-	AccessToken   string `json:"access_token"`
-	RefreshToken  string `json:"refresh_token"`
-	IdToken       string `json:"id_token"`
-	AnchorMailbox string
+	TokenType         string `json:"token_type"`
+	ExpiresIn         string `json:"expires_in"`
+	Scope             string `json:"scope"`
+	AccessToken       string `json:"access_token"`
+	RefreshToken      string `json:"refresh_token"`
+	IdToken           string `json:"id_token"`
+	AnchorMailbox     string
+	PreferredUsername bool
 }
 
 type outlookEvent struct {
@@ -80,7 +79,15 @@ type OutlookCalendarInfo struct {
 	ChangeKey string `json:"ChangeKey"`
 }
 
-func outlookTokenRefresh(oldToken string) {
+var calendar = []byte(`{
+  "Name": "Social events"
+}`)
+
+var calendar2 = []byte(`{
+  "Name": "Social"
+}`)
+
+func OutlookTokenRefresh(oldToken string) {
 	client := http.Client{}
 	//check if token is DEAD!!!
 
@@ -107,135 +114,18 @@ func outlookTokenRefresh(oldToken string) {
 		fmt.Println(err)
 	}
 	//TODO save info
-	//getAllCalendars()
-	//getAllEvents()
+
+	//TODO CRUD events
+	//getAllEvents() TESTED
 	//createEvent("", nil)
-	//updateEvent("", nil)
-	deleteEvent("")
-}
+	//updateEvent("", nil) TESTED
+	//deleteEvent("") TESTED
+	//getEvent("") TESTED
 
-func getAllCalendars() {
-	fmt.Println("All Calendars")
-
-	contents := backend.NewRequest(
-		"GET",
-		OutlookRequests.RootUri+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Calendars,
-		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
-		OutlookResp.AnchorMailbox)
-	fmt.Printf("%s\n", contents)
-
-}
-
-func getAllEvents() {
-	fmt.Println("All Events")
-
-	contents := backend.NewRequest("GET",
-		OutlookRequests.RootUri+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Events,
-		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
-		OutlookResp.AnchorMailbox)
-
-	fmt.Printf("%s\n", contents)
-}
-
-//TODO: delete this
-var event = []byte(`{
-  "Subject": "Discuss the Calendar REST API",
-  "Body": {
-    "ContentType": "HTML",
-    "Content": "I think it will meet our requirements!"
-  },
-  "Start": {
-      "DateTime": "2016-02-02T18:00:00",
-      "TimeZone": "Pacific Standard Time"
-  },
-  "End": {
-      "DateTime": "2016-02-02T19:00:00",
-      "TimeZone": "Pacific Standard Time"
-  },
-	"ReminderMinutesBeforeStart": "30",
-  "IsReminderOn": "false"
-}`)
-
-func createEvent(calendarID string, eventData []byte) {
-	fmt.Println("Create event")
-	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := backend.NewRequest("POST",
-		OutlookRequests.RootUri+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			//	outlookRequests.Calendars+ TODO: Uncomment this two
-			//	calendarID+
-			OutlookRequests.Events,
-		bytes.NewBuffer(event),
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
-		OutlookResp.AnchorMailbox)
-
-	fmt.Printf("%s\n", contents)
-}
-
-var update = []byte(`{
-  "Location": {
-    "DisplayName": "Your office"
-  }
-}`)
-
-func updateEvent(eventID string, eventData []byte) {
-	fmt.Println("Update event")
-	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := backend.NewRequest("PATCH",
-		OutlookRequests.RootUri+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Events+"/AAMkADIyZTVhZWUzLTZkNDUtNDM0Mi04MmVkLTA3YTM1NmZjZmRhMABGAAAAAADBz_m20_ARTLPlrdxoDR-VBwAM8uNeNO_IS54Z_auRX3ZoAAAAHLWyAACVymTsMw3zQK86n81a2jLeAAIs-oJBAAA=",
-		bytes.NewBuffer(update),
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
-		OutlookResp.AnchorMailbox)
-
-	fmt.Printf("%s\n", contents)
-
-}
-
-func deleteEvent(eventID string) {
-	fmt.Println("Delete event")
-	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := backend.NewRequest("DELETE",
-		OutlookRequests.RootUri+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Events+"/AAMkADIyZTVhZWUzLTZkNDUtNDM0Mi04MmVkLTA3YTM1NmZjZmRhMABGAAAAAADBz_m20_ARTLPlrdxoDR-VBwAM8uNeNO_IS54Z_auRX3ZoAAAAHLWyAACVymTsMw3zQK86n81a2jLeAAIs-oJBAAA=",
-		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
-		OutlookResp.AnchorMailbox)
-
-	fmt.Printf("%s\n", contents)
-}
-
-func getEvent(eventID string) {
-	fmt.Println("Get event")
-	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := backend.NewRequest("GET",
-		OutlookRequests.RootUri+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Events+"/AAMkADIyZTVhZWUzLTZkNDUtNDM0Mi04MmVkLTA3YTM1NmZjZmRhMABGAAAAAADBz_m20_ARTLPlrdxoDR-VBwAM8uNeNO_IS54Z_auRX3ZoAAAAHLWyAACVymTsMw3zQK86n81a2jLeAAIs-oJBAAA=",
-		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
-		OutlookResp.AnchorMailbox)
-
-	fmt.Printf("%s\n", contents)
-
+	//TODO CRUD calendars
+	//getAllCalendars() TESTED
+	//getCalendar() TESTED
+	//updateCalendar() TESTED
+	//deleteCalendar() TESTED
+	//createCalendar() TESTED
 }
