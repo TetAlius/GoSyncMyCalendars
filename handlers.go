@@ -87,21 +87,22 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Decoding token: %s\n", err)
 	}
 
-	fmt.Printf("%s\n", decodedToken)
-
 	var f interface{}
 	err = json.Unmarshal(decodedToken, &f)
 	m := f.(map[string]interface{})
 
 	// TODO: El email petará si no recibo eso en el JSON
-	outlook.OutlookResp.AnchorMailbox = m["email"].(string)
-	if outlook.OutlookResp.AnchorMailbox == "" {
+	if m["email"] != nil {
+		outlook.OutlookResp.AnchorMailbox = m["email"].(string)
+		outlook.OutlookResp.PreferredUsername = false
+	} else {
 		fmt.Println("tengo que coger el preferred username")
 		outlook.OutlookResp.AnchorMailbox = m["preferred_username"].(string)
+		outlook.OutlookResp.PreferredUsername = true
 	}
 
 	//TODO remove this call!
-	//outlookTokenRefresh(outlookResp.RefreshToken)
+	outlook.OutlookTokenRefresh(outlook.OutlookResp.RefreshToken)
 
 	http.Redirect(w, r, "/", 301)
 
