@@ -1,4 +1,4 @@
-package main
+package outlook
 
 import (
 	"bytes"
@@ -7,9 +7,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/TetAlius/GoSyncMyCalendars/backend"
 )
 
-type Outlook struct {
+var Outlook struct {
 	OutlookConfig `json:"outlook"`
 }
 
@@ -22,7 +24,7 @@ type OutlookConfig struct {
 	Scope       string `json:"scope"`
 }
 
-type OutlookRequests struct {
+var OutlookRequests struct {
 	RootUri     string `json:"root_uri"`
 	Version     string `json:"version"`
 	UserContext string `json:"user_context"`
@@ -30,7 +32,8 @@ type OutlookRequests struct {
 	Events      string `json:"events"`
 }
 
-type OutlookResp struct {
+// TODO: this will be change to type and not var when I store the access_token on the BD
+var OutlookResp struct {
 	TokenType     string `json:"token_type"`
 	ExpiresIn     string `json:"expires_in"`
 	Scope         string `json:"scope"`
@@ -66,7 +69,7 @@ type eventDate struct {
 }
 type OutlookCalendarResponse struct {
 	OdataContext string                `json:"@odata.context"`
-	value        []OutlookCalendarInfo `json:"value"`
+	Value        []OutlookCalendarInfo `json:"value"`
 }
 
 type OutlookCalendarInfo struct {
@@ -82,12 +85,12 @@ func outlookTokenRefresh(oldToken string) {
 	//check if token is DEAD!!!
 
 	req, err := http.NewRequest("POST",
-		outlook.LoginURI+outlook.Version+"/token",
+		Outlook.LoginURI+Outlook.Version+"/token",
 		strings.NewReader("grant_type=refresh_token"+
-			"&client_id="+outlook.Id+
-			"&scope="+outlook.Scope+
+			"&client_id="+Outlook.Id+
+			"&scope="+Outlook.Scope+
 			"&refresh_token="+oldToken+
-			"&client_secret="+outlook.Secret))
+			"&client_secret="+Outlook.Secret))
 
 	if err != nil {
 		fmt.Println(err)
@@ -99,7 +102,7 @@ func outlookTokenRefresh(oldToken string) {
 	resp, _ := client.Do(req)
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(contents, &outlookResp)
+	err = json.Unmarshal(contents, &OutlookResp)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -114,16 +117,16 @@ func outlookTokenRefresh(oldToken string) {
 func getAllCalendars() {
 	fmt.Println("All Calendars")
 
-	contents := NewRequest(
+	contents := backend.NewRequest(
 		"GET",
-		outlookRequests.RootUri+
-			outlookRequests.Version+
-			outlookRequests.UserContext+
-			outlookRequests.Calendars,
+		OutlookRequests.RootUri+
+			OutlookRequests.Version+
+			OutlookRequests.UserContext+
+			OutlookRequests.Calendars,
 		nil,
-		outlookResp.TokenType+" "+
-			outlookResp.AccessToken,
-		outlookResp.AnchorMailbox)
+		OutlookResp.TokenType+" "+
+			OutlookResp.AccessToken,
+		OutlookResp.AnchorMailbox)
 	fmt.Printf("%s\n", contents)
 
 }
@@ -131,15 +134,15 @@ func getAllCalendars() {
 func getAllEvents() {
 	fmt.Println("All Events")
 
-	contents := NewRequest("GET",
-		outlookRequests.RootUri+
-			outlookRequests.Version+
-			outlookRequests.UserContext+
-			outlookRequests.Events,
+	contents := backend.NewRequest("GET",
+		OutlookRequests.RootUri+
+			OutlookRequests.Version+
+			OutlookRequests.UserContext+
+			OutlookRequests.Events,
 		nil,
-		outlookResp.TokenType+" "+
-			outlookResp.AccessToken,
-		outlookResp.AnchorMailbox)
+		OutlookResp.TokenType+" "+
+			OutlookResp.AccessToken,
+		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
@@ -166,17 +169,17 @@ var event = []byte(`{
 func createEvent(calendarID string, eventData []byte) {
 	fmt.Println("Create event")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := NewRequest("POST",
-		outlookRequests.RootUri+
-			outlookRequests.Version+
-			outlookRequests.UserContext+
+	contents := backend.NewRequest("POST",
+		OutlookRequests.RootUri+
+			OutlookRequests.Version+
+			OutlookRequests.UserContext+
 			//	outlookRequests.Calendars+ TODO: Uncomment this two
 			//	calendarID+
-			outlookRequests.Events,
+			OutlookRequests.Events,
 		bytes.NewBuffer(event),
-		outlookResp.TokenType+" "+
-			outlookResp.AccessToken,
-		outlookResp.AnchorMailbox)
+		OutlookResp.TokenType+" "+
+			OutlookResp.AccessToken,
+		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
@@ -190,15 +193,15 @@ var update = []byte(`{
 func updateEvent(eventID string, eventData []byte) {
 	fmt.Println("Update event")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := NewRequest("PATCH",
-		outlookRequests.RootUri+
-			outlookRequests.Version+
-			outlookRequests.UserContext+
-			outlookRequests.Events+"/AAMkADIyZTVhZWUzLTZkNDUtNDM0Mi04MmVkLTA3YTM1NmZjZmRhMABGAAAAAADBz_m20_ARTLPlrdxoDR-VBwAM8uNeNO_IS54Z_auRX3ZoAAAAHLWyAACVymTsMw3zQK86n81a2jLeAAIs-oJBAAA=",
+	contents := backend.NewRequest("PATCH",
+		OutlookRequests.RootUri+
+			OutlookRequests.Version+
+			OutlookRequests.UserContext+
+			OutlookRequests.Events+"/AAMkADIyZTVhZWUzLTZkNDUtNDM0Mi04MmVkLTA3YTM1NmZjZmRhMABGAAAAAADBz_m20_ARTLPlrdxoDR-VBwAM8uNeNO_IS54Z_auRX3ZoAAAAHLWyAACVymTsMw3zQK86n81a2jLeAAIs-oJBAAA=",
 		bytes.NewBuffer(update),
-		outlookResp.TokenType+" "+
-			outlookResp.AccessToken,
-		outlookResp.AnchorMailbox)
+		OutlookResp.TokenType+" "+
+			OutlookResp.AccessToken,
+		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 
@@ -207,15 +210,15 @@ func updateEvent(eventID string, eventData []byte) {
 func deleteEvent(eventID string) {
 	fmt.Println("Delete event")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := NewRequest("DELETE",
-		outlookRequests.RootUri+
-			outlookRequests.Version+
-			outlookRequests.UserContext+
-			outlookRequests.Events+"/AAMkADIyZTVhZWUzLTZkNDUtNDM0Mi04MmVkLTA3YTM1NmZjZmRhMABGAAAAAADBz_m20_ARTLPlrdxoDR-VBwAM8uNeNO_IS54Z_auRX3ZoAAAAHLWyAACVymTsMw3zQK86n81a2jLeAAIs-oJBAAA=",
+	contents := backend.NewRequest("DELETE",
+		OutlookRequests.RootUri+
+			OutlookRequests.Version+
+			OutlookRequests.UserContext+
+			OutlookRequests.Events+"/AAMkADIyZTVhZWUzLTZkNDUtNDM0Mi04MmVkLTA3YTM1NmZjZmRhMABGAAAAAADBz_m20_ARTLPlrdxoDR-VBwAM8uNeNO_IS54Z_auRX3ZoAAAAHLWyAACVymTsMw3zQK86n81a2jLeAAIs-oJBAAA=",
 		nil,
-		outlookResp.TokenType+" "+
-			outlookResp.AccessToken,
-		outlookResp.AnchorMailbox)
+		OutlookResp.TokenType+" "+
+			OutlookResp.AccessToken,
+		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
@@ -223,15 +226,15 @@ func deleteEvent(eventID string) {
 func getEvent(eventID string) {
 	fmt.Println("Get event")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := NewRequest("GET",
-		outlookRequests.RootUri+
-			outlookRequests.Version+
-			outlookRequests.UserContext+
-			outlookRequests.Events+"/AAMkADIyZTVhZWUzLTZkNDUtNDM0Mi04MmVkLTA3YTM1NmZjZmRhMABGAAAAAADBz_m20_ARTLPlrdxoDR-VBwAM8uNeNO_IS54Z_auRX3ZoAAAAHLWyAACVymTsMw3zQK86n81a2jLeAAIs-oJBAAA=",
+	contents := backend.NewRequest("GET",
+		OutlookRequests.RootUri+
+			OutlookRequests.Version+
+			OutlookRequests.UserContext+
+			OutlookRequests.Events+"/AAMkADIyZTVhZWUzLTZkNDUtNDM0Mi04MmVkLTA3YTM1NmZjZmRhMABGAAAAAADBz_m20_ARTLPlrdxoDR-VBwAM8uNeNO_IS54Z_auRX3ZoAAAAHLWyAACVymTsMw3zQK86n81a2jLeAAIs-oJBAAA=",
 		nil,
-		outlookResp.TokenType+" "+
-			outlookResp.AccessToken,
-		outlookResp.AnchorMailbox)
+		OutlookResp.TokenType+" "+
+			OutlookResp.AccessToken,
+		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 

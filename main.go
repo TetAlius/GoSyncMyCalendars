@@ -5,14 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
 )
-
-var outlook Outlook
-
-// TODO: this will be removed when I store the access_token on the BD
-var outlookResp OutlookResp
-
-var outlookRequests OutlookRequests
 
 func main() {
 	//Parse configuration of outlook and gmail
@@ -20,7 +15,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = json.Unmarshal(file, &outlook)
+	err = json.Unmarshal(file, &outlook.Outlook)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -30,7 +25,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = json.Unmarshal(file, &outlookRequests)
+	err = json.Unmarshal(file, &outlook.OutlookRequests)
 	if err != nil {
 		fmt.Println(err)
 	}

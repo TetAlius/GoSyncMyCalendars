@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 	"text/template"
+
+	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
 )
 
 type calendarInfo struct {
@@ -22,10 +24,10 @@ func welcomeHandler(w http.ResponseWriter, r *http.Request) {
 
 func outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r,
-		outlook.LoginURI+outlook.Version+
-			"/authorize?client_id="+outlook.Id+
-			"&redirect_uri="+outlook.RedirectURI+
-			"&response_type=code&scope="+outlook.Scope, 301)
+		outlook.Outlook.LoginURI+outlook.Outlook.Version+
+			"/authorize?client_id="+outlook.Outlook.Id+
+			"&redirect_uri="+outlook.Outlook.RedirectURI+
+			"&response_type=code&scope="+outlook.Outlook.Scope, 301)
 }
 
 func listCalendarsHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,13 +50,13 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 
 	req, _ := http.NewRequest("POST",
-		outlook.LoginURI+outlook.Version+
+		outlook.Outlook.LoginURI+outlook.Outlook.Version+
 			"/token",
 		strings.NewReader("grant_type=authorization_code"+
 			"&code="+code+
-			"&redirect_uri="+outlook.RedirectURI+
-			"&client_id="+outlook.Id+
-			"&client_secret="+outlook.Secret))
+			"&redirect_uri="+outlook.Outlook.RedirectURI+
+			"&client_id="+outlook.Outlook.Id+
+			"&client_secret="+outlook.Outlook.Secret))
 	req.Header.Set("Content-Type",
 		"application/x-www-form-urlencoded")
 
@@ -62,14 +64,14 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
-	err := json.Unmarshal(contents, &outlookResp)
+	err := json.Unmarshal(contents, &outlook.OutlookResp)
 
 	//TODO save info
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	tokens := strings.Split(outlookResp.IdToken, ".")
+	tokens := strings.Split(outlook.OutlookResp.IdToken, ".")
 
 	//According to Outlook example, this replaces must be done
 	encodedToken := strings.Replace(
@@ -85,10 +87,18 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Decoding token: %s\n", err)
 	}
 
+	fmt.Printf("%s\n", decodedToken)
+
 	var f interface{}
 	err = json.Unmarshal(decodedToken, &f)
 	m := f.(map[string]interface{})
-	outlookResp.AnchorMailbox = m["preferred_username"].(string)
+
+	// TODO: El email petará si no recibo eso en el JSON
+	outlook.OutlookResp.AnchorMailbox = m["email"].(string)
+	if outlook.OutlookResp.AnchorMailbox == "" {
+		fmt.Println("tengo que coger el preferred username")
+		outlook.OutlookResp.AnchorMailbox = m["preferred_username"].(string)
+	}
 
 	//TODO remove this call!
 	//outlookTokenRefresh(outlookResp.RefreshToken)
