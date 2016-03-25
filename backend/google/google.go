@@ -35,6 +35,7 @@ var Requests struct {
 	Context      string `json:"user_context"`
 	CalendarList string `json:"calendar_list"`
 	Calendars    string `json:"calendars"`
+	Events       string `json:"events"`
 }
 
 // Responses TODO doc
@@ -113,16 +114,16 @@ func TokenRefresh(oldToken string) {
 	fmt.Printf("%s\n", contents)
 
 	//TODO CRUD events
-	//getAllEvents()
-	//createEvent("", nil)
-	//updateEvent("", nil)
-	//deleteEvent("")
-	//getEvent("")
+	//getAllEvents("primary") //TESTED
+	//createEvent("primary", nil) //TESTED
+	//updateEvent("primary", "eventID", nil)//TESTED
+	//deleteEvent("primary", "eventID")//TESTED
+	//getEvent("primary", "eventID") //TESTED
 
 	//TODO CRUD calendars
-	//getAllCalendars() TESTED
-	//getCalendar("ID") TESTED
-	//updateCalendar("ID", []byte(`"Hola":"Adios"`)) TESTED
-	//deleteCalendar("ID") TESTED
-	//createCalendar([]byte(`"Hola":"Adios"`)) TESTED
+	//getAllCalendars() //TESTED
+	//getCalendar("ID") //TESTED
+	//updateCalendar("ID", []byte(`"Hola":"Adios"`)) //TESTED
+	//deleteCalendar("ID") //TESTED
+	//createCalendar([]byte(`"Hola":"Adios"`)) //TESTED
 }
