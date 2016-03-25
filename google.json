@@ -4,5 +4,6 @@
 "version":"/v3",
 "user_context":"/users/me",
 "calendar_list":"/calendarList",
-"calendars":"/calendars"
+"calendars":"/calendars",
+"events":"/events"
 }
