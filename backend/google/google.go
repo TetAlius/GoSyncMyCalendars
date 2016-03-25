@@ -28,7 +28,13 @@ type googleConfig struct {
 
 // Requests TODO doc
 var Requests struct {
-	State string
+	State        string
+	RootURI      string `json:"root_uri"`
+	CalendarAPI  string `json:"calendarAPI"`
+	Version      string `json:"version"`
+	Context      string `json:"user_context"`
+	CalendarList string `json:"calendar_list"`
+	Calendars    string `json:"calendars"`
 }
 
 // Responses TODO doc
@@ -114,9 +120,9 @@ func TokenRefresh(oldToken string) {
 	//getEvent("")
 
 	//TODO CRUD calendars
-	getAllCalendars()
-	//getCalendar()
-	//updateCalendar()
-	//deleteCalendar()
-	//createCalendar()
+	//getAllCalendars() TESTED
+	//getCalendar("ID") TESTED
+	//updateCalendar("ID", []byte(`"Hola":"Adios"`)) TESTED
+	//deleteCalendar("ID") TESTED
+	//createCalendar([]byte(`"Hola":"Adios"`)) TESTED
 }
