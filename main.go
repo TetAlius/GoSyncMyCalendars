@@ -31,4 +31,8 @@ func main() {
 	}
 
 	http.HandleFunc("/", welcomeHandler)
+	http.HandleFunc("/SignInWithGoogle", googleSignInHandler)
+	http.HandleFunc("/google", googleTokenHandler)
+
+	http.ListenAndServe(":8080", nil)
 }
