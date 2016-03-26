@@ -1,0 +1,9 @@
+{
+"root_uri":"https://www.googleapis.com",
+"calendarAPI":"/calendar",
+"version":"/v3",
+"user_context":"/users/me",
+"calendar_list":"/calendarList",
+"calendars":"/calendars",
+"events":"/events"
+}
