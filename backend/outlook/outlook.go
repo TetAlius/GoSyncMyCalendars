@@ -8,11 +8,12 @@ import (
 	"strings"
 )
 
-//TODO: improve this calls
+//Outlook TODO: improve this calls
 var Outlook struct {
 	OutlookConfig `json:"outlook"`
 }
 
+// OutlookConfig TODO
 type OutlookConfig struct {
 	Id          string `json:"client_id"`
 	Secret      string `json:"client_secret"`
@@ -22,6 +23,7 @@ type OutlookConfig struct {
 	Scope       string `json:"scope"`
 }
 
+// OutlookRequests TODO
 var OutlookRequests struct {
 	RootUri     string `json:"root_uri"`
 	Version     string `json:"version"`
@@ -30,10 +32,10 @@ var OutlookRequests struct {
 	Events      string `json:"events"`
 }
 
-// TODO: this will be change to type and not var when I store the access_token on the BD
+// OutlookResp TODO: this will be change to type and not var when I store the access_token on the BD
 var OutlookResp struct {
 	TokenType         string `json:"token_type"`
-	ExpiresIn         string `json:"expires_in"`
+	ExpiresIn         int    `json:"expires_in"`
 	Scope             string `json:"scope"`
 	AccessToken       string `json:"access_token"`
 	RefreshToken      string `json:"refresh_token"`
@@ -66,11 +68,14 @@ type eventDate struct {
 	DateTime string `json:"DateTime"`
 	TimeZone string `json:"TimeZone"`
 }
+
+//OutlookCalendarResponse TODO
 type OutlookCalendarResponse struct {
 	OdataContext string                `json:"@odata.context"`
 	Value        []OutlookCalendarInfo `json:"value"`
 }
 
+//
 type OutlookCalendarInfo struct {
 	OdataId   string `json:"@odata.id"`
 	Id        string `json:"Id"`
@@ -87,6 +92,7 @@ var calendar2 = []byte(`{
   "Name": "Social"
 }`)
 
+// OutlookTokenRefresh TODO
 func OutlookTokenRefresh(oldToken string) {
 	client := http.Client{}
 	//check if token is DEAD!!!
