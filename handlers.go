@@ -65,6 +65,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
+	fmt.Printf("%s\n", contents)
 	err := json.Unmarshal(contents, &outlook.OutlookResp)
 
 	//TODO save info
