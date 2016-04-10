@@ -8,6 +8,7 @@ import (
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
+	_ "github.com/jackc/pgx/stdlib"
 )
 
 func main() {
