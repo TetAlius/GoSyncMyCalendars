@@ -6,32 +6,6 @@ import (
 	"os"
 )
 
-// ExtractConfig TODO
-/*func ExtractConfig() pgx.ConnConfig {
-	var config pgx.ConnConfig
-
-	config.Host = os.Getenv("TODO_DB_HOST")
-	if config.Host == "" {
-		config.Host = "localhost"
-	}
-
-	config.User = os.Getenv("TODO_DB_USER")
-	if config.User == "" {
-		config.User = os.Getenv("USER")
-		config.User = "marta"
-	}
-
-	config.Password = os.Getenv("TODO_DB_PASSWORD")
-
-	config.Database = os.Getenv("TODO_DB_DATABASE")
-	if config.Database == "" {
-		config.Database = "todo"
-		config.Database = "marta"
-	}
-
-	return config
-}*/
-
 func getDBConfig() (connection string) {
 	host := os.Getenv("DBHOST")
 	if host == "" {
