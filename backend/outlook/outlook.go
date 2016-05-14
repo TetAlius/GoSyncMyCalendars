@@ -2,10 +2,11 @@ package outlook
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/TetAlius/logs/logger"
 )
 
 //Outlook TODO: improve this calls
@@ -106,7 +107,7 @@ func OutlookTokenRefresh(oldToken string) {
 			"&client_secret="+Outlook.Secret))
 
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error creating new request: %s", err.Error())
 	}
 
 	req.Header.Set("Content-Type",
@@ -117,7 +118,7 @@ func OutlookTokenRefresh(oldToken string) {
 	contents, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(contents, &OutlookResp)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error unmarshaling outlook response: %s", err.Error())
 	}
 	//TODO save info
 
