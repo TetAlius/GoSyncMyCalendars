@@ -47,12 +47,17 @@ func Errorf(format string, v ...interface{}) {
 	er.Printf(format, v...)
 }
 
-//Fatalln calls Println
+//Fatal calls Fatal
+func Fatal(v ...interface{}) {
+	fatal.Fatal(v...)
+}
+
+//Fatalln calls Fatalln
 func Fatalln(v ...interface{}) {
 	fatal.Fatalln(v...)
 }
 
-//Fatalf calls Printf
+//Fatalf calls Fatalf
 func Fatalf(format string, v ...interface{}) {
 	fatal.Fatalf(format, v...)
 }
