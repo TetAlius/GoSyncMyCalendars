@@ -3,10 +3,11 @@ package google
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	log "github.com/TetAlius/logs/logger"
 )
 
 // Config TODO doc
@@ -55,7 +56,7 @@ func GenerateRandomState() (rs string) {
 	_, err := rand.Read(rb)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error creating random numbers: %s", err.Error())
 	}
 
 	rs = base64.URLEncoding.EncodeToString(rb)
@@ -68,18 +69,18 @@ func GetDiscoveryDocument() (document []byte) {
 	client := http.Client{}
 	req, err := http.NewRequest("GET", Config.DiscoveryDocument, nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error creating new request: %s", err.Error())
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error doing request: %s", err.Error())
 	}
 
 	defer resp.Body.Close()
 	//TODO parse errors and content
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error reading response: %s", err.Error())
 	}
 	//fmt.Printf("%s\n", contents)
 
@@ -98,10 +99,10 @@ func TokenRefresh(oldToken string) {
 			"&grant_type=refresh_token"))
 
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error creating new request: %s", err.Error())
 	}
 
-	fmt.Printf("%s\n", req.Body)
+	log.Debugf("%s\n", req.Body)
 
 	req.Header.Set("Content-Type",
 		"application/x-www-form-urlencoded")
@@ -111,7 +112,7 @@ func TokenRefresh(oldToken string) {
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 
 	//TODO CRUD events
 	//getAllEvents("primary") //TESTED
