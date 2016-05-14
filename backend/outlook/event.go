@@ -5,12 +5,13 @@ import (
 	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
+	log "github.com/TetAlius/logs/logger"
 )
 
 func getAllEvents() {
-	fmt.Println("All Events")
+	log.Debugln("getAllEvents outlook")
 
-	contents := backend.NewRequest("GET",
+	contents, _ := backend.NewRequest("GET",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
@@ -43,9 +44,9 @@ var event = []byte(`{
 }`)
 
 func createEvent(calendarID string, eventData []byte) {
-	fmt.Println("Create event")
+	log.Debugln("createEvent outlook")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := backend.NewRequest("POST",
+	contents, _ := backend.NewRequest("POST",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
@@ -67,9 +68,9 @@ var update = []byte(`{
 }`)
 
 func updateEvent(eventID string, eventData []byte) {
-	fmt.Println("Update event")
+	log.Debugln("updateEvent outlook")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := backend.NewRequest("PATCH",
+	contents, _ := backend.NewRequest("PATCH",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
@@ -85,9 +86,9 @@ func updateEvent(eventID string, eventData []byte) {
 }
 
 func deleteEvent(eventID string) {
-	fmt.Println("Delete event")
+	log.Debugln("deleteEvent outlook")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := backend.NewRequest("DELETE",
+	contents, _ := backend.NewRequest("DELETE",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
@@ -102,9 +103,9 @@ func deleteEvent(eventID string) {
 }
 
 func getEvent(eventID string) {
-	fmt.Println("Get event")
+	log.Debugln("getEvent outlook")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
-	contents := backend.NewRequest("GET",
+	contents, _ := backend.NewRequest("GET",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+

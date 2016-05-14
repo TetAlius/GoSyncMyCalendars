@@ -5,12 +5,13 @@ import (
 	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 func getAllCalendars() {
-	fmt.Println("All Calendars")
+	log.Debugln("getAllCalendars outlook")
 
-	contents := backend.NewRequest("GET",
+	contents, _ := backend.NewRequest("GET",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
@@ -20,7 +21,7 @@ func getAllCalendars() {
 			OutlookResp.AccessToken,
 		OutlookResp.AnchorMailbox)
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 
 }
 
@@ -31,8 +32,8 @@ func getPrimaryCalendar() {
 
 //GET https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}
 func getCalendar(calendarID string) {
-	fmt.Println("Get Calendar given")
-	contents := backend.NewRequest("GET",
+	log.Debugln("getCalendar outlook")
+	contents, _ := backend.NewRequest("GET",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
@@ -48,9 +49,9 @@ func getCalendar(calendarID string) {
 
 //POST https://outlook.office.com/api/v2.0/me/calendars
 func createCalendar(calendarData []byte) {
-	fmt.Println("Create calendar")
+	log.Debugln("createCalendars outlook")
 
-	contents := backend.NewRequest("POST",
+	contents, _ := backend.NewRequest("POST",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
@@ -66,9 +67,9 @@ func createCalendar(calendarData []byte) {
 
 //PATCH https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}
 func updateCalendar(calendarID string, calendarData []byte) {
-	fmt.Println("Update calendar")
+	log.Debugln("updateCalendar outlook")
 
-	contents := backend.NewRequest("PATCH",
+	contents, _ := backend.NewRequest("PATCH",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
@@ -94,9 +95,9 @@ func updateCalendar(calendarID string, calendarData []byte) {
 //DELETE https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}
 //Does not return json if OK, only status 204
 func deleteCalendar(calendarID string) {
-	fmt.Println("Delete calendar")
+	log.Debugln("deleteCalendar outlook")
 
-	contents := backend.NewRequest("DELETE",
+	contents, _ := backend.NewRequest("DELETE",
 		OutlookRequests.RootUri+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
