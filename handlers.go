@@ -98,10 +98,11 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: El email petará si no recibo eso en el JSON
 	if m["email"] != nil {
+		log.Infoln("Got email on outlook")
 		outlook.OutlookResp.AnchorMailbox = m["email"].(string)
 		outlook.OutlookResp.PreferredUsername = false
 	} else {
-		log.Warningln("Have to get preferred username on outlook")
+		log.Infoln("Got preferred username on outlook")
 		outlook.OutlookResp.AnchorMailbox = m["preferred_username"].(string)
 		outlook.OutlookResp.PreferredUsername = true
 	}
