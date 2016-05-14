@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"text/template"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 type calendarInfo struct {
@@ -34,14 +34,15 @@ func outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
 func listCalendarsHandler(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("./frontend/calendars.html")
 	if err != nil {
-		log.Fatal("Parse file error: ", err)
+		log.Fatalf("Parse file error: %s", err.Error())
 	}
 
 	calendars := []calendarInfo{
 		{"outlook@outlook.com", []string{"a", "b"}},
 		{"outlook@outlook.com", []string{"a", "b"}},
 	}
-	fmt.Println(calendars)
+	log.Debugln(calendars)
+
 	t.Execute(w, calendars)
 }
 
@@ -67,10 +68,9 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	contents, _ := ioutil.ReadAll(resp.Body)
 	fmt.Printf("%s\n", contents)
 	err := json.Unmarshal(contents, &outlook.OutlookResp)
-
 	//TODO save info
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error unmarshaling outlook response: %s", err.Error())
 	}
 
 	tokens := strings.Split(outlook.OutlookResp.IdToken, ".")
@@ -86,14 +86,13 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	encodedToken = encodedToken + "=="
 	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
 	if err != nil {
-		fmt.Printf("Decoding token: %s\n", err)
+		log.Errorf("Error decoding outlook token: %s", err.Error())
 	}
 
 	var f interface{}
 	err = json.Unmarshal(decodedToken, &f)
-
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error unmarshaling outlook decoded token: %s", err.Error())
 	}
 	m := f.(map[string]interface{})
 
@@ -102,7 +101,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		outlook.OutlookResp.AnchorMailbox = m["email"].(string)
 		outlook.OutlookResp.PreferredUsername = false
 	} else {
-		fmt.Println("tengo que coger el preferred username")
+		log.Warningln("Have to get preferred username on outlook")
 		outlook.OutlookResp.AnchorMailbox = m["preferred_username"].(string)
 		outlook.OutlookResp.PreferredUsername = true
 	}
@@ -115,6 +114,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 }
 func googleSignInHandler(w http.ResponseWriter, r *http.Request) {
 	google.Requests.State = google.GenerateRandomState()
+	log.Debugf("Random google state: %s", google.Requests.State)
 	_ = google.GetDiscoveryDocument()
 
 	//	fmt.Printf("%s\n", google.Requests.State)
@@ -134,7 +134,7 @@ func googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	state := query.Get("state")
 
 	if strings.Compare(google.Requests.State, state) != 0 {
-		fmt.Println("state is not correct")
+		log.Errorf("State is not correct, expected %s got %s", google.Requests.State, state)
 	}
 
 	code := query.Get("code")
@@ -158,10 +158,10 @@ func googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.Unmarshal(contents, &google.Responses)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error unmarshaling google responses: %s", err.Error())
 	}
 
-	fmt.Printf("%s,\n", contents)
+	log.Debugf("%s", contents)
 
 	tokens := strings.Split(google.Responses.TokenID, ".")
 
@@ -172,7 +172,7 @@ func googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	encodedToken = encodedToken + "=="
 	_, err = base64.StdEncoding.DecodeString(encodedToken)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Error decoding google token: %s", err.Error())
 	}
 
 	//fmt.Printf("%s\n", decoded)
