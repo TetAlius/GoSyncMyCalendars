@@ -12,7 +12,7 @@ func getAllEvents() {
 	log.Debugln("getAllEvents outlook")
 
 	contents, _ := backend.NewRequest("GET",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Events,
@@ -47,7 +47,7 @@ func createEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent outlook")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
 	contents, _ := backend.NewRequest("POST",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Calendars+"/"+
@@ -71,7 +71,7 @@ func updateEvent(eventID string, eventData []byte) {
 	log.Debugln("updateEvent outlook")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
 	contents, _ := backend.NewRequest("PATCH",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Events+"/"+
@@ -89,7 +89,7 @@ func deleteEvent(eventID string) {
 	log.Debugln("deleteEvent outlook")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
 	contents, _ := backend.NewRequest("DELETE",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Events+"/"+
@@ -106,7 +106,7 @@ func getEvent(eventID string) {
 	log.Debugln("getEvent outlook")
 	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
 	contents, _ := backend.NewRequest("GET",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Events+"/"+
