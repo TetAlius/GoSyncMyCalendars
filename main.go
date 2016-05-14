@@ -49,7 +49,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", welcomeHandler)
-	http.HandleFunc("/signInOutlook", outlookSignInHandler)
+	http.HandleFunc("/signInWithOutlook", outlookSignInHandler)
 	http.HandleFunc("/outlook", outlookTokenHandler)
 	http.HandleFunc("/calendars", listCalendarsHandler)
 	http.HandleFunc("/SignInWithGoogle", googleSignInHandler)
