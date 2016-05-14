@@ -2,8 +2,9 @@ package database
 
 import (
 	"database/sql"
-	"log"
 	"os"
+
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 func getDBConfig() (connection string) {
