@@ -2,10 +2,10 @@ package calendar
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	"github.com/TetAlius/GoSyncMyCalendars/database"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 // Create creates a new calendar with the account given, the id of the calendar
@@ -23,17 +23,17 @@ func Create(db *sql.DB, account string, id string, mail string) (err error) {
 
 	sentence, err := getSentenceToCalendarInsert(account)
 	if err != nil {
-		log.Fatalf("GetSentenceToCalendarInsert unexpectedly failed: %v", err)
+		log.Errorf("GetSentenceToCalendarInsert unexpectedly failed: %v", err)
 	}
 
 	result, err := db.Exec(sentence, id)
 	if err != nil {
-		log.Fatalf("db.Exec unexpectedly failed: %v", err)
+		log.Errorf("db.Exec unexpectedly failed: %v", err)
 	}
 
 	n, err := result.RowsAffected()
 	if err != nil {
-		log.Fatalf("result.RowsAffected unexpectedly failed: %v", err)
+		log.Errorf("result.RowsAffected unexpectedly failed: %v", err)
 	}
 	if n != 1 {
 		return customErrors.RowsError{Expected: 1, Received: n, Message: "On calendar.Create with id: " + id + " mail: " + mail + " account: " + account}
@@ -67,13 +67,13 @@ func Get(db *sql.DB, account string, id string) (v interface{}, err error) {
 
 	sentence, err := getSentenceToCalendarRead(account)
 	if err != nil {
-		log.Fatalf("GetSentenceToCalendarRead unexpectedly failed: %v", err)
+		log.Errorf("GetSentenceToCalendarRead unexpectedly failed: %v", err)
 		return
 	}
 
 	rows, err := db.Query(sentence, id)
 	if err != nil {
-		log.Fatalf("db.Exec unexpectedly failed: %v", err)
+		log.Errorf("db.Exec unexpectedly failed: %v", err)
 		return
 	}
 
@@ -99,12 +99,12 @@ func Delete(db *sql.DB, id string) (err error) {
 
 	result, err := db.Exec(sentence, id)
 	if err != nil {
-		log.Fatalf("db.Exec unexpectedly failed: %v", err)
+		log.Errorf("db.Exec unexpectedly failed: %v", err)
 	}
 
 	n, err := result.RowsAffected()
 	if err != nil {
-		log.Fatalf("result.RowsAffected unexpectedly failed: %v", err)
+		log.Errorf("result.RowsAffected unexpectedly failed: %v", err)
 	}
 	if n != 1 {
 		return customErrors.RowsError{Expected: 1, Received: n, Message: "On calendar.Delete with id: " + id}
