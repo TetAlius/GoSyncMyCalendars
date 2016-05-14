@@ -26,7 +26,7 @@ func welcomeHandler(w http.ResponseWriter, r *http.Request) {
 func outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r,
 		outlook.Outlook.LoginURI+outlook.Outlook.Version+
-			"/authorize?client_id="+outlook.Outlook.Id+
+			"/authorize?client_id="+outlook.Outlook.ID+
 			"&redirect_uri="+outlook.Outlook.RedirectURI+
 			"&response_type=code&scope="+outlook.Outlook.Scope, 301)
 }
@@ -57,7 +57,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		strings.NewReader("grant_type=authorization_code"+
 			"&code="+code+
 			"&redirect_uri="+outlook.Outlook.RedirectURI+
-			"&client_id="+outlook.Outlook.Id+
+			"&client_id="+outlook.Outlook.ID+
 			"&client_secret="+outlook.Outlook.Secret))
 	req.Header.Set("Content-Type",
 		"application/x-www-form-urlencoded")
@@ -73,7 +73,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("Error unmarshaling outlook response: %s", err.Error())
 	}
 
-	tokens := strings.Split(outlook.OutlookResp.IdToken, ".")
+	tokens := strings.Split(outlook.OutlookResp.IDToken, ".")
 
 	//According to Outlook example, this replaces must be done
 	encodedToken := strings.Replace(
@@ -108,7 +108,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//TODO remove this call!
-	outlook.OutlookTokenRefresh(outlook.OutlookResp.RefreshToken)
+	outlook.TokenRefresh(outlook.OutlookResp.RefreshToken)
 
 	http.Redirect(w, r, "/", 301)
 

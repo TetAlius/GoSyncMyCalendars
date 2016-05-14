@@ -12,7 +12,7 @@ func getAllCalendars() {
 	log.Debugln("getAllCalendars outlook")
 
 	contents, _ := backend.NewRequest("GET",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Calendars,
@@ -34,7 +34,7 @@ func getPrimaryCalendar() {
 func getCalendar(calendarID string) {
 	log.Debugln("getCalendar outlook")
 	contents, _ := backend.NewRequest("GET",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Calendars+"/"+
@@ -52,7 +52,7 @@ func createCalendar(calendarData []byte) {
 	log.Debugln("createCalendars outlook")
 
 	contents, _ := backend.NewRequest("POST",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Calendars,
@@ -70,7 +70,7 @@ func updateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar outlook")
 
 	contents, _ := backend.NewRequest("PATCH",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Calendars+"/"+
@@ -98,7 +98,7 @@ func deleteCalendar(calendarID string) {
 	log.Debugln("deleteCalendar outlook")
 
 	contents, _ := backend.NewRequest("DELETE",
-		OutlookRequests.RootUri+
+		OutlookRequests.RootURI+
 			OutlookRequests.Version+
 			OutlookRequests.UserContext+
 			OutlookRequests.Calendars+"/"+
