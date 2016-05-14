@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
+	"github.com/TetAlius/logs/logger"
 )
 
 type eventResource struct {
@@ -89,9 +90,9 @@ var eventUpdated = []byte(`{
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events
 func getAllEvents(calendarID string) {
-	fmt.Println("Get all events from calendar")
+	log.Debugln("getAllEvents google")
 
-	contents := backend.NewRequest("GET",
+	contents, _ := backend.NewRequest("GET",
 		Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID+Requests.Events,
 		nil,
 		Responses.TokenType+" "+Responses.AccessToken,
@@ -103,8 +104,8 @@ func getAllEvents(calendarID string) {
 
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events
 func createEvent(calendarID string, eventData []byte) {
-	fmt.Println("Create event")
-	contents := backend.NewRequest("POST",
+	log.Debugln("createEvent google")
+	contents, _ := backend.NewRequest("POST",
 		//Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID+Requests.Events,
 		"https://www.googleapis.com/calendar/v3/calendars/"+calendarID+"/events",
 		bytes.NewBuffer(event),
@@ -117,11 +118,11 @@ func createEvent(calendarID string, eventData []byte) {
 
 //PUT https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events/{eventId}
 func updateEvent(calendarID string, eventID string, eventData []byte) {
-	fmt.Println("Update event")
+	log.Debugln("updateEvent google")
 
 	//Meter en los header el etag
 
-	contents := backend.NewRequest("PUT",
+	contents, _ := backend.NewRequest("PUT",
 		//Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID+Requests.Events,
 		"https://www.googleapis.com/calendar/v3/calendars/"+calendarID+"/events/"+eventID,
 		bytes.NewBuffer(eventUpdated),
@@ -134,9 +135,9 @@ func updateEvent(calendarID string, eventID string, eventData []byte) {
 
 //DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events/{eventId}
 func deleteEvent(calendarID string, eventID string) {
-	fmt.Println("Delete event")
+	log.Debugln("deleteEvent google")
 
-	contents := backend.NewRequest(
+	contents, _ := backend.NewRequest(
 		"DELETE",
 		"https://www.googleapis.com/calendar/v3/calendars/"+calendarID+"/events/"+eventID,
 		nil,
@@ -149,9 +150,9 @@ func deleteEvent(calendarID string, eventID string) {
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events/{eventId}
 func getEvent(calendarID string, eventID string) {
-	fmt.Println("Get event")
+	log.Debugln("getEvent google")
 
-	contents := backend.NewRequest(
+	contents, _ := backend.NewRequest(
 		"GET",
 		"https://www.googleapis.com/calendar/v3/calendars/"+calendarID+"/events/"+eventID,
 		nil,

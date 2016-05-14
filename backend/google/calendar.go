@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
+	log "github.com/TetAlius/logs/logger"
 )
 
 type calendarResp struct {
@@ -19,9 +20,9 @@ type calendarResp struct {
 
 //GET https://www.googleapis.com/calendar/v3/users/me/calendarList
 func getAllCalendars() {
-	fmt.Println("All calendars")
+	log.Debugln("getAllCalendars google")
 
-	contents :=
+	contents, _ :=
 		backend.NewRequest(
 			"GET",
 			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Context+Requests.CalendarList,
@@ -35,8 +36,8 @@ func getAllCalendars() {
 // GET https://www.googleapis.com/calendar/v3/calendars/primary This is the one used
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary
 func getPrimaryCalendar() {
-	fmt.Println("Get primary calendar")
-	contents :=
+	log.Debugln("getPrimaryCalendar google")
+	contents, _ :=
 		backend.NewRequest(
 			"GET",
 			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/primary",
@@ -50,9 +51,9 @@ func getPrimaryCalendar() {
 
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarID}
 func getCalendar(calendarID string) {
-	fmt.Println("Get one calendar")
+	log.Debugln("getCalendar google")
 
-	contents :=
+	contents, _ :=
 		backend.NewRequest(
 			"GET",
 			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Context+Requests.CalendarList+"/"+calendarID,
@@ -70,9 +71,9 @@ var calendarUpdate = []byte(`{"summary":"Updated CalendarGO"}`)
 
 // POST https://www.googleapis.com/calendar/v3/calendars
 func createCalendar(calendarData []byte) {
-	fmt.Println("Create new calendar")
+	log.Debugln("createCalendar google")
 
-	contents :=
+	contents, _ :=
 		backend.NewRequest(
 			"POST",
 			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars,
@@ -86,9 +87,9 @@ func createCalendar(calendarData []byte) {
 
 // PUT https://www.googleapis.com/calendar/v3/calendars/{calendarId}
 func updateCalendar(calendarID string, calendarData []byte) {
-	fmt.Println("Update calendar")
+	log.Debugln("updateCalendar google")
 
-	contents :=
+	contents, _ :=
 		backend.NewRequest(
 			"PUT",
 			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID,
@@ -104,7 +105,7 @@ func updateCalendar(calendarID string, calendarData []byte) {
 func deleteCalendar(calendarID string) {
 	fmt.Println("Delete calendar")
 
-	contents := backend.NewRequest(
+	contents, _ := backend.NewRequest(
 		"DELETE",
 		Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID,
 		nil,
