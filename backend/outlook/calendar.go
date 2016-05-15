@@ -8,17 +8,14 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
+// GET https://outlook.office.com/api/v2.0/me/calendars
 func getAllCalendars() {
 	log.Debugln("getAllCalendars outlook")
 
 	contents, _ := backend.NewRequest("GET",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Calendars,
+		calendarsURI(""),
 		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	log.Debugf("%s\n", contents)
@@ -30,54 +27,40 @@ func getPrimaryCalendar() {
 	//TODO
 }
 
-//GET https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}
+// GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 func getCalendar(calendarID string) {
 	log.Debugln("getCalendar outlook")
 	contents, _ := backend.NewRequest("GET",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Calendars+"/"+
-			calendarID,
+		calendarsURI(calendarID),
 		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
 
-//POST https://outlook.office.com/api/v2.0/me/calendars
+// POST https://outlook.office.com/api/v2.0/me/calendars
 func createCalendar(calendarData []byte) {
 	log.Debugln("createCalendars outlook")
 
 	contents, _ := backend.NewRequest("POST",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Calendars,
+		calendarsURI(""),
 		bytes.NewBuffer(calendarData),
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 
 }
 
-//PATCH https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}
+// PATCH https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 func updateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar outlook")
 
 	contents, _ := backend.NewRequest("PATCH",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Calendars+"/"+
-			calendarID,
+		calendarsURI(calendarID),
 		bytes.NewBuffer(calendarData),
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
@@ -92,20 +75,15 @@ func updateCalendar(calendarID string, calendarData []byte) {
 	}
 }
 */
-//DELETE https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}
+// DELETE https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 //Does not return json if OK, only status 204
 func deleteCalendar(calendarID string) {
 	log.Debugln("deleteCalendar outlook")
 
 	contents, _ := backend.NewRequest("DELETE",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Calendars+"/"+
-			calendarID,
+		calendarsURI(calendarID),
 		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)

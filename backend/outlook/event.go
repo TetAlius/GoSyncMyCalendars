@@ -8,17 +8,14 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
-func getAllEvents() {
+// GET https://outlook.office.com/api/v2.0/me/events
+// GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
+func getAllEvents(calendarID string) {
 	log.Debugln("getAllEvents outlook")
-
 	contents, _ := backend.NewRequest("GET",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Events,
+		eventsFromCalendarURI(calendarID),
 		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
@@ -43,19 +40,13 @@ var event = []byte(`{
   "IsReminderOn": "false"
 }`)
 
+// POST https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
 func createEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent outlook")
-	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
 	contents, _ := backend.NewRequest("POST",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Calendars+"/"+
-			calendarID+
-			OutlookRequests.Events,
+		eventsFromCalendarURI(calendarID),
 		bytes.NewBuffer(event),
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
@@ -67,53 +58,38 @@ var update = []byte(`{
   }
 }`)
 
+// PATCH https://outlook.office.com/api/v2.0/me/events/{eventID}
 func updateEvent(eventID string, eventData []byte) {
 	log.Debugln("updateEvent outlook")
-	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
 	contents, _ := backend.NewRequest("PATCH",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Events+"/"+
-			eventID,
+		eventURI(eventID),
 		bytes.NewBuffer(update),
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 
 }
 
+// DELETE https://outlook.office.com/api/v2.0/me/events/{eventID}
 func deleteEvent(eventID string) {
 	log.Debugln("deleteEvent outlook")
-	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
 	contents, _ := backend.NewRequest("DELETE",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Events+"/"+
-			eventID,
+		eventURI(eventID),
 		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
 
+// GET https://outlook.office.com/api/v2.0/me/events/{eventID}
 func getEvent(eventID string) {
 	log.Debugln("getEvent outlook")
-	//POST https://outlook.office.com/api/v2.0/me/calendars/{calendar_id}/events
 	contents, _ := backend.NewRequest("GET",
-		OutlookRequests.RootURI+
-			OutlookRequests.Version+
-			OutlookRequests.UserContext+
-			OutlookRequests.Events+"/"+
-			eventID,
+		eventURI(eventID),
 		nil,
-		OutlookResp.TokenType+" "+
-			OutlookResp.AccessToken,
+		authorizationRequest(),
 		OutlookResp.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)

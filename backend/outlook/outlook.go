@@ -136,3 +136,22 @@ func TokenRefresh(oldToken string) {
 	//deleteCalendar() TESTED
 	//createCalendar() TESTED
 }
+
+// https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
+func eventsFromCalendarURI(calendarID string) (URI string) {
+	return OutlookRequests.RootURI + OutlookRequests.Version + OutlookRequests.UserContext + OutlookRequests.Calendars + "/" + calendarID + OutlookRequests.Events
+}
+
+// https://outlook.office.com/api/v2.0/me/events/{eventID}
+func eventURI(eventID string) (URI string) {
+	return OutlookRequests.RootURI + OutlookRequests.Version + OutlookRequests.UserContext + OutlookRequests.Events + "/" + eventID
+}
+
+// https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
+func calendarsURI(calendarID string) (URI string) {
+	return OutlookRequests.RootURI + OutlookRequests.Version + OutlookRequests.UserContext + OutlookRequests.Calendars + "/" + calendarID
+}
+
+func authorizationRequest() (auth string) {
+	return OutlookResp.TokenType + " " + OutlookResp.AccessToken
+}

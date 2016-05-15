@@ -116,7 +116,7 @@ func TokenRefresh(oldToken string) {
 	log.Debugf("%s\n", contents)
 
 	//TODO CRUD events
-	getAllEvents("primary") //TESTED
+	//getAllEvents("primary") //TESTED
 	//createEvent("primary", nil) //TESTED
 	//updateEvent("primary", "eventID", nil)//TESTED
 	//deleteEvent("primary", "eventID")//TESTED
