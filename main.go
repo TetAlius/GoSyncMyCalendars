@@ -17,7 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error reading config.json: %s", err.Error())
 	}
-	err = json.Unmarshal(file, &outlook.Outlook)
+	err = json.Unmarshal(file, &outlook.Config)
 	if err != nil {
 		log.Fatalf("Error unmarshalling outlook config: %s", err.Error())
 	}
@@ -31,7 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error reading outlook.json: %s", err.Error())
 	}
-	err = json.Unmarshal(file, &outlook.OutlookRequests)
+	err = json.Unmarshal(file, &outlook.Requests)
 	if err != nil {
 		log.Fatalf("Error unmarshalling outlook requests: %s", err.Error())
 	}

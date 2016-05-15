@@ -25,10 +25,10 @@ func welcomeHandler(w http.ResponseWriter, r *http.Request) {
 
 func outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r,
-		outlook.Outlook.LoginURI+outlook.Outlook.Version+
-			"/authorize?client_id="+outlook.Outlook.ID+
-			"&redirect_uri="+outlook.Outlook.RedirectURI+
-			"&response_type=code&scope="+outlook.Outlook.Scope, 301)
+		outlook.Config.LoginURI+outlook.Config.Version+
+			"/authorize?client_id="+outlook.Config.ID+
+			"&redirect_uri="+outlook.Config.RedirectURI+
+			"&response_type=code&scope="+outlook.Config.Scope, 301)
 }
 
 func listCalendarsHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,13 +52,13 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 
 	req, _ := http.NewRequest("POST",
-		outlook.Outlook.LoginURI+outlook.Outlook.Version+
+		outlook.Config.LoginURI+outlook.Config.Version+
 			"/token",
 		strings.NewReader("grant_type=authorization_code"+
 			"&code="+code+
-			"&redirect_uri="+outlook.Outlook.RedirectURI+
-			"&client_id="+outlook.Outlook.ID+
-			"&client_secret="+outlook.Outlook.Secret))
+			"&redirect_uri="+outlook.Config.RedirectURI+
+			"&client_id="+outlook.Config.ID+
+			"&client_secret="+outlook.Config.Secret))
 	req.Header.Set("Content-Type",
 		"application/x-www-form-urlencoded")
 
@@ -67,13 +67,13 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
 	fmt.Printf("%s\n", contents)
-	err := json.Unmarshal(contents, &outlook.OutlookResp)
+	err := json.Unmarshal(contents, &outlook.Responses)
 	//TODO save info
 	if err != nil {
 		log.Errorf("Error unmarshaling outlook response: %s", err.Error())
 	}
 
-	tokens := strings.Split(outlook.OutlookResp.IDToken, ".")
+	tokens := strings.Split(outlook.Responses.IDToken, ".")
 
 	//According to Outlook example, this replaces must be done
 	encodedToken := strings.Replace(
@@ -99,16 +99,16 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: El email petará si no recibo eso en el JSON
 	if m["email"] != nil {
 		log.Infoln("Got email on outlook")
-		outlook.OutlookResp.AnchorMailbox = m["email"].(string)
-		outlook.OutlookResp.PreferredUsername = false
+		outlook.Responses.AnchorMailbox = m["email"].(string)
+		outlook.Responses.PreferredUsername = false
 	} else {
 		log.Infoln("Got preferred username on outlook")
-		outlook.OutlookResp.AnchorMailbox = m["preferred_username"].(string)
-		outlook.OutlookResp.PreferredUsername = true
+		outlook.Responses.AnchorMailbox = m["preferred_username"].(string)
+		outlook.Responses.PreferredUsername = true
 	}
 
 	//TODO remove this call!
-	outlook.TokenRefresh(outlook.OutlookResp.RefreshToken)
+	outlook.TokenRefresh(outlook.Responses.RefreshToken)
 
 	http.Redirect(w, r, "/", 301)
 
