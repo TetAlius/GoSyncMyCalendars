@@ -16,7 +16,7 @@ func getAllEvents(calendarID string) {
 		eventsFromCalendarURI(calendarID),
 		nil,
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
@@ -47,7 +47,7 @@ func createEvent(calendarID string, eventData []byte) {
 		eventsFromCalendarURI(calendarID),
 		bytes.NewBuffer(event),
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
@@ -65,7 +65,7 @@ func updateEvent(eventID string, eventData []byte) {
 		eventURI(eventID),
 		bytes.NewBuffer(update),
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 
@@ -78,7 +78,7 @@ func deleteEvent(eventID string) {
 		eventURI(eventID),
 		nil,
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
@@ -90,7 +90,7 @@ func getEvent(eventID string) {
 		eventURI(eventID),
 		nil,
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 

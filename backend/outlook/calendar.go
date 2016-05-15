@@ -16,7 +16,7 @@ func getAllCalendars() {
 		calendarsURI(""),
 		nil,
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	log.Debugf("%s\n", contents)
 
@@ -34,7 +34,7 @@ func getCalendar(calendarID string) {
 		calendarsURI(calendarID),
 		nil,
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
@@ -47,7 +47,7 @@ func createCalendar(calendarData []byte) {
 		calendarsURI(""),
 		bytes.NewBuffer(calendarData),
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 
@@ -61,7 +61,7 @@ func updateCalendar(calendarID string, calendarData []byte) {
 		calendarsURI(calendarID),
 		bytes.NewBuffer(calendarData),
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
@@ -84,7 +84,7 @@ func deleteCalendar(calendarID string) {
 		calendarsURI(calendarID),
 		nil,
 		authorizationRequest(),
-		OutlookResp.AnchorMailbox)
+		Responses.AnchorMailbox)
 
 	fmt.Printf("%s\n", contents)
 }
