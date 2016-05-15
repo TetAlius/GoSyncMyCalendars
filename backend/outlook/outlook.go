@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/TetAlius/logs/logger"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 //Outlook TODO: improve this calls

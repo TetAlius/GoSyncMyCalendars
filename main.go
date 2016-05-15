@@ -12,8 +12,6 @@ import (
 )
 
 func main() {
-	//Initialize logger
-	log.Init()
 	//Parse configuration of outlook and google
 	file, err := ioutil.ReadFile("./config.json")
 	if err != nil {
@@ -55,5 +53,5 @@ func main() {
 	http.HandleFunc("/SignInWithGoogle", googleSignInHandler)
 	http.HandleFunc("/google", googleTokenHandler)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatalln(http.ListenAndServe(":8080", nil))
 }

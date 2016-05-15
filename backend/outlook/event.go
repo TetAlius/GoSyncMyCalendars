@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
-	log "github.com/TetAlius/logs/logger"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 func getAllEvents() {

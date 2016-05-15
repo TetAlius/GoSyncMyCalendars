@@ -5,61 +5,85 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 )
+
+func returnShortFile(file string) (short string) {
+	short = file
+	for i := len(file) - 1; i > 0; i-- {
+		if file[i] == '/' {
+			short = file[i+1:]
+			break
+		}
+	}
+	return short
+}
+func prepareFileAndLine(v ...interface{}) (slice []interface{}) {
+	_, fn, line, _ := runtime.Caller(2)
+	fn = returnShortFile(fn)
+	s := []interface{}{fn, line}
+	slice = append(s, v...)
+	return
+}
 
 //Debugln calls Println
 func Debugln(v ...interface{}) {
-	debug.Println(v...)
+	s := prepareFileAndLine(v...)
+	debug.Printf("%s:%d: %s", s...)
 }
 
 //Debugf calls Printf
 func Debugf(format string, v ...interface{}) {
-	debug.Printf(format, v...)
+	s := prepareFileAndLine(v...)
+	debug.Printf("%s:%d: "+format, s...)
 }
 
 //Infoln calls Println
 func Infoln(v ...interface{}) {
-	info.Println(v...)
+	s := prepareFileAndLine(v...)
+	info.Printf("%s:%d: %s", s...)
 }
 
 //Infof calls Printf
 func Infof(format string, v ...interface{}) {
-	info.Printf(format, v...)
+	s := prepareFileAndLine(v...)
+	info.Printf("%s:%d: "+format, s...)
 }
 
 //Warningln calls Println
 func Warningln(v ...interface{}) {
-	warning.Println(v...)
+	s := prepareFileAndLine(v...)
+	warning.Printf("%s:%d: %s", s...)
 }
 
 //Warningf calls Printf
 func Warningf(format string, v ...interface{}) {
-	warning.Printf(format, v...)
+	s := prepareFileAndLine(v...)
+	warning.Printf("%s:%d: "+format, s...)
 }
 
 //Errorln calls Println
 func Errorln(v ...interface{}) {
-	er.Println(v...)
+	s := prepareFileAndLine(v...)
+	er.Printf("%s:%d: %s", s...)
 }
 
 //Errorf calls Printf
 func Errorf(format string, v ...interface{}) {
-	er.Printf(format, v...)
-}
-
-//Fatal calls Fatal
-func Fatal(v ...interface{}) {
-	fatal.Fatal(v...)
+	s := prepareFileAndLine(v...)
+	er.Printf("%s:%d: "+format, s...)
 }
 
 //Fatalln calls Fatalln
 func Fatalln(v ...interface{}) {
-	fatal.Fatalln(v...)
+	s := prepareFileAndLine(v...)
+	fatal.Fatalf("%s:%d: %s", s...)
 }
 
 //Fatalf calls Fatalf
 func Fatalf(format string, v ...interface{}) {
-	fatal.Fatalf(format, v...)
+	s := prepareFileAndLine(v...)
+	fatal.Fatalf("%s:%d: "+format, s...)
 }
 
 var (
@@ -73,14 +97,7 @@ var (
 // Init all the different levels of log to use on the program depending on the environment.
 // For a non-production environment, all logs will be on os.Stdout, as well as a file.
 // For a production environment, all logs will be stored on an external file.
-func Init() {
-	/*
-
-		traceHandle io.Writer,
-		infoHandle io.Writer,
-		warningHandle io.Writer,
-		errorHandle io.Writer
-	*/
+func init() {
 	//TODO: Stop execution if environment is not set
 	env := os.Getenv("ENVIRONMENT")
 	var debugHandle, infoHandle, warningHandle, errorHandle, fatalHandle io.Writer
@@ -111,7 +128,7 @@ func Init() {
 
 	debug = log.New(debugHandle,
 		"[DEBUG] ",
-		log.Ldate|log.Ltime|log.Lshortfile)
+		log.Ldate|log.Ltime)
 
 	info = log.New(infoHandle,
 		"[INFO] ",

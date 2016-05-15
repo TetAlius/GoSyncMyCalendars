@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	log "github.com/TetAlius/logs/logger"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 //NewRequest TODO Creates and executes the request for all petitions

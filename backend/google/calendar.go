@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
-	log "github.com/TetAlius/logs/logger"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 type calendarResp struct {
@@ -25,12 +25,12 @@ func getAllCalendars() {
 	contents, _ :=
 		backend.NewRequest(
 			"GET",
-			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Context+Requests.CalendarList,
+			calendarListURI(""),
 			nil,
-			Responses.TokenType+" "+Responses.AccessToken,
+			authorizationRequest(),
 			"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/primary This is the one used
@@ -40,12 +40,12 @@ func getPrimaryCalendar() {
 	contents, _ :=
 		backend.NewRequest(
 			"GET",
-			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/primary",
+			calendarsURI("primary"),
 			nil,
-			Responses.TokenType+" "+Responses.AccessToken,
+			authorizationRequest(),
 			"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 
 }
 
@@ -56,12 +56,12 @@ func getCalendar(calendarID string) {
 	contents, _ :=
 		backend.NewRequest(
 			"GET",
-			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Context+Requests.CalendarList+"/"+calendarID,
+			calendarListURI(calendarID),
 			nil,
-			Responses.TokenType+" "+Responses.AccessToken,
+			authorizationRequest(),
 			"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 
 }
 
@@ -76,12 +76,12 @@ func createCalendar(calendarData []byte) {
 	contents, _ :=
 		backend.NewRequest(
 			"POST",
-			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars,
+			calendarsURI(""),
 			bytes.NewBuffer(calendarData),
-			Responses.TokenType+" "+Responses.AccessToken,
+			authorizationRequest(),
 			"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 
 }
 
@@ -92,12 +92,12 @@ func updateCalendar(calendarID string, calendarData []byte) {
 	contents, _ :=
 		backend.NewRequest(
 			"PUT",
-			Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID,
+			calendarsURI(calendarID),
 			bytes.NewBuffer(calendarData),
-			Responses.TokenType+" "+Responses.AccessToken,
+			authorizationRequest(),
 			"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 
 }
 
@@ -107,10 +107,10 @@ func deleteCalendar(calendarID string) {
 
 	contents, _ := backend.NewRequest(
 		"DELETE",
-		Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID,
+		calendarsURI(calendarID),
 		nil,
-		Responses.TokenType+" "+Responses.AccessToken,
+		authorizationRequest(),
 		"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 }
