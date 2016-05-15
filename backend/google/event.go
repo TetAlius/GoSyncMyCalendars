@@ -2,11 +2,10 @@ package google
 
 import (
 	"bytes"
-	"fmt"
 	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
-	"github.com/TetAlius/logs/logger"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 type eventResource struct {
@@ -88,77 +87,75 @@ var eventUpdated = []byte(`{
   }
 }`)
 
-// GET https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events
+// GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
 func getAllEvents(calendarID string) {
 	log.Debugln("getAllEvents google")
 
 	contents, _ := backend.NewRequest("GET",
-		Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID+Requests.Events,
+		eventsURI(calendarID, ""),
 		nil,
-		Responses.TokenType+" "+Responses.AccessToken,
+		authorizationRequest(),
 		"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 
 }
 
-// POST https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events
+// POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
 func createEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent google")
 	contents, _ := backend.NewRequest("POST",
-		//Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID+Requests.Events,
-		"https://www.googleapis.com/calendar/v3/calendars/"+calendarID+"/events",
+		eventsURI(calendarID, ""),
 		bytes.NewBuffer(event),
-		Responses.TokenType+" "+Responses.AccessToken,
+		authorizationRequest(),
 		"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 
 }
 
-//PUT https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events/{eventId}
+//PUT https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
 func updateEvent(calendarID string, eventID string, eventData []byte) {
 	log.Debugln("updateEvent google")
 
 	//Meter en los header el etag
 
 	contents, _ := backend.NewRequest("PUT",
-		//Requests.RootURI+Requests.CalendarAPI+Requests.Version+Requests.Calendars+"/"+calendarID+Requests.Events,
-		"https://www.googleapis.com/calendar/v3/calendars/"+calendarID+"/events/"+eventID,
+		eventsURI(calendarID, eventID),
 		bytes.NewBuffer(eventUpdated),
-		Responses.TokenType+" "+Responses.AccessToken,
+		authorizationRequest(),
 		"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 
 }
 
-//DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events/{eventId}
+//DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
 func deleteEvent(calendarID string, eventID string) {
 	log.Debugln("deleteEvent google")
 
 	contents, _ := backend.NewRequest(
 		"DELETE",
-		"https://www.googleapis.com/calendar/v3/calendars/"+calendarID+"/events/"+eventID,
+		eventsURI(calendarID, eventID),
 		nil,
-		Responses.TokenType+" "+Responses.AccessToken,
+		authorizationRequest(),
 		"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 
 }
 
-// GET https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events/{eventId}
+// GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
 func getEvent(calendarID string, eventID string) {
 	log.Debugln("getEvent google")
 
 	contents, _ := backend.NewRequest(
 		"GET",
-		"https://www.googleapis.com/calendar/v3/calendars/"+calendarID+"/events/"+eventID,
+		eventsURI(calendarID, eventID),
 		nil,
-		Responses.TokenType+" "+Responses.AccessToken,
+		authorizationRequest(),
 		"")
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("Contents: %s", contents)
 
 }

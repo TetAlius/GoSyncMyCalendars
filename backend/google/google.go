@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	log "github.com/TetAlius/logs/logger"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 // Config TODO doc
@@ -102,7 +102,7 @@ func TokenRefresh(oldToken string) {
 		log.Errorf("Error creating new request: %s", err.Error())
 	}
 
-	log.Debugf("%s\n", req.Body)
+	//log.Debugf("%s\n", req.Body)
 
 	req.Header.Set("Content-Type",
 		"application/x-www-form-urlencoded")
@@ -112,10 +112,11 @@ func TokenRefresh(oldToken string) {
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
 
+	//fmt.Printf("%s\n", contents)
 	log.Debugf("%s\n", contents)
 
 	//TODO CRUD events
-	//getAllEvents("primary") //TESTED
+	getAllEvents("primary") //TESTED
 	//createEvent("primary", nil) //TESTED
 	//updateEvent("primary", "eventID", nil)//TESTED
 	//deleteEvent("primary", "eventID")//TESTED
@@ -127,4 +128,23 @@ func TokenRefresh(oldToken string) {
 	//updateCalendar("ID", []byte(`"Hola":"Adios"`)) //TESTED
 	//deleteCalendar("ID") //TESTED
 	//createCalendar([]byte(`"Hola":"Adios"`)) //TESTED
+}
+
+// https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
+func eventsURI(calendarID string, eventID string) (URI string) {
+	return Requests.RootURI + Requests.CalendarAPI + Requests.Version + Requests.Calendars + "/" + calendarID + Requests.Events + "/" + eventID
+}
+
+// https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarID}
+func calendarListURI(calendarID string) (URI string) {
+	return Requests.RootURI + Requests.CalendarAPI + Requests.Version + Requests.Context + Requests.CalendarList + "/" + calendarID
+}
+
+// https://www.googleapis.com/calendar/v3/calendars/{calendarID}
+func calendarsURI(calendarID string) (URI string) {
+	return Requests.RootURI + Requests.CalendarAPI + Requests.Version + Requests.Calendars
+}
+
+func authorizationRequest() (auth string) {
+	return Responses.TokenType + " " + Responses.AccessToken
 }
