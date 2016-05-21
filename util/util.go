@@ -1,0 +1,46 @@
+package util
+
+import (
+	"encoding/base64"
+	"encoding/json"
+	"reflect"
+	"strings"
+
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+)
+
+func MailFromToken(tokens []string) (email string, preferred bool, err error) {
+	encodedToken := strings.Replace(
+		strings.Replace(tokens[1], "-", "_", -1),
+		"+", "/", -1) + "=="
+	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
+	if err != nil {
+		log.Errorf("Error decoding google token: %s", err.Error())
+	}
+
+	var f interface{}
+	err = json.Unmarshal(decodedToken, &f)
+	if err != nil {
+		log.Errorf("Error unmarshaling google decoded token: %s", err.Error())
+	}
+
+	if reflect.TypeOf(f) != nil && reflect.TypeOf(f).Kind() == reflect.Map {
+		m := f.(map[string]interface{})
+
+		if m["email"] != nil {
+			log.Debugf("Got email %s", m["email"].(string))
+			email = m["email"].(string)
+			preferred = false
+		} else if m["preferred_username"] != nil {
+			log.Debugf("Got preferred email %s", m["preferred_username"].(string))
+			email = m["preferred_username"].(string)
+			preferred = true
+		} else {
+			customErrors.DecodedError{message: "Not email nor preferred_username on token"}
+		}
+	} else {
+		err = customErrors.DecodedError{message: "Decoded token is not a map"}
+	}
+	return
+}

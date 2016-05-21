@@ -8,7 +8,7 @@ import (
 	"runtime"
 )
 
-func returnShortFile(file string) (short string) {
+func ShortFile(file string) (short string) {
 	short = file
 	for i := len(file) - 1; i > 0; i-- {
 		if file[i] == '/' {
@@ -20,7 +20,7 @@ func returnShortFile(file string) (short string) {
 }
 func prepareFileAndLine(v ...interface{}) (slice []interface{}) {
 	_, fn, line, _ := runtime.Caller(2)
-	fn = returnShortFile(fn)
+	fn = ShortFile(fn)
 	s := []interface{}{fn, line}
 	slice = append(s, v...)
 	return
