@@ -78,12 +78,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	//According to Outlook example, this replaces must be done
 	encodedToken := strings.Replace(
 		strings.Replace(tokens[1], "-", "_", -1),
-		"+", "/", -1)
-
-	//TODO create evaluation of last two ==
-	//Go must have the == at the end of base64 decode
-	//in order to decode it without errors
-	encodedToken = encodedToken + "=="
+		"+", "/", -1) + "=="
 	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
 	if err != nil {
 		log.Errorf("Error decoding outlook token: %s", err.Error())
@@ -168,9 +163,7 @@ func googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	encodedToken := strings.Replace(
 		strings.Replace(tokens[1], "-", "_", -1),
-		"+", "/", -1)
-
-	encodedToken = encodedToken + "=="
+		"+", "/", -1) + "=="
 	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
 	if err != nil {
 		log.Errorf("Error decoding google token: %s", err.Error())
