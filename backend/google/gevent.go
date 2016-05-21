@@ -91,11 +91,15 @@ var eventUpdated = []byte(`{
 func getAllEvents(calendarID string) {
 	log.Debugln("getAllEvents google")
 
-	contents, _ := backend.NewRequest("GET",
+	contents, err := backend.NewRequest("GET",
 		eventsURI(calendarID, ""),
 		nil,
 		authorizationRequest(),
 		"")
+
+	if err != nil {
+		log.Errorf("Error getting all events of a calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 
@@ -104,11 +108,16 @@ func getAllEvents(calendarID string) {
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
 func createEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent google")
-	contents, _ := backend.NewRequest("POST",
+
+	contents, err := backend.NewRequest("POST",
 		eventsURI(calendarID, ""),
 		bytes.NewBuffer(event),
 		authorizationRequest(),
 		"")
+
+	if err != nil {
+		log.Errorf("Error creating event in a calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 
@@ -120,11 +129,15 @@ func updateEvent(calendarID string, eventID string, eventData []byte) {
 
 	//Meter en los header el etag
 
-	contents, _ := backend.NewRequest("PUT",
+	contents, err := backend.NewRequest("PUT",
 		eventsURI(calendarID, eventID),
 		bytes.NewBuffer(eventUpdated),
 		authorizationRequest(),
 		"")
+
+	if err != nil {
+		log.Errorf("Error updating event of a calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 
@@ -134,12 +147,16 @@ func updateEvent(calendarID string, eventID string, eventData []byte) {
 func deleteEvent(calendarID string, eventID string) {
 	log.Debugln("deleteEvent google")
 
-	contents, _ := backend.NewRequest(
+	contents, err := backend.NewRequest(
 		"DELETE",
 		eventsURI(calendarID, eventID),
 		nil,
 		authorizationRequest(),
 		"")
+
+	if err != nil {
+		log.Errorf("Error deleting event of a calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 
@@ -149,12 +166,16 @@ func deleteEvent(calendarID string, eventID string) {
 func getEvent(calendarID string, eventID string) {
 	log.Debugln("getEvent google")
 
-	contents, _ := backend.NewRequest(
+	contents, err := backend.NewRequest(
 		"GET",
 		eventsURI(calendarID, eventID),
 		nil,
 		authorizationRequest(),
 		"")
+
+	if err != nil {
+		log.Errorf("Error getting an event of a calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 

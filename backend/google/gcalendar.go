@@ -22,13 +22,16 @@ type calendarResp struct {
 func getAllCalendars() {
 	log.Debugln("getAllCalendars google")
 
-	contents, _ :=
+	contents, err :=
 		backend.NewRequest(
 			"GET",
 			calendarListURI(""),
 			nil,
 			authorizationRequest(),
 			"")
+	if err != nil {
+		log.Errorf("Error getting all calendars for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 }
@@ -37,13 +40,17 @@ func getAllCalendars() {
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary
 func getPrimaryCalendar() {
 	log.Debugln("getPrimaryCalendar google")
-	contents, _ :=
+	contents, err :=
 		backend.NewRequest(
 			"GET",
 			calendarsURI("primary"),
 			nil,
 			authorizationRequest(),
 			"")
+
+	if err != nil {
+		log.Errorf("Error getting primary calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 
@@ -53,13 +60,17 @@ func getPrimaryCalendar() {
 func getCalendar(calendarID string) {
 	log.Debugln("getCalendar google")
 
-	contents, _ :=
+	contents, err :=
 		backend.NewRequest(
 			"GET",
 			calendarListURI(calendarID),
 			nil,
 			authorizationRequest(),
 			"")
+
+	if err != nil {
+		log.Errorf("Error getting a calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 
@@ -73,13 +84,17 @@ var calendarUpdate = []byte(`{"summary":"Updated CalendarGO"}`)
 func createCalendar(calendarData []byte) {
 	log.Debugln("createCalendar google")
 
-	contents, _ :=
+	contents, err :=
 		backend.NewRequest(
 			"POST",
 			calendarsURI(""),
 			bytes.NewBuffer(calendarData),
 			authorizationRequest(),
 			"")
+
+	if err != nil {
+		log.Errorf("Error creating a calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 
@@ -89,13 +104,17 @@ func createCalendar(calendarData []byte) {
 func updateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar google")
 
-	contents, _ :=
+	contents, err :=
 		backend.NewRequest(
 			"PUT",
 			calendarsURI(calendarID),
 			bytes.NewBuffer(calendarData),
 			authorizationRequest(),
 			"")
+
+	if err != nil {
+		log.Errorf("Error updateing a calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 
@@ -105,12 +124,16 @@ func updateCalendar(calendarID string, calendarData []byte) {
 func deleteCalendar(calendarID string) {
 	fmt.Println("Delete calendar")
 
-	contents, _ := backend.NewRequest(
+	contents, err := backend.NewRequest(
 		"DELETE",
 		calendarsURI(calendarID),
 		nil,
 		authorizationRequest(),
 		"")
+
+	if err != nil {
+		log.Errorf("Error deleting a calendar for email %s. %s", Responses.Email, err.Error())
+	}
 
 	log.Debugf("Contents: %s", contents)
 }
