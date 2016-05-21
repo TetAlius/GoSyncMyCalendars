@@ -23,3 +23,11 @@ type RowsError struct {
 func (err RowsError) Error() string {
 	return fmt.Sprintf("Expected: %d Received: %d. %s", err.Expected, err.Received, err.Message)
 }
+
+type DecodedError struct {
+	message string
+}
+
+func (err DecodedError) Error() string {
+	return fmt.Sprintln(message)
+}

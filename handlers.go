@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +11,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 type calendarInfo struct {
@@ -73,33 +73,12 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("Error unmarshaling outlook response: %s", err.Error())
 	}
 
-	tokens := strings.Split(outlook.Responses.IDToken, ".")
-
-	//According to Outlook example, this replaces must be done
-	encodedToken := strings.Replace(
-		strings.Replace(tokens[1], "-", "_", -1),
-		"+", "/", -1) + "=="
-	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
+	email, preferred, err := util.MailFromToken(strings.Split(google.Responses.TokenID, "."))
 	if err != nil {
-		log.Errorf("Error decoding outlook token: %s", err.Error())
-	}
-
-	var f interface{}
-	err = json.Unmarshal(decodedToken, &f)
-	if err != nil {
-		log.Errorf("Error unmarshaling outlook decoded token: %s", err.Error())
-	}
-	m := f.(map[string]interface{})
-
-	// TODO: El email petará si no recibo eso en el JSON
-	if m["email"] != nil {
-		log.Infoln("Got email on outlook")
-		outlook.Responses.AnchorMailbox = m["email"].(string)
-		outlook.Responses.PreferredUsername = false
+		log.Errorf("Error retrieving outlook mail: %s", err.Error())
 	} else {
-		log.Infoln("Got preferred username on outlook")
-		outlook.Responses.AnchorMailbox = m["preferred_username"].(string)
-		outlook.Responses.PreferredUsername = true
+		outlook.Responses.AnchorMailbox = email
+		outlook.Responses.PreferredUsername = preferred
 	}
 
 	//TODO remove this call!
@@ -159,28 +138,11 @@ func googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Debugf("%s", contents)
 
-	tokens := strings.Split(google.Responses.TokenID, ".")
-
-	encodedToken := strings.Replace(
-		strings.Replace(tokens[1], "-", "_", -1),
-		"+", "/", -1) + "=="
-	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
+	email, _, err := util.MailFromToken(strings.Split(google.Responses.TokenID, "."))
 	if err != nil {
-		log.Errorf("Error decoding google token: %s", err.Error())
-	}
-
-	var f interface{}
-	err = json.Unmarshal(decodedToken, &f)
-	if err != nil {
-		log.Errorf("Error unmarshaling google decoded token: %s", err.Error())
-	}
-	m := f.(map[string]interface{})
-
-	if m["email"] != nil {
-		log.Debugf("Got email %s on google", m["email"].(string))
-		google.Responses.Email = m["email"].(string)
+		log.Errorf("Error retrieving google mail: %s", err.Error())
 	} else {
-		log.Errorln("No email was given on google response")
+		google.Responses.Email = email
 	}
 
 	//TODO remove tests
