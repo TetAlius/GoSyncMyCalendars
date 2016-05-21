@@ -12,11 +12,16 @@ import (
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
 func getAllEvents(calendarID string) {
 	log.Debugln("getAllEvents outlook")
-	contents, _ := backend.NewRequest("GET",
+
+	contents, err := backend.NewRequest("GET",
 		eventsFromCalendarURI(calendarID),
 		nil,
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error getting all events of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	fmt.Printf("%s\n", contents)
 }
@@ -43,11 +48,15 @@ var event = []byte(`{
 // POST https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
 func createEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent outlook")
-	contents, _ := backend.NewRequest("POST",
+	contents, err := backend.NewRequest("POST",
 		eventsFromCalendarURI(calendarID),
 		bytes.NewBuffer(event),
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error creating event in a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	fmt.Printf("%s\n", contents)
 }
@@ -61,11 +70,15 @@ var update = []byte(`{
 // PATCH https://outlook.office.com/api/v2.0/me/events/{eventID}
 func updateEvent(eventID string, eventData []byte) {
 	log.Debugln("updateEvent outlook")
-	contents, _ := backend.NewRequest("PATCH",
+	contents, err := backend.NewRequest("PATCH",
 		eventURI(eventID),
 		bytes.NewBuffer(update),
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error updating event of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	fmt.Printf("%s\n", contents)
 
@@ -74,11 +87,15 @@ func updateEvent(eventID string, eventData []byte) {
 // DELETE https://outlook.office.com/api/v2.0/me/events/{eventID}
 func deleteEvent(eventID string) {
 	log.Debugln("deleteEvent outlook")
-	contents, _ := backend.NewRequest("DELETE",
+	contents, err := backend.NewRequest("DELETE",
 		eventURI(eventID),
 		nil,
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error deleting event of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	fmt.Printf("%s\n", contents)
 }
@@ -86,11 +103,15 @@ func deleteEvent(eventID string) {
 // GET https://outlook.office.com/api/v2.0/me/events/{eventID}
 func getEvent(eventID string) {
 	log.Debugln("getEvent outlook")
-	contents, _ := backend.NewRequest("GET",
+	contents, err := backend.NewRequest("GET",
 		eventURI(eventID),
 		nil,
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error getting an event of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	fmt.Printf("%s\n", contents)
 

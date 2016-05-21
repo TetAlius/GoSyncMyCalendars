@@ -12,11 +12,15 @@ import (
 func getAllCalendars() {
 	log.Debugln("getAllCalendars outlook")
 
-	contents, _ := backend.NewRequest("GET",
+	contents, err := backend.NewRequest("GET",
 		calendarsURI(""),
 		nil,
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error getting all calendars for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	log.Debugf("%s\n", contents)
 
@@ -30,11 +34,15 @@ func getPrimaryCalendar() {
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 func getCalendar(calendarID string) {
 	log.Debugln("getCalendar outlook")
-	contents, _ := backend.NewRequest("GET",
+	contents, err := backend.NewRequest("GET",
 		calendarsURI(calendarID),
 		nil,
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error getting a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	fmt.Printf("%s\n", contents)
 }
@@ -43,11 +51,15 @@ func getCalendar(calendarID string) {
 func createCalendar(calendarData []byte) {
 	log.Debugln("createCalendars outlook")
 
-	contents, _ := backend.NewRequest("POST",
+	contents, err := backend.NewRequest("POST",
 		calendarsURI(""),
 		bytes.NewBuffer(calendarData),
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error creating a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	fmt.Printf("%s\n", contents)
 
@@ -57,11 +69,15 @@ func createCalendar(calendarData []byte) {
 func updateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar outlook")
 
-	contents, _ := backend.NewRequest("PATCH",
+	contents, err := backend.NewRequest("PATCH",
 		calendarsURI(calendarID),
 		bytes.NewBuffer(calendarData),
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error updateing a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	fmt.Printf("%s\n", contents)
 }
@@ -80,11 +96,15 @@ func updateCalendar(calendarID string, calendarData []byte) {
 func deleteCalendar(calendarID string) {
 	log.Debugln("deleteCalendar outlook")
 
-	contents, _ := backend.NewRequest("DELETE",
+	contents, err := backend.NewRequest("DELETE",
 		calendarsURI(calendarID),
 		nil,
 		authorizationRequest(),
 		Responses.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error deleting a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+	}
 
 	fmt.Printf("%s\n", contents)
 }
