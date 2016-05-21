@@ -171,12 +171,24 @@ func googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 		"+", "/", -1)
 
 	encodedToken = encodedToken + "=="
-	_, err = base64.StdEncoding.DecodeString(encodedToken)
+	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
 	if err != nil {
 		log.Errorf("Error decoding google token: %s", err.Error())
 	}
 
-	//fmt.Printf("%s\n", decoded)
+	var f interface{}
+	err = json.Unmarshal(decodedToken, &f)
+	if err != nil {
+		log.Errorf("Error unmarshaling google decoded token: %s", err.Error())
+	}
+	m := f.(map[string]interface{})
+
+	if m["email"] != nil {
+		log.Debugf("Got email %s on google", m["email"].(string))
+		google.Responses.Email = m["email"].(string)
+	} else {
+		log.Errorln("No email was given on google response")
+	}
 
 	//TODO remove tests
 	google.TokenRefresh(google.Responses.RefreshToken)

@@ -46,6 +46,7 @@ var Responses struct {
 	ExpiresIn    int    `json:"expires_in"`
 	RefreshToken string `json:"refresh_token"`
 	TokenID      string `json:"id_token"`
+	Email        string
 }
 
 //GenerateRandomState TODO doc
