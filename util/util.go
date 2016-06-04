@@ -37,10 +37,10 @@ func MailFromToken(tokens []string) (email string, preferred bool, err error) {
 			email = m["preferred_username"].(string)
 			preferred = true
 		} else {
-			customErrors.DecodedError{message: "Not email nor preferred_username on token"}
+			err = customErrors.DecodedError{Message: "Not email nor preferred_username on token"}
 		}
 	} else {
-		err = customErrors.DecodedError{message: "Decoded token is not a map"}
+		err = customErrors.DecodedError{Message: "Decoded token is not a map"}
 	}
 	return
 }

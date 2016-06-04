@@ -113,9 +113,15 @@ func TokenRefresh(oldToken string) {
 	req.Header.Set("Content-Type",
 		"application/x-www-form-urlencoded")
 
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error doing outlook request: %s", err.Error())
+	}
 	defer resp.Body.Close()
-	contents, _ := ioutil.ReadAll(resp.Body)
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading outlook response: %s", err.Error())
+	}
 	err = json.Unmarshal(contents, &Responses)
 	if err != nil {
 		log.Errorf("Error unmarshaling outlook response: %s", err.Error())

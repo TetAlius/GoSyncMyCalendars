@@ -24,10 +24,11 @@ func (err RowsError) Error() string {
 	return fmt.Sprintf("Expected: %d Received: %d. %s", err.Expected, err.Received, err.Message)
 }
 
+// DecodedError TODO
 type DecodedError struct {
-	message string
+	Message string
 }
 
 func (err DecodedError) Error() string {
-	return fmt.Sprintln(message)
+	return fmt.Sprintln(err.Message)
 }
