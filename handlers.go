@@ -51,7 +51,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	client := http.Client{}
 	code := r.URL.Query().Get("code")
 
-	req, _ := http.NewRequest("POST",
+	req, err := http.NewRequest("POST",
 		outlook.Config.LoginURI+outlook.Config.Version+
 			"/token",
 		strings.NewReader("grant_type=authorization_code"+
@@ -62,12 +62,21 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	req.Header.Set("Content-Type",
 		"application/x-www-form-urlencoded")
 
-	resp, _ := client.Do(req)
+	if err != nil {
+		log.Errorf("Error creating new outlook request: %s", err.Error())
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error doing outlook request: %s", err.Error())
+	}
 
 	defer resp.Body.Close()
-	contents, _ := ioutil.ReadAll(resp.Body)
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body from outlook request: %s", err.Error())
+	}
 	fmt.Printf("%s\n", contents)
-	err := json.Unmarshal(contents, &outlook.Responses)
+	err = json.Unmarshal(contents, &outlook.Responses)
 	//TODO save info
 	if err != nil {
 		log.Errorf("Error unmarshaling outlook response: %s", err.Error())
@@ -90,6 +99,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 func googleSignInHandler(w http.ResponseWriter, r *http.Request) {
 	google.Requests.State = google.GenerateRandomState()
 	log.Debugf("Random google state: %s", google.Requests.State)
+	//TODO
 	_ = google.GetDiscoveryDocument()
 
 	//	fmt.Printf("%s\n", google.Requests.State)
@@ -115,7 +125,7 @@ func googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	code := query.Get("code")
 
 	client := http.Client{}
-	req, _ := http.NewRequest("POST",
+	req, err := http.NewRequest("POST",
 		google.Config.TokenEndpoint,
 		strings.NewReader("code="+code+
 			"&client_id="+google.Config.ID+
@@ -123,21 +133,32 @@ func googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 			"&redirect_uri="+google.Config.RedirectURI+
 			"&grant_type=authorization_code"))
 
+	if err != nil {
+		log.Errorf("Error creating new google request: %s", err.Error())
+	}
+
 	req.Header.Set("Content-Type",
 		"application/x-www-form-urlencoded")
 
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error doing google request: %s", err.Error())
+	}
 
 	defer resp.Body.Close()
-	contents, _ := ioutil.ReadAll(resp.Body)
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body from google request: %s", err.Error())
+	}
 
-	err := json.Unmarshal(contents, &google.Responses)
+	err = json.Unmarshal(contents, &google.Responses)
 	if err != nil {
 		log.Errorf("Error unmarshaling google responses: %s", err.Error())
 	}
 
 	log.Debugf("%s", contents)
 
+	// preferred is ignored on google
 	email, _, err := util.MailFromToken(strings.Split(google.Responses.TokenID, "."))
 	if err != nil {
 		log.Errorf("Error retrieving google mail: %s", err.Error())

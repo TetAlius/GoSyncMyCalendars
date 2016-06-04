@@ -108,10 +108,16 @@ func TokenRefresh(oldToken string) {
 	req.Header.Set("Content-Type",
 		"application/x-www-form-urlencoded")
 
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error doing google request: %s", err.Error())
+	}
 
 	defer resp.Body.Close()
-	contents, _ := ioutil.ReadAll(resp.Body)
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body from google request: %s", err.Error())
+	}
 
 	//fmt.Printf("%s\n", contents)
 	log.Debugf("%s\n", contents)
