@@ -16,15 +16,12 @@ var Config struct {
 }
 
 type googleConfig struct {
-	ID                string `json:"client_id"`
-	Secret            string `json:"client_secret"`
-	RedirectURI       string `json:"redirect_uri"`
-	DiscoveryDocument string `json:"discovery_document"`
-	Endpoint          string `json:"authorization_endpoint"`
-	TokenEndpoint     string `json:"token_endpoint"`
-	LoginURI          string `json:"login_uri"`
-	Version           string `json:"version"`
-	Scope             string `json:"scope"`
+	ID            string `json:"client_id"`
+	Secret        string `json:"client_secret"`
+	RedirectURI   string `json:"redirect_uri"`
+	Endpoint      string `json:"authorization_endpoint"`
+	TokenEndpoint string `json:"token_endpoint"`
+	Scope         string `json:"scope"`
 }
 
 // Requests TODO doc
@@ -63,29 +60,6 @@ func GenerateRandomState() (rs string) {
 	rs = base64.URLEncoding.EncodeToString(rb)
 
 	return
-}
-
-// GetDiscoveryDocument TODO doc
-func GetDiscoveryDocument() (document []byte) {
-	client := http.Client{}
-	req, err := http.NewRequest("GET", Config.DiscoveryDocument, nil)
-	if err != nil {
-		log.Errorf("Error creating new request: %s", err.Error())
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Errorf("Error doing request: %s", err.Error())
-	}
-
-	defer resp.Body.Close()
-	//TODO parse errors and content
-	contents, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("Error reading response: %s", err.Error())
-	}
-	//fmt.Printf("%s\n", contents)
-
-	return contents
 }
 
 //TokenRefresh TODO doc
