@@ -99,10 +99,6 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 func googleSignInHandler(w http.ResponseWriter, r *http.Request) {
 	google.Requests.State = google.GenerateRandomState()
 	log.Debugf("Random google state: %s", google.Requests.State)
-	//TODO
-	_ = google.GetDiscoveryDocument()
-
-	//	fmt.Printf("%s\n", google.Requests.State)
 
 	http.Redirect(w, r, google.Config.Endpoint+
 		"?client_id="+google.Config.ID+
