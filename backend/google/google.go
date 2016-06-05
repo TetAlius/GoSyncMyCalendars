@@ -93,7 +93,6 @@ func TokenRefresh(oldToken string) {
 		log.Errorf("Error reading response body from google request: %s", err.Error())
 	}
 
-	//fmt.Printf("%s\n", contents)
 	log.Debugf("%s\n", contents)
 
 	//TODO CRUD events

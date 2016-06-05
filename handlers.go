@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -75,7 +74,7 @@ func outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Error reading response body from outlook request: %s", err.Error())
 	}
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 	err = json.Unmarshal(contents, &outlook.Responses)
 	//TODO save info
 	if err != nil {

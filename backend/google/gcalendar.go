@@ -2,7 +2,6 @@ package google
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -122,7 +121,7 @@ func updateCalendar(calendarID string, calendarData []byte) {
 
 // DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarId}
 func deleteCalendar(calendarID string) {
-	fmt.Println("Delete calendar")
+	log.Debugln("Delete calendar")
 
 	contents, err := backend.DoRequest(
 		"DELETE",
