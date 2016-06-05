@@ -2,7 +2,6 @@ package outlook
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -23,7 +22,7 @@ func getAllEvents(calendarID string) {
 		log.Errorf("Error getting all events of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
 	}
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 }
 
 //TODO: delete this
@@ -58,7 +57,7 @@ func createEvent(calendarID string, eventData []byte) {
 		log.Errorf("Error creating event in a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
 	}
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 }
 
 var update = []byte(`{
@@ -80,7 +79,7 @@ func updateEvent(eventID string, eventData []byte) {
 		log.Errorf("Error updating event of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
 	}
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 
 }
 
@@ -97,7 +96,7 @@ func deleteEvent(eventID string) {
 		log.Errorf("Error deleting event of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
 	}
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 }
 
 // GET https://outlook.office.com/api/v2.0/me/events/{eventID}
@@ -113,6 +112,6 @@ func getEvent(eventID string) {
 		log.Errorf("Error getting an event of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
 	}
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 
 }

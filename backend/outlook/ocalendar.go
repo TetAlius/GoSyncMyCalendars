@@ -2,7 +2,6 @@ package outlook
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -44,7 +43,7 @@ func getCalendar(calendarID string) {
 		log.Errorf("Error getting a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
 	}
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 }
 
 // POST https://outlook.office.com/api/v2.0/me/calendars
@@ -61,7 +60,7 @@ func createCalendar(calendarData []byte) {
 		log.Errorf("Error creating a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
 	}
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 
 }
 
@@ -79,7 +78,7 @@ func updateCalendar(calendarID string, calendarData []byte) {
 		log.Errorf("Error updateing a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
 	}
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 }
 
 //TODO check if calendar is primary or birthdays if it is, the following error is send
@@ -106,5 +105,5 @@ func deleteCalendar(calendarID string) {
 		log.Errorf("Error deleting a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
 	}
 
-	fmt.Printf("%s\n", contents)
+	log.Debugf("%s\n", contents)
 }
