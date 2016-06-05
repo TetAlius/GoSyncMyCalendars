@@ -23,7 +23,7 @@ func getAllCalendars() {
 	log.Debugln("getAllCalendars google")
 
 	contents, err :=
-		backend.NewRequest(
+		backend.DoRequest(
 			"GET",
 			calendarListURI(""),
 			nil,
@@ -41,7 +41,7 @@ func getAllCalendars() {
 func getPrimaryCalendar() {
 	log.Debugln("getPrimaryCalendar google")
 	contents, err :=
-		backend.NewRequest(
+		backend.DoRequest(
 			"GET",
 			calendarsURI("primary"),
 			nil,
@@ -61,7 +61,7 @@ func getCalendar(calendarID string) {
 	log.Debugln("getCalendar google")
 
 	contents, err :=
-		backend.NewRequest(
+		backend.DoRequest(
 			"GET",
 			calendarListURI(calendarID),
 			nil,
@@ -85,7 +85,7 @@ func createCalendar(calendarData []byte) {
 	log.Debugln("createCalendar google")
 
 	contents, err :=
-		backend.NewRequest(
+		backend.DoRequest(
 			"POST",
 			calendarsURI(""),
 			bytes.NewBuffer(calendarData),
@@ -105,7 +105,7 @@ func updateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar google")
 
 	contents, err :=
-		backend.NewRequest(
+		backend.DoRequest(
 			"PUT",
 			calendarsURI(calendarID),
 			bytes.NewBuffer(calendarData),
@@ -124,7 +124,7 @@ func updateCalendar(calendarID string, calendarData []byte) {
 func deleteCalendar(calendarID string) {
 	fmt.Println("Delete calendar")
 
-	contents, err := backend.NewRequest(
+	contents, err := backend.DoRequest(
 		"DELETE",
 		calendarsURI(calendarID),
 		nil,

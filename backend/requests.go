@@ -8,9 +8,9 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
-//NewRequest TODO Creates and executes the request for all petitions
+//DoRequest TODO Creates and executes the request for all petitions
 //and returns the JSON so that it can be parsed into the correct struct
-func NewRequest(method string, url string, body io.Reader, authorization string, anchorMailbox string) (contents []byte, err error) {
+func DoRequest(method string, url string, body io.Reader, authorization string, anchorMailbox string) (contents []byte, err error) {
 	client := http.Client{}
 
 	req, err := http.NewRequest(method, url, body)
