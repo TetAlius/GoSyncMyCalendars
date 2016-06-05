@@ -13,7 +13,7 @@ import (
 func getAllEvents(calendarID string) {
 	log.Debugln("getAllEvents outlook")
 
-	contents, err := backend.NewRequest("GET",
+	contents, err := backend.DoRequest("GET",
 		eventsFromCalendarURI(calendarID),
 		nil,
 		authorizationRequest(),
@@ -48,7 +48,7 @@ var event = []byte(`{
 // POST https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
 func createEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent outlook")
-	contents, err := backend.NewRequest("POST",
+	contents, err := backend.DoRequest("POST",
 		eventsFromCalendarURI(calendarID),
 		bytes.NewBuffer(event),
 		authorizationRequest(),
@@ -70,7 +70,7 @@ var update = []byte(`{
 // PATCH https://outlook.office.com/api/v2.0/me/events/{eventID}
 func updateEvent(eventID string, eventData []byte) {
 	log.Debugln("updateEvent outlook")
-	contents, err := backend.NewRequest("PATCH",
+	contents, err := backend.DoRequest("PATCH",
 		eventURI(eventID),
 		bytes.NewBuffer(update),
 		authorizationRequest(),
@@ -87,7 +87,7 @@ func updateEvent(eventID string, eventData []byte) {
 // DELETE https://outlook.office.com/api/v2.0/me/events/{eventID}
 func deleteEvent(eventID string) {
 	log.Debugln("deleteEvent outlook")
-	contents, err := backend.NewRequest("DELETE",
+	contents, err := backend.DoRequest("DELETE",
 		eventURI(eventID),
 		nil,
 		authorizationRequest(),
@@ -103,7 +103,7 @@ func deleteEvent(eventID string) {
 // GET https://outlook.office.com/api/v2.0/me/events/{eventID}
 func getEvent(eventID string) {
 	log.Debugln("getEvent outlook")
-	contents, err := backend.NewRequest("GET",
+	contents, err := backend.DoRequest("GET",
 		eventURI(eventID),
 		nil,
 		authorizationRequest(),

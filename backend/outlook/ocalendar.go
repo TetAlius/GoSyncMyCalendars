@@ -12,7 +12,7 @@ import (
 func getAllCalendars() {
 	log.Debugln("getAllCalendars outlook")
 
-	contents, err := backend.NewRequest("GET",
+	contents, err := backend.DoRequest("GET",
 		calendarsURI(""),
 		nil,
 		authorizationRequest(),
@@ -34,7 +34,7 @@ func getPrimaryCalendar() {
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 func getCalendar(calendarID string) {
 	log.Debugln("getCalendar outlook")
-	contents, err := backend.NewRequest("GET",
+	contents, err := backend.DoRequest("GET",
 		calendarsURI(calendarID),
 		nil,
 		authorizationRequest(),
@@ -51,7 +51,7 @@ func getCalendar(calendarID string) {
 func createCalendar(calendarData []byte) {
 	log.Debugln("createCalendars outlook")
 
-	contents, err := backend.NewRequest("POST",
+	contents, err := backend.DoRequest("POST",
 		calendarsURI(""),
 		bytes.NewBuffer(calendarData),
 		authorizationRequest(),
@@ -69,7 +69,7 @@ func createCalendar(calendarData []byte) {
 func updateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar outlook")
 
-	contents, err := backend.NewRequest("PATCH",
+	contents, err := backend.DoRequest("PATCH",
 		calendarsURI(calendarID),
 		bytes.NewBuffer(calendarData),
 		authorizationRequest(),
@@ -96,7 +96,7 @@ func updateCalendar(calendarID string, calendarData []byte) {
 func deleteCalendar(calendarID string) {
 	log.Debugln("deleteCalendar outlook")
 
-	contents, err := backend.NewRequest("DELETE",
+	contents, err := backend.DoRequest("DELETE",
 		calendarsURI(calendarID),
 		nil,
 		authorizationRequest(),

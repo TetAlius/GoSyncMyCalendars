@@ -91,7 +91,7 @@ var eventUpdated = []byte(`{
 func getAllEvents(calendarID string) {
 	log.Debugln("getAllEvents google")
 
-	contents, err := backend.NewRequest("GET",
+	contents, err := backend.DoRequest("GET",
 		eventsURI(calendarID, ""),
 		nil,
 		authorizationRequest(),
@@ -109,7 +109,7 @@ func getAllEvents(calendarID string) {
 func createEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent google")
 
-	contents, err := backend.NewRequest("POST",
+	contents, err := backend.DoRequest("POST",
 		eventsURI(calendarID, ""),
 		bytes.NewBuffer(event),
 		authorizationRequest(),
@@ -129,7 +129,7 @@ func updateEvent(calendarID string, eventID string, eventData []byte) {
 
 	//Meter en los header el etag
 
-	contents, err := backend.NewRequest("PUT",
+	contents, err := backend.DoRequest("PUT",
 		eventsURI(calendarID, eventID),
 		bytes.NewBuffer(eventUpdated),
 		authorizationRequest(),
@@ -147,7 +147,7 @@ func updateEvent(calendarID string, eventID string, eventData []byte) {
 func deleteEvent(calendarID string, eventID string) {
 	log.Debugln("deleteEvent google")
 
-	contents, err := backend.NewRequest(
+	contents, err := backend.DoRequest(
 		"DELETE",
 		eventsURI(calendarID, eventID),
 		nil,
@@ -166,7 +166,7 @@ func deleteEvent(calendarID string, eventID string) {
 func getEvent(calendarID string, eventID string) {
 	log.Debugln("getEvent google")
 
-	contents, err := backend.NewRequest(
+	contents, err := backend.DoRequest(
 		"GET",
 		eventsURI(calendarID, eventID),
 		nil,
