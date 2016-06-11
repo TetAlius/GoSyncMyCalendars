@@ -1,0 +1,61 @@
+<form method="post" onsubmit="return checkForm(this);">
+  <label id="name-label" for="name">Nombre: </label>
+  <input id="name" type="text" name="name"/>
+
+  <label id="surname-label" for="surname">Apellidos: </label>
+  <input id="surname" type="text" name="surname"/>
+
+  <label id="email-label" for="email">Correo: </label>
+  <input id="email" type="email" name="email"/>
+
+  <label id="pswd1-label" for="pswd1">Contraseña: </label>
+  <input id="pswd1" type="password" name="pswd1" required/>
+  <label id="pswd2-label" for="pswd2">Contraseña: </label>
+  <input id="pswd2" type="password" name="pswd2" required/>
+
+  <input type="submit" value="Registrar">
+</form>
+
+<script type="text/javascript">
+
+  function checkForm(form)
+  {
+    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    if(form.name.value == "") {
+      alert("Error: Name cannot be blank!");
+      form.name.focus();
+      return false;
+    }
+    if(form.surname.value == "") {
+      alert("Error: Surname cannot be blank!");
+      form.surname.focus();
+      return false;
+    }
+    if(form.email.value == "") {
+      alert("Error: Email cannot be blank!");
+      form.email.focus();
+      return false;
+    }
+    else if(!re.test(form.email.value)){
+      alert("Error: Email is not valid!");
+      form.email.focus();
+      return false;
+    }
+    if(form.pswd1.value==""){
+      alert("Error: Password cannot be blank!");
+      form.pswd1.focus()
+      return false;
+    }
+    else if(form.pswd2.value==""){
+      alert("Error: Password cannot be blank!");
+      form.pswd2.focus()
+      return false;
+    }
+    else if(form.pswd2.value != form.pswd1.value){
+      alert("Error: Please check that you've entered and confirmed your password!");
+      form.pswd1.focus()
+      return false;
+    }
+    return true;
+  }
+</script>
