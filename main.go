@@ -7,11 +7,15 @@ import (
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
+	"github.com/TetAlius/GoSyncMyCalendars/backend/user"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	_ "github.com/jackc/pgx/stdlib"
 )
 
 func main() {
+	user.Save("Marta", "Jiménez", "tete", "password")
+
+	log.Fatalln("Meh")
 	//Parse configuration of outlook and google
 	file, err := ioutil.ReadFile("./config.json")
 	if err != nil {
@@ -52,6 +56,7 @@ func main() {
 	http.HandleFunc("/calendars", listCalendarsHandler)
 	http.HandleFunc("/SignInWithGoogle", googleSignInHandler)
 	http.HandleFunc("/google", googleTokenHandler)
+	http.HandleFunc("/signUp", singUpHandler)
 
 	log.Fatalln(http.ListenAndServe(":8080", nil))
 }

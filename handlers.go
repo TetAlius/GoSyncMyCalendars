@@ -9,6 +9,7 @@ import (
 
 	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
+	"github.com/TetAlius/GoSyncMyCalendars/backend/user"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -166,5 +167,21 @@ func googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	//This is so that users cannot read the response
 	http.Redirect(w, r, "/", 301)
+
+}
+
+func singUpHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debugln(r.Method)
+	switch r.Method {
+	case "GET":
+		log.Debugln("Serving form to sign up")
+		http.ServeFile(w, r, "./frontend/sign-up.html")
+		break
+	case "POST":
+		log.Debugln("Storing user info")
+		user.CheckInfo(r.FormValue("name"), r.FormValue("surname"), r.FormValue("email"), r.FormValue("pswd1"), r.FormValue("pswd2"))
+		log.Debugf("Name: %s, Surname: %s, Mail: %s, Password: %s", r.FormValue("name"), r.FormValue("surname"), r.FormValue("email"), r.FormValue("password"))
+		http.ServeFile(w, r, "./frontend/welcome.html")
+	}
 
 }
