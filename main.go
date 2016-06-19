@@ -46,6 +46,18 @@ func main() {
 		log.Fatalf("Error unmarshalling google requests: %s", err.Error())
 	}
 
+	cssFileServer := http.StripPrefix("/css/", http.FileServer(http.Dir("./frontend/resources/css/")))
+	jsFileServer := http.StripPrefix("/js/", http.FileServer(http.Dir("./frontend/resources/js/")))
+	fontsFileServer := http.StripPrefix("/fonts/", http.FileServer(http.Dir("./frontend/resources/fonts/")))
+	lessFileServer := http.StripPrefix("/less/", http.FileServer(http.Dir("./frontend/resources/less/")))
+	scssFileServer := http.StripPrefix("/scss/", http.FileServer(http.Dir("./frontend/resources/scss/")))
+
+	http.Handle("/css/", cssFileServer)
+	http.Handle("/js/", jsFileServer)
+	http.Handle("/fonts/", fontsFileServer)
+	http.Handle("/less/", lessFileServer)
+	http.Handle("/scss/", scssFileServer)
+
 	http.HandleFunc("/", welcomeHandler)
 	http.HandleFunc("/signInWithOutlook", outlookSignInHandler)
 	http.HandleFunc("/outlook", outlookTokenHandler)
