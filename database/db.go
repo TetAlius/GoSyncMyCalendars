@@ -1,17 +1,6 @@
 package database
 
-import (
-	"database/sql"
-
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
-)
-
-//SaveUser saves the user data onto the DB
-func SaveUser(db *sql.DB) (err error) {
-	row, err := db.Query(`INSERT INTO users(mail, diggested_password) VALUES('marta@marta.com', 'password')`)
-	log.Debugln(row)
-	return
-}
+import "database/sql"
 
 //CreateEvent TODO
 func CreateEvent(db *sql.DB, idCal string, id string, mail string) {

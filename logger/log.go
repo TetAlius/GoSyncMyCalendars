@@ -132,17 +132,17 @@ func init() {
 
 	info = log.New(infoHandle,
 		"[INFO] ",
-		log.Ldate|log.Ltime|log.Lshortfile)
+		log.Ldate|log.Ltime)
 
 	warning = log.New(warningHandle,
 		"[WARN] ",
-		log.Ldate|log.Ltime|log.Lshortfile)
+		log.Ldate|log.Ltime)
 
 	er = log.New(errorHandle,
 		"[ERROR] ",
-		log.Ldate|log.Ltime|log.Lshortfile)
+		log.Ldate|log.Ltime)
 
 	fatal = log.New(fatalHandle,
 		"[ERROR] ",
-		log.Ldate|log.Ltime|log.Lshortfile)
+		log.Ldate|log.Ltime)
 }

@@ -32,3 +32,11 @@ type DecodedError struct {
 func (err DecodedError) Error() string {
 	return fmt.Sprintln(err.Message)
 }
+
+// EmptyValueError TODO
+type EmptyValueError struct {
+}
+
+func (err EmptyValueError) Error() string {
+	return fmt.Sprintln("Values cannot be empty")
+}
