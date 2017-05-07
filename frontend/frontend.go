@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"github.com/TetAlius/GoSyncMyCalendars/frontend/handlers"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"html/template"
 	"net"
@@ -10,13 +11,15 @@ import (
 
 //Frontend object
 type Frontend struct {
-	IP   net.IP
-	Port int
+	IP            net.IP
+	Port          int
+	googleHandler *handlers.Google
 }
 
 //NewFrontend creates a frontend
 func NewFrontend(ip string, port int) *Frontend {
-	frontend := Frontend{net.ParseIP(ip), port}
+	googleHandler := handlers.NewGoogleHandler()
+	frontend := Frontend{net.ParseIP(ip), port, googleHandler}
 	return &frontend
 }
 
@@ -33,6 +36,19 @@ func (f *Frontend) Start() error {
 	webServerMux.Handle("/js/", jsFileServer)
 	webServerMux.Handle("/images/", imagesFileServer)
 	webServerMux.HandleFunc("/", f.indexHandler)
+
+	webServerMux.HandleFunc("/SignInWithGoogle", f.googleHandler.SignInHandler)
+
+	/*
+		http.HandleFunc("/signInWithOutlook", outlookSignInHandler)
+		http.HandleFunc("/outlook", outlookTokenHandler)
+		http.HandleFunc("/calendars", listCalendarsHandler)
+		http.HandleFunc("/SignInWithGoogle", googleSignInHandler)
+		http.HandleFunc("/google", googleTokenHandler)
+		http.HandleFunc("/signUp", signUpHandler)
+		http.HandleFunc("/signIn", signInHandler)
+		http.HandleFunc("/cookies", cookiesHandlerTest)
+	*/
 
 	laddr := f.IP.String() + ":" + strconv.Itoa(f.Port)
 	log.Infof("Web server listening at %s", laddr)
