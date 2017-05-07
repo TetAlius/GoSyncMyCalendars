@@ -9,7 +9,7 @@ before_install:
   - chmod +x ./scripts/test.sh
 
 script:
-  - ./script/cibuild
+  - ./scripts/cibuild.sh
 
 after_success:
 #  - bash <(curl -s https://codecov.io/bash)
