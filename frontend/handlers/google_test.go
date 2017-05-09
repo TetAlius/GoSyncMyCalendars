@@ -4,5 +4,5 @@ import "testing"
 
 //SingInHandlerTest test the SignInHandler method
 func TestSignInHandler(t *testing.T) {
-	t.Fail()
+	t.Log("Testing Travis and Codecov")
 }
