@@ -70,7 +70,7 @@ func (f *Frontend) indexHandler(w http.ResponseWriter, r *http.Request) {
 		f.errorHandler(w, r, http.StatusNotFound)
 		return
 	}
-	t, err := template.ParseFiles("./frontend/welcome.html")
+	t, err := template.ParseFiles("./frontend/resources/html/welcome.html")
 	if err != nil {
 		log.Errorln("Error reading config.json: %s", err.Error())
 	}
@@ -83,7 +83,7 @@ func (f *Frontend) indexHandler(w http.ResponseWriter, r *http.Request) {
 
 //errorHandler if something can not be loaded, call the 404 web page
 func (f *Frontend) errorHandler(w http.ResponseWriter, r *http.Request, status int) {
-	http.ServeFile(w, r, "./frontend/404.html")
+	http.ServeFile(w, r, "./frontend/resources/html/404.html")
 }
 
 //Stop the frontend
