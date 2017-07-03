@@ -64,6 +64,10 @@ func (f *Frontend) Start() error {
 //func (s *server) indexHandler(w http.ResponseWriter, r *http.Request, title string) {
 func (f *Frontend) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// 404 page
+	if r.URL.Path != "/" {
+		f.errorHandler(w, r, http.StatusNotFound)
+		return
+	}
 	t, err := template.ParseFiles("./frontend/welcome.html")
 	if err != nil {
 		log.Errorln("Error reading config.json: %s", err.Error())
