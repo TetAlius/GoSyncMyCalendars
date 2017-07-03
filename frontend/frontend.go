@@ -11,15 +11,17 @@ import (
 
 //Frontend object
 type Frontend struct {
-	IP            net.IP
-	Port          int
-	googleHandler *handlers.Google
+	IP             net.IP
+	Port           int
+	googleHandler  *handlers.Google
+	outlookHandler *handlers.Outlook
 }
 
 //NewFrontend creates a frontend
 func NewFrontend(ip string, port int) *Frontend {
 	googleHandler := handlers.NewGoogleHandler()
-	frontend := Frontend{net.ParseIP(ip), port, googleHandler}
+	outlookHandler := handlers.NewOutlookHandler()
+	frontend := Frontend{net.ParseIP(ip), port, googleHandler, outlookHandler}
 	return &frontend
 }
 
@@ -39,9 +41,9 @@ func (f *Frontend) Start() error {
 
 	webServerMux.HandleFunc("/SignInWithGoogle", f.googleHandler.SignInHandler)
 
-	/*
-		http.HandleFunc("/signInWithOutlook", outlookSignInHandler)
-		http.HandleFunc("/outlook", outlookTokenHandler)
+	webServerMux.HandleFunc("/SignInWithOutlook", f.outlookHandler.SignInHandler)
+
+	/*	http.HandleFunc("/outlook", outlookTokenHandler)
 		http.HandleFunc("/calendars", listCalendarsHandler)
 		http.HandleFunc("/SignInWithGoogle", googleSignInHandler)
 		http.HandleFunc("/google", googleTokenHandler)
