@@ -50,9 +50,8 @@ func (f *Frontend) Start() error {
 	webServerMux.HandleFunc("/google", f.googleHandler.TokenHandler)
 
 	webServerMux.HandleFunc("/SignInWithOutlook", f.outlookHandler.SignInHandler)
-
-	/*	http.HandleFunc("/outlook", outlookTokenHandler)
-		http.HandleFunc("/calendars", listCalendarsHandler)
+	webServerMux.HandleFunc("/outlook", f.outlookHandler.TokenHandler)
+	/*	http.HandleFunc("/calendars", listCalendarsHandler)
 		http.HandleFunc("/SignInWithGoogle", googleSignInHandler)
 		http.HandleFunc("/google", googleTokenHandler)
 		http.HandleFunc("/signUp", signUpHandler)
