@@ -18,13 +18,15 @@ type Frontend struct {
 }
 
 //NewFrontend creates a frontend
-func NewFrontend(ip string, port int, configFile *string) *Frontend {
+func NewFrontend(ip string, port int) *Frontend {
+	googleConfig := "./google.json"
 
-	googleHandler, err := handlers.NewGoogleHandler(configFile)
+	googleHandler, err := handlers.NewGoogleHandler(&googleConfig)
 	if err != nil {
 		log.Fatalf("Could not initialize GoogleHandler: %s", err.Error())
 	}
-	outlookHandler, err := handlers.NewOutlookHandler(configFile)
+	outlookConfig := "./outlook.json"
+	outlookHandler, err := handlers.NewOutlookHandler(&outlookConfig)
 	if err != nil {
 		log.Fatalf("Could not initialize OutlookHandler: %s", err.Error())
 	}
