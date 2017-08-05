@@ -1,13 +1,15 @@
 package handlers
 
 import (
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
-	"net/http"
-	//"github.com/TetAlius/GoSyncMyCalendars/backend/google"
 	"encoding/json"
+	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"strings"
 )
 
 //Config TODO: improve this calls
@@ -50,4 +52,55 @@ func (o *Outlook) SignInHandler(w http.ResponseWriter, r *http.Request) {
 			"/authorize?client_id="+o.ID+
 			"&redirect_uri="+o.RedirectURI+
 			"&response_type=code&scope="+o.Scope, 302)
+}
+
+//TODO handle errors
+func (o *Outlook) TokenHandler(w http.ResponseWriter, r *http.Request) {
+	client := http.Client{}
+	code := r.URL.Query().Get("code")
+
+	req, err := http.NewRequest("POST",
+		o.LoginURI+o.Version+
+			"/token",
+		strings.NewReader("grant_type=authorization_code"+
+			"&code="+code+
+			"&redirect_uri="+o.RedirectURI+
+			"&client_id="+o.ID+
+			"&client_secret="+o.Secret))
+	req.Header.Set("Content-Type",
+		"application/x-www-form-urlencoded")
+
+	if err != nil {
+		log.Errorf("Error creating new outlook request: %s", err.Error())
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error doing outlook request: %s", err.Error())
+	}
+
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body from outlook request: %s", err.Error())
+	}
+	log.Debugf("%s\n", contents)
+	err = json.Unmarshal(contents, &outlook.Responses)
+	//TODO save info
+	if err != nil {
+		log.Errorf("Error unmarshaling outlook response: %s", err.Error())
+	}
+
+	email, preferred, err := util.MailFromToken(strings.Split(outlook.Responses.IDToken, "."))
+	if err != nil {
+		log.Errorf("Error retrieving outlook mail: %s", err.Error())
+	} else {
+		outlook.Responses.AnchorMailbox = email
+		outlook.Responses.PreferredUsername = preferred
+	}
+
+	//TODO remove this call!
+	outlook.TokenRefresh(outlook.Responses.RefreshToken)
+
+	http.Redirect(w, r, "/", 301)
+
 }
