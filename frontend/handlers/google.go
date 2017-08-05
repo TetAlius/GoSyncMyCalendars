@@ -8,20 +8,18 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	"html/template"
 	"io/ioutil"
+	"os"
 )
 
 //Google //TODO Document
 type Google struct {
-	googleConfig `json:"google"`
-}
-
-type googleConfig struct {
 	ID            string `json:"client_id"`
-	Secret        string `json:"client_secret"`
+	Secret        string
 	RedirectURI   string `json:"redirect_uri"`
 	Endpoint      string `json:"authorization_endpoint"`
 	TokenEndpoint string `json:"token_endpoint"`
 	Scope         string `json:"scope"`
+	//googleConfig `json:"google"`
 }
 
 func NewGoogleHandler(fileName *string) (google *Google, err error) {
@@ -38,6 +36,8 @@ func NewGoogleHandler(fileName *string) (google *Google, err error) {
 		log.Errorf("Error unmarshalling google config: %s", err.Error())
 		return
 	}
+	env := os.Getenv("google_secret")
+	google.Secret = env
 
 	if len(google.ID) == 0 || len(google.Secret) == 0 || len(google.RedirectURI) == 0 || len(google.Endpoint) == 0 || len(google.TokenEndpoint) == 0 || len(google.Scope) == 0 {
 		err = customErrors.ConfigNotChargedCorrectlyError{Message: "Google Config has not loaded properly"}

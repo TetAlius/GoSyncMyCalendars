@@ -7,17 +7,13 @@ import (
 	"encoding/json"
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	"io/ioutil"
+	"os"
 )
 
 //Config TODO: improve this calls
 type Outlook struct {
-	outlookConfig `json:"outlook"`
-}
-
-// Config TODO
-type outlookConfig struct {
 	ID          string `json:"client_id"`
-	Secret      string `json:"client_secret"`
+	Secret      string
 	RedirectURI string `json:"redirect_uri"`
 	LoginURI    string `json:"login_uri"`
 	Version     string `json:"version"`
@@ -38,6 +34,8 @@ func NewOutlookHandler(fileName *string) (outlook *Outlook, err error) {
 		log.Errorf("Error unmarshalling google config: %s", err.Error())
 		return
 	}
+	env := os.Getenv("outlook_secret")
+	outlook.Secret = env
 	if len(outlook.ID) == 0 || len(outlook.Secret) == 0 || len(outlook.RedirectURI) == 0 || len(outlook.LoginURI) == 0 || len(outlook.Version) == 0 || len(outlook.Scope) == 0 {
 		err = customErrors.ConfigNotChargedCorrectlyError{Message: "Outlook Config has not loaded properly"}
 		log.Errorf("%s", err.Error())
