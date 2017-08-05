@@ -14,15 +14,16 @@ func MailFromToken(tokens []string) (email string, preferred bool, err error) {
 	encodedToken := strings.Replace(
 		strings.Replace(tokens[1], "-", "_", -1),
 		"+", "/", -1) + "=="
+	log.Debugf("EncodedToken: %s", encodedToken)
 	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
 	if err != nil {
-		log.Errorf("Error decoding google token: %s", err.Error())
+		log.Errorf("Error decoding token: %s", err.Error())
 	}
-
+	log.Debugf("DecodedToken: %s", decodedToken)
 	var f interface{}
 	err = json.Unmarshal(decodedToken, &f)
 	if err != nil {
-		log.Errorf("Error unmarshaling google decoded token: %s", err.Error())
+		log.Errorf("Error unmarshaling decoded token: %s", err.Error())
 	}
 
 	if reflect.TypeOf(f) != nil && reflect.TypeOf(f).Kind() == reflect.Map {
