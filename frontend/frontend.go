@@ -19,17 +19,11 @@ type Frontend struct {
 
 //NewFrontend creates a frontend
 func NewFrontend(ip string, port int) *Frontend {
-	googleConfig := "./google.json"
 
-	googleHandler, err := handlers.NewGoogleHandler(&googleConfig)
-	if err != nil {
-		log.Fatalf("Could not initialize GoogleHandler: %s", err.Error())
-	}
-	outlookConfig := "./outlook.json"
-	outlookHandler, err := handlers.NewOutlookHandler(&outlookConfig)
-	if err != nil {
-		log.Fatalf("Could not initialize OutlookHandler: %s", err.Error())
-	}
+	googleHandler := handlers.NewGoogleHandler()
+
+	outlookHandler := handlers.NewOutlookHandler()
+
 	frontend := Frontend{net.ParseIP(ip), port, googleHandler, outlookHandler}
 	return &frontend
 }
@@ -49,12 +43,11 @@ func (f *Frontend) Start() error {
 	webServerMux.HandleFunc("/", f.indexHandler)
 
 	webServerMux.HandleFunc("/SignInWithGoogle", f.googleHandler.SignInHandler)
-	webServerMux.HandleFunc("/google", f.googleHandler.TokenHandler)
+	//webServerMux.HandleFunc("/google", f.googleHandler.TokenHandler)
 
 	webServerMux.HandleFunc("/SignInWithOutlook", f.outlookHandler.SignInHandler)
 	webServerMux.HandleFunc("/outlook", f.outlookHandler.TokenHandler)
 	/*	http.HandleFunc("/calendars", listCalendarsHandler)
-		http.HandleFunc("/SignInWithGoogle", googleSignInHandler)
 		http.HandleFunc("/google", googleTokenHandler)
 		http.HandleFunc("/signUp", signUpHandler)
 		http.HandleFunc("/signIn", signInHandler)
