@@ -3,11 +3,13 @@ package util
 import (
 	"encoding/base64"
 	"encoding/json"
-	"reflect"
-	"strings"
-
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"reflect"
+	"strings"
 )
 
 func MailFromToken(tokens []string) (email string, preferred bool, err error) {
@@ -44,4 +46,27 @@ func MailFromToken(tokens []string) (email string, preferred bool, err error) {
 		err = customErrors.DecodedError{Message: "Decoded token is not a map"}
 	}
 	return
+}
+
+func CallAPIRoot(route string) string {
+	client := http.Client{}
+	root := os.Getenv("API_ROOT")
+	req, err := http.NewRequest("GET", root+route, nil)
+
+	if err != nil {
+		log.Errorf("Error creating API request: %s", err.Error())
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error doing API request: %s", err.Error())
+	}
+
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body from API request: %s", err.Error())
+	}
+
+	return strings.Replace(string(contents[:]), "\"", "", -1)
 }
