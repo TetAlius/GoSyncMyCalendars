@@ -1,14 +1,15 @@
 package handlers_test
 
 import (
-	"github.com/TetAlius/GoSyncMyCalendars/frontend/handlers"
+	"github.com/TetAlius/GoSyncMyCalendars/tests"
 	"net/http"
 	"testing"
 )
 
 //TestGoogle_SignInHandlerSignInHandler test the SignInHandler method
-func TestOutlook_SignInHandler(t *testing.T) {
-	setup()
+func TestOutlookSignInHandler(t *testing.T) {
+	f := tests.SetupFrontend()
+	defer f.Stop()
 	//defer server.Close()
 	// Set up the HTTP request
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8080/SignInWithOutlook", nil)
@@ -25,29 +26,4 @@ func TestOutlook_SignInHandler(t *testing.T) {
 	}
 
 	t.Log(resp.Header.Get("Location"))
-}
-
-func TestOutlook_NewOutlookHandler(t *testing.T) {
-	configNameErr := "configgggg.json"
-	_, err := handlers.NewOutlookHandler(&configNameErr)
-	if err == nil {
-		t.Fatal("Error should not be nil but it is")
-	}
-
-	configNameErr = "./badConfig.json"
-	_, err = handlers.NewOutlookHandler(&configNameErr)
-	if err == nil {
-		t.Fatal("Error should not be nil but it is")
-	}
-	configName := "../../config.json"
-	_, err = handlers.NewOutlookHandler(&configName)
-	if err != nil {
-		t.Fatalf("Error should be nil but it is: %s", err.Error())
-	}
-
-	notThisConfig := "../../google.json"
-	_, err = handlers.NewOutlookHandler(&notThisConfig)
-	if err == nil {
-		t.Fatal("Error should not be nil but it is")
-	}
 }
