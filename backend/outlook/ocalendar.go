@@ -1,12 +1,14 @@
 package outlook
 
 import (
-	"bytes"
+//"bytes"
 
-	"github.com/TetAlius/GoSyncMyCalendars/backend"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+//"github.com/TetAlius/GoSyncMyCalendars/backend"
+//"github.com/TetAlius/GoSyncMyCalendars/backend"
+//log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
+/*
 // GET https://outlook.office.com/api/v2.0/me/calendars
 func getAllCalendars() {
 	log.Debugln("getAllCalendars outlook")
@@ -82,14 +84,14 @@ func updateCalendar(calendarID string, calendarData []byte) {
 }
 
 //TODO check if calendar is primary or birthdays if it is, the following error is send
-/*
-{
-	"error": {
-		"code": "ErrorInvalidRequest",
-		"message": "Your request can't be completed. The default calendar cannot be deleted."
-	}
-}
-*/
+//
+//{
+//	"error": {
+//		"code": "ErrorInvalidRequest",
+//		"message": "Your request can't be completed. The default calendar cannot be deleted."
+//	}
+//}
+
 // DELETE https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 //Does not return json if OK, only status 204
 func deleteCalendar(calendarID string) {
@@ -107,3 +109,4 @@ func deleteCalendar(calendarID string) {
 
 	log.Debugf("%s\n", contents)
 }
+*/

@@ -7,7 +7,11 @@ import (
 	"net/http"
 	"strings"
 
+	"encoding/json"
+	"fmt"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
+	"github.com/pkg/errors"
 )
 
 // Config TODO doc
@@ -44,6 +48,33 @@ var Responses struct {
 	RefreshToken string `json:"refresh_token"`
 	TokenID      string `json:"id_token"`
 	Email        string
+}
+
+type Response struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	TokenID      string `json:"id_token"`
+	Email        string
+}
+
+func NewResponse(contents []byte) (r *Response, err error) {
+	err = json.Unmarshal(contents, &r)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error unmarshaling google responses: %s", err.Error()))
+	}
+
+	log.Debugf("%s", contents)
+
+	// preferred is ignored on google
+	email, _, err := util.MailFromToken(strings.Split(r.TokenID, "."))
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error retrieving google mail: %s", err.Error()))
+	}
+
+	r.Email = email
+	return
 }
 
 //GenerateRandomState TODO doc

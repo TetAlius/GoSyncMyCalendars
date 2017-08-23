@@ -1,10 +1,10 @@
 package google
 
 import (
-	"bytes"
-
-	"github.com/TetAlius/GoSyncMyCalendars/backend"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+//"bytes"
+//"github.com/TetAlius/GoSyncMyCalendars/backend"
+//"github.com/TetAlius/GoSyncMyCalendars/backend"
+//log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 type calendarResp struct {
@@ -17,6 +17,7 @@ type calendarResp struct {
 	TimeZone    string `json:"timeZone"`
 }
 
+/*
 //GET https://www.googleapis.com/calendar/v3/users/me/calendarList
 func getAllCalendars() {
 	log.Debugln("getAllCalendars google")
@@ -136,3 +137,4 @@ func deleteCalendar(calendarID string) {
 
 	log.Debugf("Contents: %s", contents)
 }
+*/
