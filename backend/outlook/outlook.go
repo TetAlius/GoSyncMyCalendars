@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"errors"
+	"fmt"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 //Config TODO: improve this calls
@@ -40,9 +43,35 @@ var Responses struct {
 	Scope             string `json:"scope"`
 	AccessToken       string `json:"access_token"`
 	RefreshToken      string `json:"refresh_token"`
-	IDToken           string `json:"id_token"`
+	TokenID           string `json:"id_token"`
 	AnchorMailbox     string
 	PreferredUsername bool
+}
+
+type Response struct {
+	TokenType         string `json:"token_type"`
+	ExpiresIn         int    `json:"expires_in"`
+	Scope             string `json:"scope"`
+	AccessToken       string `json:"access_token"`
+	RefreshToken      string `json:"refresh_token"`
+	TokenID           string `json:"id_token"`
+	AnchorMailbox     string
+	PreferredUsername bool
+}
+
+func NewResponse(contents []byte) (r *Response, err error) {
+	err = json.Unmarshal(contents, &r)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error unmarshaling outlook response: %s", err.Error()))
+	}
+
+	email, preferred, err := util.MailFromToken(strings.Split(r.TokenID, "."))
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error retrieving outlook mail: %s", err.Error()))
+	}
+	r.AnchorMailbox = email
+	r.PreferredUsername = preferred
+	return
 }
 
 type outlookEvent struct {

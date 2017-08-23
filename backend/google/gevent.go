@@ -1,11 +1,11 @@
 package google
 
 import (
-	"bytes"
+	//"bytes"
 	"time"
-
-	"github.com/TetAlius/GoSyncMyCalendars/backend"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	//"github.com/TetAlius/GoSyncMyCalendars/backend"
+	//"github.com/TetAlius/GoSyncMyCalendars/backend"
+	//log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 type eventResource struct {
@@ -87,6 +87,7 @@ var eventUpdated = []byte(`{
   }
 }`)
 
+/*
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
 func getAllEvents(calendarID string) {
 	log.Debugln("getAllEvents google")
@@ -179,4 +180,4 @@ func getEvent(calendarID string, eventID string) {
 
 	log.Debugf("Contents: %s", contents)
 
-}
+}*/

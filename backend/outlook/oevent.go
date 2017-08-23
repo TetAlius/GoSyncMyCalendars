@@ -1,12 +1,13 @@
 package outlook
 
 import (
-	"bytes"
+//"bytes"
 
-	"github.com/TetAlius/GoSyncMyCalendars/backend"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+//"github.com/TetAlius/GoSyncMyCalendars/backend"
+//log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
+/*
 // GET https://outlook.office.com/api/v2.0/me/events
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
 func getAllEvents(calendarID string) {
@@ -115,3 +116,4 @@ func getEvent(eventID string) {
 	log.Debugf("%s\n", contents)
 
 }
+*/

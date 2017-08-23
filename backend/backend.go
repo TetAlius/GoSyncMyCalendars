@@ -11,16 +11,17 @@ import (
 
 //Backend object
 type Backend struct {
-	IP            net.IP
-	Port          int
-	googleHandler *handlers.Google
-	//outlookHandler *handlers.Outlook
+	IP             net.IP
+	Port           int
+	googleHandler  *handlers.Google
+	outlookHandler *handlers.Outlook
 }
 
 //NewBackend creates a backend
 func NewBackend(ip string, port int) *Backend {
 	googleHandler := handlers.NewGoogleHandler()
-	backend := Backend{net.ParseIP(ip), port, googleHandler}
+	outlookHandler := handlers.NewOutlookHandler()
+	backend := Backend{net.ParseIP(ip), port, googleHandler, outlookHandler}
 	return &backend
 }
 
@@ -30,6 +31,7 @@ func (b *Backend) Start() {
 	webServerMux := http.NewServeMux()
 
 	webServerMux.HandleFunc("/google", b.googleHandler.TokenHandler)
+	webServerMux.HandleFunc("/outlook", b.outlookHandler.TokenHandler)
 
 	laddr := b.IP.String() + ":" + strconv.Itoa(b.Port)
 	log.Infof("Backend server listening at %s", laddr)
