@@ -84,7 +84,7 @@ func (g *GoogleAccount) getCalendar(calendarID string) {
 			"")
 
 	if err != nil {
-		log.Errorf("Error getting g calendar for email %s. %s", g.Email, err.Error())
+		log.Errorf("Error getting a calendar for email %s. %s", g.Email, err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -113,7 +113,7 @@ func (g *GoogleAccount) createCalendar(calendarData []byte) {
 			"")
 
 	if err != nil {
-		log.Errorf("Error creating g calendar for email %s. %s", g.Email, err.Error())
+		log.Errorf("Error creating a calendar for email %s. %s", g.Email, err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -138,7 +138,7 @@ func (g *GoogleAccount) updateCalendar(calendarID string, calendarData []byte) {
 			"")
 
 	if err != nil {
-		log.Errorf("Error updateing g calendar for email %s. %s", g.Email, err.Error())
+		log.Errorf("Error updating a calendar for email %s. %s", g.Email, err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -162,7 +162,7 @@ func (g *GoogleAccount) deleteCalendar(calendarID string) {
 		"")
 
 	if err != nil {
-		log.Errorf("Error deleting g calendar for email %s. %s", g.Email, err.Error())
+		log.Errorf("Error deleting a calendar for email %s. %s", g.Email, err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)
