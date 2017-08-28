@@ -17,6 +17,20 @@ type Backend struct {
 	outlookHandler *handlers.Outlook
 }
 
+type Accounter interface {
+	GetAllCalendars()
+	//getPrimaryCalendar()
+	//getCalendar()
+	//createCalendar()
+	//updateCalendar()
+	//deleteCalendar()
+	//getAllEvents()
+	//createEvent()
+	//updateEvent()
+	//deleteEvent()
+	//getEvent()
+}
+
 //NewBackend creates a backend
 func NewBackend(ip string, port int) *Backend {
 	googleHandler := handlers.NewGoogleHandler()
