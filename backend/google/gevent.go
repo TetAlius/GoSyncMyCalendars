@@ -136,8 +136,9 @@ func (g *GoogleAccount) CreateEvent(calendarID string, eventData []byte) {
 }
 
 //PUT https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (g *GoogleAccount) UpdateEvent(calendarID string, eventID string, eventData []byte) {
+func (g *GoogleAccount) UpdateEvent(eventData []byte, ids ...string) {
 	log.Debugln("updateEvent google")
+	//TODO: Test if ids are two given
 
 	//Meter en los header el etag
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
@@ -147,7 +148,7 @@ func (g *GoogleAccount) UpdateEvent(calendarID string, eventID string, eventData
 	}
 
 	contents, err := util.DoRequest("PUT",
-		fmt.Sprintf(route, calendarID, eventID),
+		fmt.Sprintf(route, ids[0], ids[1]),
 		bytes.NewBuffer(eventUpdated),
 		g.authorizationRequest(),
 		"")
@@ -161,8 +162,9 @@ func (g *GoogleAccount) UpdateEvent(calendarID string, eventID string, eventData
 }
 
 //DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (g *GoogleAccount) DeleteEvent(calendarID string, eventID string) {
+func (g *GoogleAccount) DeleteEvent(ids ...string) {
 	log.Debugln("deleteEvent google")
+	//TODO: Test if ids are two given
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
 	if err != nil {
@@ -172,7 +174,7 @@ func (g *GoogleAccount) DeleteEvent(calendarID string, eventID string) {
 
 	contents, err := util.DoRequest(
 		"DELETE",
-		fmt.Sprintf(route, calendarID, eventID),
+		fmt.Sprintf(route, ids[0], ids[1]),
 		nil,
 		g.authorizationRequest(),
 		"")
@@ -186,7 +188,7 @@ func (g *GoogleAccount) DeleteEvent(calendarID string, eventID string) {
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (g *GoogleAccount) GetEvent(calendarID string, eventID string) {
+func (g *GoogleAccount) GetEvent(ids ...string) {
 	log.Debugln("getEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
@@ -197,7 +199,7 @@ func (g *GoogleAccount) GetEvent(calendarID string, eventID string) {
 
 	contents, err := util.DoRequest(
 		"GET",
-		fmt.Sprintf(route, calendarID, eventID),
+		fmt.Sprintf(route, ids[0], ids[1]),
 		nil,
 		g.authorizationRequest(),
 		"")

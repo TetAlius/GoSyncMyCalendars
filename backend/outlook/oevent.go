@@ -78,15 +78,16 @@ var update = []byte(`{
 }`)
 
 // PATCH https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (o *OutlookAccount) UpdateEvent(eventID string, eventData []byte) {
+func (o *OutlookAccount) UpdateEvent(eventData []byte, ids ...string) {
 	log.Debugln("updateEvent outlook")
+	//TODO: Test if ids are two given
 	route, err := util.CallAPIRoot("outlook/events/id")
 	if err != nil {
 		log.Errorf("Error generating URL: %s", err.Error())
 		return
 	}
 	contents, err := util.DoRequest("PATCH",
-		fmt.Sprintf(route, eventID),
+		fmt.Sprintf(route, ids[0]),
 		bytes.NewBuffer(update),
 		o.authorizationRequest(),
 		o.AnchorMailbox)
@@ -100,15 +101,16 @@ func (o *OutlookAccount) UpdateEvent(eventID string, eventData []byte) {
 }
 
 // DELETE https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (o *OutlookAccount) DeleteEvent(eventID string) {
+func (o *OutlookAccount) DeleteEvent(ids ...string) {
 	log.Debugln("deleteEvent outlook")
+	//TODO: Test if ids are two given
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
 		log.Errorf("Error generating URL: %s", err.Error())
 		return
 	}
 	contents, err := util.DoRequest("DELETE",
-		fmt.Sprintf(route, eventID),
+		fmt.Sprintf(route, ids[0]),
 		nil,
 		o.authorizationRequest(),
 		o.AnchorMailbox)
@@ -121,8 +123,9 @@ func (o *OutlookAccount) DeleteEvent(eventID string) {
 }
 
 // GET https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (o *OutlookAccount) GetEvent(eventID string) {
+func (o *OutlookAccount) GetEvent(ids ...string) {
 	log.Debugln("getEvent outlook")
+	//TODO: Test if ids are one given
 
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -130,7 +133,7 @@ func (o *OutlookAccount) GetEvent(eventID string) {
 		return
 	}
 	contents, err := util.DoRequest("GET",
-		fmt.Sprintf(route, eventID),
+		fmt.Sprintf(route, ids[0]),
 		nil,
 		o.authorizationRequest(),
 		o.AnchorMailbox)
