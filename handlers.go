@@ -1,20 +1,5 @@
 package main
 
-import (
-//"encoding/json"
-//"io/ioutil"
-//"net/http"
-//"strings"
-//"text/template"
-//"time"
-//
-//"github.com/TetAlius/GoSyncMyCalendars/backend/google"
-//"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
-//"github.com/TetAlius/GoSyncMyCalendars/backend/user"
-//log "github.com/TetAlius/GoSyncMyCalendars/logger"
-//"github.com/TetAlius/GoSyncMyCalendars/util"
-)
-
 type calendarInfo struct {
 	account string
 	names   []string

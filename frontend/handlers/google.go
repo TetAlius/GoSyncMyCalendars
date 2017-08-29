@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"net/http"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
-	"net/http"
 )
 
 type Google struct {

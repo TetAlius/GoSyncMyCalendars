@@ -1,12 +1,13 @@
 package frontend
 
 import (
-	"github.com/TetAlius/GoSyncMyCalendars/frontend/handlers"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"html/template"
 	"net"
 	"net/http"
 	"strconv"
+
+	"github.com/TetAlius/GoSyncMyCalendars/frontend/handlers"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 //Frontend object

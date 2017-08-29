@@ -3,12 +3,13 @@ package handlers
 import (
 	//"encoding/json"
 	"fmt"
-	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
-	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 type Google struct {

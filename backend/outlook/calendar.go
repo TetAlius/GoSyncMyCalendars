@@ -3,6 +3,7 @@ package outlook
 import (
 	"bytes"
 	"fmt"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )

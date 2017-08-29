@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
-	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 type Outlook struct {

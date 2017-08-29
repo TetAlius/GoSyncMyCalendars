@@ -1,9 +1,10 @@
 package handlers_test
 
 import (
-	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 	"net/http"
 	"testing"
+
+	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 )
 
 //TestGoogleSignInHandler test the SignInHandler method

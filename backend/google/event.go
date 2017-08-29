@@ -3,9 +3,10 @@ package google
 import (
 	"bytes"
 	"fmt"
+	"time"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
-	"time"
 )
 
 type eventResource struct {
