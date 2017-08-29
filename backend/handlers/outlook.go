@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	//"encoding/json"
 	"fmt"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -9,8 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	//"github.com/TetAlius/GoSyncMyCalendars/backend/google"
-	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
 )
 
 type Outlook struct {
