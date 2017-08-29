@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 	"github.com/TetAlius/GoSyncMyCalendars/tests"
 	"net/http"
 	"testing"
@@ -8,7 +9,8 @@ import (
 
 //TestGoogleSignInHandler test the SignInHandler method
 func TestGoogleSignInHandler(t *testing.T) {
-	f := tests.SetupFrontend()
+	f := frontend.NewServer("127.0.0.1", 8080)
+	f.Start()
 	defer f.Stop()
 	//defer server.Close()
 	// Set up the HTTP request
