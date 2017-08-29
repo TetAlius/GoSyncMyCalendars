@@ -9,7 +9,7 @@ import (
 
 // GET https://outlook.office.com/api/v2.0/me/events
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
-func (o *OutlookAccount) getAllEventsFromCalendar(calendarID string) {
+func (o *OutlookAccount) GetAllEventsFromCalendar(calendarID string) {
 	log.Debugln("getAllEvents outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -50,7 +50,7 @@ var event = []byte(`{
 }`)
 
 // POST https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
-func (o *OutlookAccount) createEvent(calendarID string, eventData []byte) {
+func (o *OutlookAccount) CreateEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -78,7 +78,7 @@ var update = []byte(`{
 }`)
 
 // PATCH https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (o *OutlookAccount) updateEvent(eventID string, eventData []byte) {
+func (o *OutlookAccount) UpdateEvent(eventID string, eventData []byte) {
 	log.Debugln("updateEvent outlook")
 	route, err := util.CallAPIRoot("outlook/events/id")
 	if err != nil {
@@ -100,7 +100,7 @@ func (o *OutlookAccount) updateEvent(eventID string, eventData []byte) {
 }
 
 // DELETE https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (o *OutlookAccount) deleteEvent(eventID string) {
+func (o *OutlookAccount) DeleteEvent(eventID string) {
 	log.Debugln("deleteEvent outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -121,7 +121,7 @@ func (o *OutlookAccount) deleteEvent(eventID string) {
 }
 
 // GET https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (o *OutlookAccount) getEvent(eventID string) {
+func (o *OutlookAccount) GetEvent(eventID string) {
 	log.Debugln("getEvent outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")

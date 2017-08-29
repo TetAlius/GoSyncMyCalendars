@@ -19,16 +19,26 @@ type Backend struct {
 
 type Accounter interface {
 	GetAllCalendars()
-	//getPrimaryCalendar()
-	//getCalendar()
-	//createCalendar()
-	//updateCalendar()
-	//deleteCalendar()
-	//getAllEvents()
-	//createEvent()
-	//updateEvent()
-	//deleteEvent()
-	//getEvent()
+	GetPrimaryCalendar()
+	GetCalendar(calendarID string)
+	CreateCalendar(calendarData []byte)
+	UpdateCalendar(calendarID string, calendarData []byte)
+	DeleteCalendar(calendarID string)
+
+	GetAllEventsFromCalendar(calendarID string)
+	CreateEvent(calendarID string, eventData []byte)
+	// Outlook
+	//UpdateEvent(eventID string, eventData []byte)
+	// Google
+	//UpdateEvent(calendarID string, eventID string, eventData []byte)
+	//Outlook
+	//DeleteEvent(eventID string)
+	//Google
+	//DeleteEvent(calendarID string, eventID string)
+	//Outlook
+	// GetEvent(eventID string)
+	//Google
+	//GetEvent(calendarID string, eventID string)
 }
 
 //NewBackend creates a backend
