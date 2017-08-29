@@ -3,13 +3,16 @@ package util
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"reflect"
 	"strings"
+	"errors"
 )
 
 func MailFromToken(tokens []string) (email string, preferred bool, err error) {
@@ -48,25 +51,60 @@ func MailFromToken(tokens []string) (email string, preferred bool, err error) {
 	return
 }
 
-func CallAPIRoot(route string) string {
+func CallAPIRoot(route string) (apiRoute string, err error) {
 	client := http.Client{}
 	root := os.Getenv("API_ROOT")
 	req, err := http.NewRequest("GET", root+route, nil)
 
 	if err != nil {
-		log.Errorf("Error creating API request: %s", err.Error())
+		return "", errors.New(fmt.Sprintf("Error creating API request: %s", err.Error()))
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf("Error doing API request: %s", err.Error())
+		return "", errors.New(fmt.Sprintf("Error doing API request: %s", err.Error()))
 	}
 
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("Error reading response body from API request: %s", err.Error())
+		return "", errors.New(fmt.Sprintf("Error reading response body from API request: %s", err.Error()))
 	}
 
-	return strings.Replace(string(contents[:]), "\"", "", -1)
+	return strings.Replace(string(contents[:]), "\"", "", -1), nil
+}
+
+//DoRequest TODO Creates and executes the request for all petitions
+//and returns the JSON so that it can be parsed into the correct struct
+func DoRequest(method string, url string, body io.Reader, authorization string, anchorMailbox string) (contents []byte, err error) {
+	client := http.Client{}
+
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		log.Errorf("Error creating new request: %s", err.Error())
+	}
+
+	//Add the authorization to the header
+	req.Header.Set("Authorization", authorization)
+
+	//Add the anchorMailbox to the header
+	req.Header.Set("X-AnchorMailbox", anchorMailbox)
+
+	// If body is given, has to put a content-Type json on the header
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error doing request: %s", err.Error())
+	}
+
+	defer resp.Body.Close()
+	//TODO parse errors and content
+	contents, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body: %s", err.Error())
+	}
+	return
 }
