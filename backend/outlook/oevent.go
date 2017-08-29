@@ -1,26 +1,30 @@
 package outlook
 
 import (
-//"bytes"
-
-//"github.com/TetAlius/GoSyncMyCalendars/backend"
-//log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"bytes"
+	"fmt"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-/*
 // GET https://outlook.office.com/api/v2.0/me/events
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
-func getAllEvents(calendarID string) {
+func (o *OutlookAccount) getAllEventsFromCalendar(calendarID string) {
 	log.Debugln("getAllEvents outlook")
+	route, err := util.CallAPIRoot("outlook/calendars/id/events")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
 
-	contents, err := backend.DoRequest("GET",
-		eventsFromCalendarURI(calendarID),
+	contents, err := util.DoRequest("GET",
+		fmt.Sprintf(route, calendarID),
 		nil,
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error getting all events of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error getting all events of a calendar for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
@@ -46,16 +50,22 @@ var event = []byte(`{
 }`)
 
 // POST https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
-func createEvent(calendarID string, eventData []byte) {
+func (o *OutlookAccount) createEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent outlook")
-	contents, err := backend.DoRequest("POST",
-		eventsFromCalendarURI(calendarID),
+	route, err := util.CallAPIRoot("outlook/calendars/id/events")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest("POST",
+		fmt.Sprintf(route, calendarID),
 		bytes.NewBuffer(event),
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error creating event in a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error creating event in a calendar for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
@@ -68,16 +78,21 @@ var update = []byte(`{
 }`)
 
 // PATCH https://outlook.office.com/api/v2.0/me/events/{eventID}
-func updateEvent(eventID string, eventData []byte) {
+func (o *OutlookAccount) updateEvent(eventID string, eventData []byte) {
 	log.Debugln("updateEvent outlook")
-	contents, err := backend.DoRequest("PATCH",
-		eventURI(eventID),
+	route, err := util.CallAPIRoot("outlook/events/id")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+	contents, err := util.DoRequest("PATCH",
+		fmt.Sprintf(route, eventID),
 		bytes.NewBuffer(update),
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error updating event of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error updating event of a calendar for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
@@ -85,35 +100,45 @@ func updateEvent(eventID string, eventData []byte) {
 }
 
 // DELETE https://outlook.office.com/api/v2.0/me/events/{eventID}
-func deleteEvent(eventID string) {
+func (o *OutlookAccount) deleteEvent(eventID string) {
 	log.Debugln("deleteEvent outlook")
-	contents, err := backend.DoRequest("DELETE",
-		eventURI(eventID),
+	route, err := util.CallAPIRoot("outlook/calendars/id/events")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+	contents, err := util.DoRequest("DELETE",
+		fmt.Sprintf(route, eventID),
 		nil,
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error deleting event of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error deleting event of a calendar for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
 }
 
 // GET https://outlook.office.com/api/v2.0/me/events/{eventID}
-func getEvent(eventID string) {
+func (o *OutlookAccount) getEvent(eventID string) {
 	log.Debugln("getEvent outlook")
-	contents, err := backend.DoRequest("GET",
-		eventURI(eventID),
+
+	route, err := util.CallAPIRoot("outlook/calendars/id/events")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+	contents, err := util.DoRequest("GET",
+		fmt.Sprintf(route, eventID),
 		nil,
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error getting an event of a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error getting an event of a calendar for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
 
 }
-*/

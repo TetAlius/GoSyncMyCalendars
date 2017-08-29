@@ -1,26 +1,30 @@
 package outlook
 
 import (
-//"bytes"
-
-//"github.com/TetAlius/GoSyncMyCalendars/backend"
-//"github.com/TetAlius/GoSyncMyCalendars/backend"
-//log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"bytes"
+	"fmt"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-/*
 // GET https://outlook.office.com/api/v2.0/me/calendars
-func getAllCalendars() {
+func (o *OutlookAccount) getAllCalendars() {
 	log.Debugln("getAllCalendars outlook")
 
-	contents, err := backend.DoRequest("GET",
-		calendarsURI(""),
+	route, err := util.CallAPIRoot("outlook/calendars")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest("GET",
+		route,
 		nil,
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error getting all calendars for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error getting all calendars for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
@@ -28,38 +32,69 @@ func getAllCalendars() {
 }
 
 //GET https://outlook.office.com/api/v2.0/me/calendar
-func getPrimaryCalendar() {
-	//TODO
+func (o *OutlookAccount) getPrimaryCalendar() {
+	log.Debugln("getPrimaryCalendar outlook")
+
+	route, err := util.CallAPIRoot("outlook/calendars/primary")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest("GET",
+		route,
+		nil,
+		o.authorizationRequest(),
+		o.AnchorMailbox)
+
+	if err != nil {
+		log.Errorf("Error getting all calendars for email %s. %s", o.AnchorMailbox, err.Error())
+	}
+
+	log.Debugf("%s\n", contents)
 }
 
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
-func getCalendar(calendarID string) {
+func (o *OutlookAccount) getCalendar(calendarID string) {
 	log.Debugln("getCalendar outlook")
-	contents, err := backend.DoRequest("GET",
-		calendarsURI(calendarID),
+
+	route, err := util.CallAPIRoot("outlook/calendars/id")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest("GET",
+		fmt.Sprintf(route, calendarID),
 		nil,
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error getting a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error getting a calendar for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
 }
 
 // POST https://outlook.office.com/api/v2.0/me/calendars
-func createCalendar(calendarData []byte) {
+func (o *OutlookAccount) createCalendar(calendarData []byte) {
 	log.Debugln("createCalendars outlook")
 
-	contents, err := backend.DoRequest("POST",
-		calendarsURI(""),
+	route, err := util.CallAPIRoot("outlook/calendars")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest("POST",
+		route,
 		bytes.NewBuffer(calendarData),
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error creating a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error creating a calendar for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
@@ -67,17 +102,23 @@ func createCalendar(calendarData []byte) {
 }
 
 // PATCH https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
-func updateCalendar(calendarID string, calendarData []byte) {
+func (o *OutlookAccount) updateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar outlook")
 
-	contents, err := backend.DoRequest("PATCH",
-		calendarsURI(calendarID),
+	route, err := util.CallAPIRoot("outlook/calendars/id")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest("PATCH",
+		fmt.Sprintf(route, calendarID),
 		bytes.NewBuffer(calendarData),
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error updateing a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error updateing a calendar for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
@@ -94,19 +135,24 @@ func updateCalendar(calendarID string, calendarData []byte) {
 
 // DELETE https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 //Does not return json if OK, only status 204
-func deleteCalendar(calendarID string) {
+func (o *OutlookAccount) deleteCalendar(calendarID string) {
 	log.Debugln("deleteCalendar outlook")
 
-	contents, err := backend.DoRequest("DELETE",
-		calendarsURI(calendarID),
+	route, err := util.CallAPIRoot("outlook/calendars/id")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest("DELETE",
+		fmt.Sprintf(route, calendarID),
 		nil,
-		authorizationRequest(),
-		Responses.AnchorMailbox)
+		o.authorizationRequest(),
+		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error deleting a calendar for email %s. %s", Responses.AnchorMailbox, err.Error())
+		log.Errorf("Error deleting a calendar for email %s. %s", o.AnchorMailbox, err.Error())
 	}
 
 	log.Debugf("%s\n", contents)
 }
-*/
