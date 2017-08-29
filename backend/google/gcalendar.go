@@ -42,7 +42,7 @@ func (g *GoogleAccount) GetAllCalendars() {
 
 // GET https://www.googleapis.com/calendar/v3/calendars/primary
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary This is the one used
-func (g *GoogleAccount) getPrimaryCalendar() {
+func (g *GoogleAccount) GetPrimaryCalendar() {
 	log.Debugln("getPrimaryCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/primary")
 	if err != nil {
@@ -67,7 +67,7 @@ func (g *GoogleAccount) getPrimaryCalendar() {
 }
 
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarID}
-func (g *GoogleAccount) getCalendar(calendarID string) {
+func (g *GoogleAccount) GetCalendar(calendarID string) {
 	log.Debugln("getCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -96,7 +96,7 @@ var calendar = []byte(`{"summary":"CalendarGO"}`)
 var calendarUpdate = []byte(`{"summary":"Updated CalendarGO"}`)
 
 // POST https://www.googleapis.com/calendar/v3/calendars
-func (g *GoogleAccount) createCalendar(calendarData []byte) {
+func (g *GoogleAccount) CreateCalendar(calendarData []byte) {
 	log.Debugln("createCalendar google")
 	route, err := util.CallAPIRoot("google/calendars")
 	if err != nil {
@@ -121,7 +121,7 @@ func (g *GoogleAccount) createCalendar(calendarData []byte) {
 }
 
 // PUT https://www.googleapis.com/calendar/v3/calendars/{calendarId}
-func (g *GoogleAccount) updateCalendar(calendarID string, calendarData []byte) {
+func (g *GoogleAccount) UpdateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -146,7 +146,7 @@ func (g *GoogleAccount) updateCalendar(calendarID string, calendarData []byte) {
 }
 
 // DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarId}
-func (g *GoogleAccount) deleteCalendar(calendarID string) {
+func (g *GoogleAccount) DeleteCalendar(calendarID string) {
 	log.Debugln("Delete calendar")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {

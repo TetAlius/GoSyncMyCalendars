@@ -88,7 +88,7 @@ var eventUpdated = []byte(`{
 }`)
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (g *GoogleAccount) getAllEventsFromCalendar(calendarID string) {
+func (g *GoogleAccount) GetAllEventsFromCalendar(calendarID string) {
 	log.Debugln("getAllEvents google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -112,7 +112,7 @@ func (g *GoogleAccount) getAllEventsFromCalendar(calendarID string) {
 }
 
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (g *GoogleAccount) createEvent(calendarID string, eventData []byte) {
+func (g *GoogleAccount) CreateEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -136,7 +136,7 @@ func (g *GoogleAccount) createEvent(calendarID string, eventData []byte) {
 }
 
 //PUT https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (g *GoogleAccount) updateEvent(calendarID string, eventID string, eventData []byte) {
+func (g *GoogleAccount) UpdateEvent(calendarID string, eventID string, eventData []byte) {
 	log.Debugln("updateEvent google")
 
 	//Meter en los header el etag
@@ -161,7 +161,7 @@ func (g *GoogleAccount) updateEvent(calendarID string, eventID string, eventData
 }
 
 //DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (g *GoogleAccount) deleteEvent(calendarID string, eventID string) {
+func (g *GoogleAccount) DeleteEvent(calendarID string, eventID string) {
 	log.Debugln("deleteEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
@@ -186,7 +186,7 @@ func (g *GoogleAccount) deleteEvent(calendarID string, eventID string) {
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (g *GoogleAccount) getEvent(calendarID string, eventID string) {
+func (g *GoogleAccount) GetEvent(calendarID string, eventID string) {
 	log.Debugln("getEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
