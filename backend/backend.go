@@ -27,18 +27,10 @@ type Accounter interface {
 
 	GetAllEventsFromCalendar(calendarID string)
 	CreateEvent(calendarID string, eventData []byte)
-	// Outlook
-	//UpdateEvent(eventID string, eventData []byte)
-	// Google
-	//UpdateEvent(calendarID string, eventID string, eventData []byte)
-	//Outlook
-	//DeleteEvent(eventID string)
-	//Google
-	//DeleteEvent(calendarID string, eventID string)
-	//Outlook
-	// GetEvent(eventID string)
-	//Google
-	//GetEvent(calendarID string, eventID string)
+
+	UpdateEvent(eventData []byte, ids ...string)
+	DeleteEvent(ids ...string)
+	GetEvent(ids ...string)
 }
 
 //NewBackend creates a backend
