@@ -4,7 +4,7 @@ import (
 	//"encoding/json"
 	//"fmt"
 	//"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
-	//log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 	//"io/ioutil"
 	"net/http"
@@ -20,5 +20,11 @@ func NewOutlookHandler() (outlook *Outlook) {
 }
 
 func (o *Outlook) SignInHandler(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, util.CallAPIRoot("outlook/login"), 302)
+	log.Debugln("Starting outlook petition")
+	route, err := util.CallAPIRoot("outlook/login")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+	http.Redirect(w, r, route, 302)
 }

@@ -17,5 +17,10 @@ func NewGoogleHandler() (google *Google) {
 //SingInHandler Google SingIn handler
 func (g *Google) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugln("Starting google petition")
-	http.Redirect(w, r, util.CallAPIRoot("google/login"), 302)
+	route, err := util.CallAPIRoot("google/login")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+	http.Redirect(w, r, route, 302)
 }

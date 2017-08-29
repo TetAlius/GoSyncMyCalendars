@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	//"github.com/TetAlius/GoSyncMyCalendars/backend/google"
+	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
 )
 
 type Outlook struct {
@@ -21,13 +22,24 @@ func NewOutlookHandler() (outlook *Outlook) {
 }
 
 func (o *Outlook) TokenHandler(w http.ResponseWriter, r *http.Request) {
+	route, err := util.CallAPIRoot("outlook/token/uri")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+	params, err := util.CallAPIRoot("outlook/token/request-params")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
 	client := http.Client{}
 	code := r.URL.Query().Get("code")
 
 	req, err := http.NewRequest("POST",
-		util.CallAPIRoot("outlook/token/uri"),
+		route,
 		strings.NewReader(
-			fmt.Sprintf(util.CallAPIRoot("outlook/token/request-params"), code)))
+			fmt.Sprintf(params, code)))
 	if err != nil {
 		log.Errorf("Error creating new outlook request: %s", err.Error())
 	}
@@ -47,10 +59,12 @@ func (o *Outlook) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//TODO: DB to implement
-	_, err = outlook.NewResponse(contents)
+	account, err := outlook.NewAccount(contents)
 
-	//TODO remove this call!
-	outlook.TokenRefresh(outlook.Responses.RefreshToken)
+	go func(account *outlook.OutlookAccount) {
+		log.Debugln(account)
+		account.GetAllCalendars()
+	}(account)
 
 	http.Redirect(w, r, "/", 301)
 }
