@@ -5,14 +5,14 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 )
 
-func SetupFrontend() *frontend.Frontend {
-	f := frontend.NewFrontend("127.0.0.1", 8080)
+func SetupFrontend() *frontend.Server {
+	f := frontend.NewServer("127.0.0.1", 8080)
 	f.Start()
 	return f
 
 }
-func SetupBackend() *backend.Backend {
-	b := backend.NewBackend("127.0.0.1", 8081)
+func SetupBackend() *backend.Server {
+	b := backend.NewServer("127.0.0.1", 8081)
 	b.Start()
 	return b
 }
