@@ -10,7 +10,7 @@ import (
 )
 
 //Frontend object
-type Frontend struct {
+type Server struct {
 	IP             net.IP
 	Port           int
 	googleHandler  *handlers.Google
@@ -18,18 +18,18 @@ type Frontend struct {
 }
 
 //NewFrontend creates a frontend
-func NewFrontend(ip string, port int) *Frontend {
+func NewServer(ip string, port int) *Server {
 
 	googleHandler := handlers.NewGoogleHandler()
 
 	outlookHandler := handlers.NewOutlookHandler()
 
-	frontend := Frontend{net.ParseIP(ip), port, googleHandler, outlookHandler}
-	return &frontend
+	server := Server{net.ParseIP(ip), port, googleHandler, outlookHandler}
+	return &server
 }
 
 //Start the frontend
-func (f *Frontend) Start() error {
+func (s *Server) Start() error {
 	log.Debugln("Start frontend")
 	webServerMux := http.NewServeMux()
 
@@ -40,11 +40,11 @@ func (f *Frontend) Start() error {
 	webServerMux.Handle("/css/", cssFileServer)
 	webServerMux.Handle("/js/", jsFileServer)
 	webServerMux.Handle("/images/", imagesFileServer)
-	webServerMux.HandleFunc("/", f.indexHandler)
+	webServerMux.HandleFunc("/", s.indexHandler)
 
-	webServerMux.HandleFunc("/SignInWithGoogle", f.googleHandler.SignInHandler)
+	webServerMux.HandleFunc("/SignInWithGoogle", s.googleHandler.SignInHandler)
 
-	webServerMux.HandleFunc("/SignInWithOutlook", f.outlookHandler.SignInHandler)
+	webServerMux.HandleFunc("/SignInWithOutlook", s.outlookHandler.SignInHandler)
 	/*	http.HandleFunc("/calendars", listCalendarsHandler)
 		http.HandleFunc("/google", googleTokenHandler)
 		http.HandleFunc("/signUp", signUpHandler)
@@ -52,7 +52,7 @@ func (f *Frontend) Start() error {
 		http.HandleFunc("/cookies", cookiesHandlerTest)
 	*/
 
-	laddr := f.IP.String() + ":" + strconv.Itoa(f.Port)
+	laddr := s.IP.String() + ":" + strconv.Itoa(s.Port)
 	log.Infof("Web server listening at %s", laddr)
 
 	go func() {
@@ -64,10 +64,10 @@ func (f *Frontend) Start() error {
 
 //indexHandler load the index.html web page
 //func (s *server) indexHandler(w http.ResponseWriter, r *http.Request, title string) {
-func (f *Frontend) indexHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// 404 page
 	if r.URL.Path != "/" {
-		f.errorHandler(w, r, http.StatusNotFound)
+		s.errorHandler(w, r, http.StatusNotFound)
 		return
 	}
 	t, err := template.ParseFiles("./frontend/resources/html/welcome.html")
@@ -82,12 +82,12 @@ func (f *Frontend) indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 //errorHandler if something can not be loaded, call the 404 web page
-func (f *Frontend) errorHandler(w http.ResponseWriter, r *http.Request, status int) {
+func (s *Server) errorHandler(w http.ResponseWriter, r *http.Request, status int) {
 	http.ServeFile(w, r, "./frontend/resources/html/404.html")
 }
 
 //Stop the frontend
-func (f *Frontend) Stop() error {
+func (s *Server) Stop() error {
 	//TODO Complete
 	log.Debugln("Stop frontend")
 	return nil
