@@ -11,7 +11,7 @@ import (
 func main() {
 
 	f := frontend.NewFrontend("127.0.0.1", 8080)
-	b := backend.NewBackend("127.0.0.1", 8081)
+	b := backend.NewServer("127.0.0.1", 8081)
 
 	// Control + C interrupt handler
 	c := make(chan os.Signal, 1)

@@ -2,14 +2,10 @@ package outlook
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"strings"
-
 	"errors"
 	"fmt"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
+	"strings"
 )
 
 //Config TODO: improve this calls

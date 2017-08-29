@@ -10,7 +10,7 @@ import (
 )
 
 //Backend object
-type Backend struct {
+type Server struct {
 	IP             net.IP
 	Port           int
 	googleHandler  *handlers.Google
@@ -42,24 +42,24 @@ type Accounter interface {
 }
 
 //NewBackend creates a backend
-func NewBackend(ip string, port int) *Backend {
+func NewServer(ip string, port int) *Server {
 	googleHandler := handlers.NewGoogleHandler()
 	outlookHandler := handlers.NewOutlookHandler()
-	backend := Backend{net.ParseIP(ip), port, googleHandler, outlookHandler}
-	return &backend
+	server := Server{net.ParseIP(ip), port, googleHandler, outlookHandler}
+	return &server
 }
 
 //Start the backend
-func (b *Backend) Start() {
+func (s *Server) Start() {
 	log.Debugln("Start backend")
 	webServerMux := http.NewServeMux()
 
-	webServerMux.HandleFunc("/google", b.googleHandler.TokenHandler)
-	webServerMux.HandleFunc("/outlook", b.outlookHandler.TokenHandler)
+	webServerMux.HandleFunc("/google", s.googleHandler.TokenHandler)
+	webServerMux.HandleFunc("/outlook", s.outlookHandler.TokenHandler)
 
-	laddr := b.IP.String() + ":" + strconv.Itoa(b.Port)
+	laddr := s.IP.String() + ":" + strconv.Itoa(s.Port)
 	log.Infof("Backend server listening at %s", laddr)
-	http.HandleFunc("/google", b.googleHandler.TokenHandler)
+	http.HandleFunc("/google", s.googleHandler.TokenHandler)
 	err := http.ListenAndServe(laddr, webServerMux)
 	if err != nil {
 		log.Fatalf("ListenAndServe: " + err.Error())
@@ -67,8 +67,8 @@ func (b *Backend) Start() {
 }
 
 //Stop the backend
-func (b *Backend) Stop() error {
+func (s *Server) Stop() error {
 	//TODO Complete
-	log.Debugln("Stop backend")
+	log.Debugln("TODO: Stop backend")
 	return nil
 }
