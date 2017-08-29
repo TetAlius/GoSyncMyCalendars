@@ -40,11 +40,11 @@ func (g *GoogleAccount) GetAllCalendars() {
 	log.Debugf("Contents: %s", contents)
 }
 
-// GET https://www.googleapis.com/calendar/v3/calendars/primary This is the one used
-// GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary
+// GET https://www.googleapis.com/calendar/v3/calendars/primary
+// GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary This is the one used
 func (g *GoogleAccount) getPrimaryCalendar() {
 	log.Debugln("getPrimaryCalendar google")
-	route, err := util.CallAPIRoot("google/calendars/id")
+	route, err := util.CallAPIRoot("google/calendars/primary")
 	if err != nil {
 		log.Errorf("Error generating URL: %s", err.Error())
 		return
@@ -53,7 +53,7 @@ func (g *GoogleAccount) getPrimaryCalendar() {
 	contents, err :=
 		util.DoRequest(
 			"GET",
-			fmt.Sprintf(route, "primary"),
+			route,
 			nil,
 			g.authorizationRequest(),
 			"")
