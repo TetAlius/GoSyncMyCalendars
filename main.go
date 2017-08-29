@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	f := frontend.NewFrontend("127.0.0.1", 8080)
+	f := frontend.NewServer("127.0.0.1", 8080)
 	b := backend.NewServer("127.0.0.1", 8081)
 
 	// Control + C interrupt handler
