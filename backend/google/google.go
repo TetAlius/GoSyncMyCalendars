@@ -9,6 +9,7 @@ import (
 
 	"encoding/json"
 	"fmt"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"github.com/pkg/errors"

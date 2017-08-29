@@ -1,11 +1,12 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
 	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 	_ "github.com/jackc/pgx/stdlib"
-	"os"
-	"os/signal"
 )
 
 func main() {

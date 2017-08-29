@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"strings"
+
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 //Config TODO: improve this calls

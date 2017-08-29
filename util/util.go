@@ -3,16 +3,17 @@ package util
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"reflect"
 	"strings"
-	"errors"
+
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 func MailFromToken(tokens []string) (email string, preferred bool, err error) {
