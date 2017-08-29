@@ -2,7 +2,6 @@ package handlers_test
 
 import (
 	"github.com/TetAlius/GoSyncMyCalendars/frontend"
-	"github.com/TetAlius/GoSyncMyCalendars/tests"
 	"net/http"
 	"testing"
 )
