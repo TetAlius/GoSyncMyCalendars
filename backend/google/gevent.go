@@ -88,7 +88,7 @@ var eventUpdated = []byte(`{
 }`)
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (g *GoogleAccount) getAllEvents(calendarID string) {
+func (g *GoogleAccount) getAllEventsFromCalendar(calendarID string) {
 	log.Debugln("getAllEvents google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
