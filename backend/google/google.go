@@ -14,34 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Config TODO doc
-var Config struct {
-	googleConfig `json:"google"`
-}
-
-type googleConfig struct {
-	ID            string `json:"client_id"`
-	Secret        string `json:"client_secret"`
-	RedirectURI   string `json:"redirect_uri"`
-	Endpoint      string `json:"authorization_endpoint"`
-	TokenEndpoint string `json:"token_endpoint"`
-	Scope         string `json:"scope"`
-}
-
-// Requests TODO doc
-var Requests struct {
-	State        string
-	RootURI      string `json:"root_uri"`
-	CalendarAPI  string `json:"calendarAPI"`
-	Version      string `json:"version"`
-	Context      string `json:"user_context"`
-	CalendarList string `json:"calendar_list"`
-	Calendars    string `json:"calendars"`
-	Events       string `json:"events"`
-}
-
-// Responses TODO doc
-var Responses struct {
+type GoogleAccount struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
 	ExpiresIn    int    `json:"expires_in"`
@@ -50,16 +23,7 @@ var Responses struct {
 	Email        string
 }
 
-type Response struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token"`
-	TokenID      string `json:"id_token"`
-	Email        string
-}
-
-func NewResponse(contents []byte) (r *Response, err error) {
+func NewAccount(contents []byte) (r *GoogleAccount, err error) {
 	err = json.Unmarshal(contents, &r)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error unmarshaling google responses: %s", err.Error()))
@@ -75,6 +39,10 @@ func NewResponse(contents []byte) (r *Response, err error) {
 
 	r.Email = email
 	return
+}
+
+func (g *GoogleAccount) authorizationRequest() string {
+	return fmt.Sprintf("%s %s", g.TokenType, g.AccessToken)
 }
 
 //GenerateRandomState TODO doc
@@ -97,12 +65,22 @@ func GenerateRandomState() (rs string) {
 func TokenRefresh(oldToken string) {
 	client := http.Client{}
 
+	route, err := util.CallAPIRoot("google/token/uri")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	params, err := util.CallAPIRoot("google/token/refresh-params")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
 	req, err := http.NewRequest("POST",
-		Config.TokenEndpoint,
-		strings.NewReader("client_id="+Config.ID+
-			"&client_secret="+Config.Secret+
-			"&refresh_token="+oldToken+
-			"&grant_type=refresh_token"))
+		route,
+		strings.NewReader(
+			fmt.Sprintf(params, oldToken)))
 
 	if err != nil {
 		log.Errorf("Error creating new request: %s", err.Error())
@@ -139,23 +117,4 @@ func TokenRefresh(oldToken string) {
 	//updateCalendar("ID", []byte(`"Hola":"Adios"`)) //TESTED
 	//deleteCalendar("ID") //TESTED
 	//createCalendar([]byte(`"Hola":"Adios"`)) //TESTED
-}
-
-// https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func eventsURI(calendarID string, eventID string) (URI string) {
-	return Requests.RootURI + Requests.CalendarAPI + Requests.Version + Requests.Calendars + "/" + calendarID + Requests.Events + "/" + eventID
-}
-
-// https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarID}
-func calendarListURI(calendarID string) (URI string) {
-	return Requests.RootURI + Requests.CalendarAPI + Requests.Version + Requests.Context + Requests.CalendarList + "/" + calendarID
-}
-
-// https://www.googleapis.com/calendar/v3/calendars/{calendarID}
-func calendarsURI(calendarID string) (URI string) {
-	return Requests.RootURI + Requests.CalendarAPI + Requests.Version + Requests.Calendars
-}
-
-func authorizationRequest() (auth string) {
-	return Responses.TokenType + " " + Responses.AccessToken
 }
