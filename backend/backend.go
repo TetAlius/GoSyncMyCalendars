@@ -59,7 +59,7 @@ func (s *Server) Start() {
 
 	laddr := s.IP.String() + ":" + strconv.Itoa(s.Port)
 	log.Infof("Backend server listening at %s", laddr)
-	http.HandleFunc("/google", s.googleHandler.TokenHandler)
+
 	err := http.ListenAndServe(laddr, webServerMux)
 	if err != nil {
 		log.Fatalf("ListenAndServe: " + err.Error())
