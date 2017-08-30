@@ -4,34 +4,37 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-//Config TODO: improve this calls
-var Config struct {
-	outlookConfig `json:"outlook"`
-}
-
-// Config TODO
-type outlookConfig struct {
-	ID          string `json:"client_id"`
-	Secret      string `json:"client_secret"`
-	RedirectURI string `json:"redirect_uri"`
-	LoginURI    string `json:"login_uri"`
-	Version     string `json:"version"`
-	Scope       string `json:"scope"`
-}
-
-// Requests TODO
-var Requests struct {
-	RootURI     string `json:"root_uri"`
-	Version     string `json:"version"`
-	UserContext string `json:"user_context"`
-	Calendars   string `json:"calendars"`
-	Events      string `json:"events"`
-}
+////Config TODO: improve this calls
+//var Config struct {
+//	outlookConfig `json:"outlook"`
+//}
+//
+//// Config TODO
+//type outlookConfig struct {
+//	ID          string `json:"client_id"`
+//	Secret      string `json:"client_secret"`
+//	RedirectURI string `json:"redirect_uri"`
+//	LoginURI    string `json:"login_uri"`
+//	Version     string `json:"version"`
+//	Scope       string `json:"scope"`
+//}
+//
+//// Requests TODO
+//var Requests struct {
+//	RootURI     string `json:"root_uri"`
+//	Version     string `json:"version"`
+//	UserContext string `json:"user_context"`
+//	Calendars   string `json:"calendars"`
+//	Events      string `json:"events"`
+//}
 
 //// Responses TODO: this will be change to type and not var when I store the access_token on the BD
 //var Responses struct {
@@ -131,69 +134,61 @@ var calendar2 = []byte(`{
 }`)
 
 // TokenRefresh TODO
-//func TokenRefresh(oldToken string) {
-//	client := http.Client{}
-//	//check if token is DEAD!!!
-//
-//	req, err := http.NewRequest("POST",
-//		Config.LoginURI+Config.Version+"/token",
-//		strings.NewReader("grant_type=refresh_token"+
-//			"&client_id="+Config.ID+
-//			"&scope="+Config.Scope+
-//			"&refresh_token="+oldToken+
-//			"&client_secret="+Config.Secret))
-//
-//	if err != nil {
-//		log.Errorf("Error creating new request: %s", err.Error())
-//	}
-//
-//	req.Header.Set("Content-Type",
-//		"application/x-www-form-urlencoded")
-//
-//	resp, err := client.Do(req)
-//	if err != nil {
-//		log.Errorf("Error doing outlook request: %s", err.Error())
-//	}
-//	defer resp.Body.Close()
-//	contents, err := ioutil.ReadAll(resp.Body)
-//	if err != nil {
-//		log.Errorf("Error reading outlook response: %s", err.Error())
-//	}
-//	err = json.Unmarshal(contents, &Responses)
-//	if err != nil {
-//		log.Errorf("Error unmarshaling outlook response: %s", err.Error())
-//	}
-//	//TODO save info
-//
-//	//TODO CRUD events
-//	//getAllEvents() TESTED
-//	//createEvent("", nil)
-//	//updateEvent("", nil) TESTED
-//	//deleteEvent("") TESTED
-//	//getEvent("") TESTED
-//
-//	//TODO CRUD calendars
-//	//getAllCalendars() TESTED
-//	//getCalendar() TESTED
-//	//updateCalendar() TESTED
-//	//deleteCalendar() TESTED
-//	//createCalendar() TESTED
-//}
+func (o *OutlookAccount) Refresh() {
+	client := http.Client{}
+	//check if token is DEAD!!!
 
-// https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
-//func eventsFromCalendarURI(calendarID string) (URI string) {
-//	return Requests.RootURI + Requests.Version + Requests.UserContext + Requests.Calendars + "/" + calendarID + Requests.Events
-//}
-//
-//// https://outlook.office.com/api/v2.0/me/events/{eventID}
-//func eventURI(eventID string) (URI string) {
-//	return Requests.RootURI + Requests.Version + Requests.UserContext + Requests.Events + "/" + eventID
-//}
-//
-//// https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
-//func calendarsURI(calendarID string) (URI string) {
-//	return Requests.RootURI + Requests.Version + Requests.UserContext + Requests.Calendars + "/" + calendarID
-//}
+	route, err := util.CallAPIRoot("outlook/token/uri")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	params, err := util.CallAPIRoot("outlook/token/refresh-params")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	req, err := http.NewRequest("POST",
+		route,
+		strings.NewReader(fmt.Sprintf(params, o.RefreshToken)))
+
+	if err != nil {
+		log.Errorf("Error creating new request: %s", err.Error())
+	}
+
+	req.Header.Set("Content-Type",
+		"application/x-www-form-urlencoded")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error doing outlook request: %s", err.Error())
+	}
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body from outlook request: %s", err.Error())
+	}
+
+	log.Debugf("%s\n", contents)
+
+	//TODO save info
+
+	//TODO CRUD events
+	//getAllEvents() TESTED
+	//createEvent("", nil)
+	//updateEvent("", nil) TESTED
+	//deleteEvent("") TESTED
+	//getEvent("") TESTED
+
+	//TODO CRUD calendars
+	//getAllCalendars() TESTED
+	//getCalendar() TESTED
+	//updateCalendar() TESTED
+	//deleteCalendar() TESTED
+	//createCalendar() TESTED
+}
 
 func (o *OutlookAccount) authorizationRequest() (auth string) {
 	return o.TokenType + " " + o.AccessToken

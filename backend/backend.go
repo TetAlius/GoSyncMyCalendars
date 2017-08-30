@@ -18,6 +18,8 @@ type Server struct {
 }
 
 type Accounter interface {
+	Refresh()
+
 	GetAllCalendars()
 	GetPrimaryCalendar()
 	GetCalendar(calendarID string)
@@ -56,6 +58,7 @@ func (s *Server) Start() {
 	if err != nil {
 		log.Fatalf("ListenAndServe: " + err.Error())
 	}
+
 }
 
 //Stop the backend

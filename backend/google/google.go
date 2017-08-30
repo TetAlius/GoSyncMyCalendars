@@ -63,7 +63,7 @@ func GenerateRandomState() (rs string) {
 }
 
 //TokenRefresh TODO doc
-func TokenRefresh(oldToken string) {
+func (g *GoogleAccount) Refresh() {
 	client := http.Client{}
 
 	route, err := util.CallAPIRoot("google/token/uri")
@@ -81,7 +81,7 @@ func TokenRefresh(oldToken string) {
 	req, err := http.NewRequest("POST",
 		route,
 		strings.NewReader(
-			fmt.Sprintf(params, oldToken)))
+			fmt.Sprintf(params, g.RefreshToken)))
 
 	if err != nil {
 		log.Errorf("Error creating new request: %s", err.Error())
