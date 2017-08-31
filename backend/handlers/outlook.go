@@ -21,11 +21,13 @@ func NewOutlookHandler() (outlook *Outlook) {
 
 func (o *Outlook) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	route, err := util.CallAPIRoot("outlook/token/uri")
+	log.Debugln(route)
 	if err != nil {
 		log.Errorf("Error generating URL: %s", err.Error())
 		return
 	}
 	params, err := util.CallAPIRoot("outlook/token/request-params")
+	log.Debugln(params)
 	if err != nil {
 		log.Errorf("Error generating URL: %s", err.Error())
 		return
@@ -55,14 +57,17 @@ func (o *Outlook) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Error reading response body from outlook request: %s", err.Error())
 	}
-
+	log.Debugln(contents)
 	//TODO: DB to implement
 	account, err := outlook.NewAccount(contents)
-
+	if err != nil {
+		log.Errorf("Error creating new account request: %s", err.Error())
+	}
 	go func(account *outlook.OutlookAccount) {
 		log.Debugln(account)
 		account.GetAllCalendars()
+		account.Refresh()
 	}(account)
 
-	http.Redirect(w, r, "/", 301)
+	http.Redirect(w, r, "http://localhost:8080", 301)
 }

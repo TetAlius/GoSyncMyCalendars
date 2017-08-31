@@ -37,10 +37,6 @@ func (g *Google) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Know how to send state
 	//state := query.Get("state")
 
-	//if strings.Compare(google.Requests.State, state) != 0 {
-	//	log.Errorf("State is not correct, expected %s got %s", google.Requests.State, state)
-	//}
-
 	code := query.Get("code")
 
 	client := http.Client{}
@@ -73,6 +69,7 @@ func (g *Google) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	go func(account *google.GoogleAccount) {
 		log.Debugln(account)
 		account.GetAllCalendars()
+		account.Refresh()
 	}(account)
 
 	//This is so that users cannot read the response

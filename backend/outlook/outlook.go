@@ -76,7 +76,7 @@ func NewAccount(contents []byte) (r *OutlookAccount, err error) {
 		return nil, errors.New(fmt.Sprintf("Error unmarshaling outlook response: %s", err.Error()))
 	}
 
-	email, preferred, err := util.MailFromToken(strings.Split(r.TokenID, "."))
+	email, preferred, err := util.MailFromToken(strings.Split(r.TokenID, "."), "=")
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error retrieving outlook mail: %s", err.Error()))
 	}
@@ -130,7 +130,7 @@ var calendar = []byte(`{
 }`)
 
 var calendar2 = []byte(`{
-  "Name": "Social"
+  "Name": "Social"contents
 }`)
 
 // TokenRefresh TODO
@@ -139,12 +139,14 @@ func (o *OutlookAccount) Refresh() {
 	//check if token is DEAD!!!
 
 	route, err := util.CallAPIRoot("outlook/token/uri")
+	log.Debugln(route)
 	if err != nil {
 		log.Errorf("Error generating URL: %s", err.Error())
 		return
 	}
 
 	params, err := util.CallAPIRoot("outlook/token/refresh-params")
+	log.Debugf("Params: %s", fmt.Sprintf(params, o.RefreshToken))
 	if err != nil {
 		log.Errorf("Error generating URL: %s", err.Error())
 		return
@@ -170,24 +172,15 @@ func (o *OutlookAccount) Refresh() {
 	if err != nil {
 		log.Errorf("Error reading response body from outlook request: %s", err.Error())
 	}
+	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nScope: %s\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
+		o.TokenType, o.ExpiresIn, o.Scope, o.AccessToken, o.RefreshToken, o.TokenID, o.AnchorMailbox, o.PreferredUsername)
 
 	log.Debugf("%s\n", contents)
+	err = json.Unmarshal(contents, &o)
 
-	//TODO save info
+	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nScope: %s\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
+		o.TokenType, o.ExpiresIn, o.Scope, o.AccessToken, o.RefreshToken, o.TokenID, o.AnchorMailbox, o.PreferredUsername)
 
-	//TODO CRUD events
-	//getAllEvents() TESTED
-	//createEvent("", nil)
-	//updateEvent("", nil) TESTED
-	//deleteEvent("") TESTED
-	//getEvent("") TESTED
-
-	//TODO CRUD calendars
-	//getAllCalendars() TESTED
-	//getCalendar() TESTED
-	//updateCalendar() TESTED
-	//deleteCalendar() TESTED
-	//createCalendar() TESTED
 }
 
 func (o *OutlookAccount) authorizationRequest() (auth string) {
