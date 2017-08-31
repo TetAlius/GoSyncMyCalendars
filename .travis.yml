@@ -1,0 +1,15 @@
+language: go
+
+go:
+  - 1.9
+
+before_install:
+  - go get -t -v ./...
+  - chmod +x ./scripts/cibuild.sh
+  - chmod +x ./scripts/test.sh
+
+script:
+  - ./scripts/cibuild.sh
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

@@ -2,10 +2,11 @@ package google
 
 import (
 	"bytes"
+	"fmt"
 	"time"
 
-	"github.com/TetAlius/GoSyncMyCalendars/backend"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 type eventResource struct {
@@ -88,17 +89,23 @@ var eventUpdated = []byte(`{
 }`)
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func getAllEvents(calendarID string) {
+func (g *GoogleAccount) GetAllEventsFromCalendar(calendarID string) {
 	log.Debugln("getAllEvents google")
 
-	contents, err := backend.DoRequest("GET",
-		eventsURI(calendarID, ""),
+	route, err := util.CallAPIRoot("google/calendars/id/events")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest("GET",
+		fmt.Sprintf(route, calendarID),
 		nil,
-		authorizationRequest(),
+		g.authorizationRequest(),
 		"")
 
 	if err != nil {
-		log.Errorf("Error getting all events of a calendar for email %s. %s", Responses.Email, err.Error())
+		log.Errorf("Error getting all events of g calendar for email %s. %s", g.Email, err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -106,17 +113,23 @@ func getAllEvents(calendarID string) {
 }
 
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func createEvent(calendarID string, eventData []byte) {
+func (g *GoogleAccount) CreateEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent google")
 
-	contents, err := backend.DoRequest("POST",
-		eventsURI(calendarID, ""),
+	route, err := util.CallAPIRoot("google/calendars/id/events")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest("POST",
+		fmt.Sprintf(route, calendarID),
 		bytes.NewBuffer(event),
-		authorizationRequest(),
+		g.authorizationRequest(),
 		"")
 
 	if err != nil {
-		log.Errorf("Error creating event in a calendar for email %s. %s", Responses.Email, err.Error())
+		log.Errorf("Error creating event in g calendar for email %s. %s", g.Email, err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -124,19 +137,25 @@ func createEvent(calendarID string, eventData []byte) {
 }
 
 //PUT https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func updateEvent(calendarID string, eventID string, eventData []byte) {
+func (g *GoogleAccount) UpdateEvent(eventData []byte, ids ...string) {
 	log.Debugln("updateEvent google")
+	//TODO: Test if ids are two given
 
 	//Meter en los header el etag
+	route, err := util.CallAPIRoot("google/calendars/id/events/id")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
 
-	contents, err := backend.DoRequest("PUT",
-		eventsURI(calendarID, eventID),
+	contents, err := util.DoRequest("PUT",
+		fmt.Sprintf(route, ids[0], ids[1]),
 		bytes.NewBuffer(eventUpdated),
-		authorizationRequest(),
+		g.authorizationRequest(),
 		"")
 
 	if err != nil {
-		log.Errorf("Error updating event of a calendar for email %s. %s", Responses.Email, err.Error())
+		log.Errorf("Error updating event of g calendar for email %s. %s", g.Email, err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -144,18 +163,25 @@ func updateEvent(calendarID string, eventID string, eventData []byte) {
 }
 
 //DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func deleteEvent(calendarID string, eventID string) {
+func (g *GoogleAccount) DeleteEvent(ids ...string) {
 	log.Debugln("deleteEvent google")
+	//TODO: Test if ids are two given
 
-	contents, err := backend.DoRequest(
+	route, err := util.CallAPIRoot("google/calendars/id/events/id")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest(
 		"DELETE",
-		eventsURI(calendarID, eventID),
+		fmt.Sprintf(route, ids[0], ids[1]),
 		nil,
-		authorizationRequest(),
+		g.authorizationRequest(),
 		"")
 
 	if err != nil {
-		log.Errorf("Error deleting event of a calendar for email %s. %s", Responses.Email, err.Error())
+		log.Errorf("Error deleting event of g calendar for email %s. %s", g.Email, err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -163,18 +189,24 @@ func deleteEvent(calendarID string, eventID string) {
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func getEvent(calendarID string, eventID string) {
+func (g *GoogleAccount) GetEvent(ids ...string) {
 	log.Debugln("getEvent google")
 
-	contents, err := backend.DoRequest(
+	route, err := util.CallAPIRoot("google/calendars/id/events/id")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
+	}
+
+	contents, err := util.DoRequest(
 		"GET",
-		eventsURI(calendarID, eventID),
+		fmt.Sprintf(route, ids[0], ids[1]),
 		nil,
-		authorizationRequest(),
+		g.authorizationRequest(),
 		"")
 
 	if err != nil {
-		log.Errorf("Error getting an event of a calendar for email %s. %s", Responses.Email, err.Error())
+		log.Errorf("Error getting an event of g calendar for email %s. %s", g.Email, err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)

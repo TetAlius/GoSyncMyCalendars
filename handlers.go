@@ -1,25 +1,11 @@
 package main
 
-import (
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"text/template"
-	"time"
-
-	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
-	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
-	"github.com/TetAlius/GoSyncMyCalendars/backend/user"
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
-	"github.com/TetAlius/GoSyncMyCalendars/util"
-)
-
 type calendarInfo struct {
 	account string
 	names   []string
 }
 
+/*
 func welcomeHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./frontend/welcome.html")
 }
@@ -229,3 +215,4 @@ func cookiesHandlerTest(w http.ResponseWriter, r *http.Request) {
 	cookie := http.Cookie{Name: "test", Value: "abcd", Expires: expiration}
 	http.SetCookie(w, &cookie)
 }
+*/
