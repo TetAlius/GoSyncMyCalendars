@@ -22,6 +22,11 @@ type OutlookAccount struct {
 	PreferredUsername bool
 }
 
+type Error struct {
+	Err              string `json:"error"`
+	ErrorDescription string `json:"error_description"`
+}
+
 func NewAccount(contents []byte) (r *OutlookAccount, err error) {
 	err = json.Unmarshal(contents, &r)
 	if err != nil {
@@ -110,6 +115,7 @@ func (o *OutlookAccount) Refresh() (err error) {
 
 	if err != nil {
 		log.Errorf("Error creating new request: %s", err.Error())
+		return
 	}
 
 	req.Header.Set("Content-Type",
@@ -118,23 +124,44 @@ func (o *OutlookAccount) Refresh() (err error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Errorf("Error doing outlook request: %s", err.Error())
+		return
 	}
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Errorf("Error reading response body from outlook request: %s", err.Error())
+		return
 	}
+
 	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
 		o.TokenType, o.ExpiresIn, o.AccessToken, o.RefreshToken, o.TokenID, o.AnchorMailbox, o.PreferredUsername)
 
 	log.Debugf("%s\n", contents)
 	err = json.Unmarshal(contents, &o)
+	err = o.checkResponseError(contents)
+	if err != nil {
+		log.Errorf("There was an error with the outlook request: %s", err.Error())
+		return
+	}
 
 	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
 		o.TokenType, o.ExpiresIn, o.AccessToken, o.RefreshToken, o.TokenID, o.AnchorMailbox, o.PreferredUsername)
-
+	return
 }
 
 func (o *OutlookAccount) authorizationRequest() (auth string) {
 	return o.TokenType + " " + o.AccessToken
+}
+
+func (o *OutlookAccount) checkResponseError(contents []byte) (err error) {
+	e := new(Error)
+	err = json.Unmarshal(contents, &e)
+	if e.empty() {
+		return nil
+	}
+	return errors.New(fmt.Sprintf("Error: %s. Description: %s", e.Err, e.ErrorDescription))
+}
+
+func (e *Error) empty() bool {
+	return len(e.Err) == 0 && len(e.ErrorDescription) == 0
 }
