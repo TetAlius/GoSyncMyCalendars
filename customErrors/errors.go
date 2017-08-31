@@ -40,3 +40,11 @@ type EmptyValueError struct {
 func (err EmptyValueError) Error() string {
 	return fmt.Sprintln("Values cannot be empty")
 }
+
+type ConfigNotChargedCorrectlyError struct {
+	Message string
+}
+
+func (err ConfigNotChargedCorrectlyError) Error() string {
+	return fmt.Sprintln(err.Message)
+}
