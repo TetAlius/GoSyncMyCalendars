@@ -33,7 +33,7 @@ func NewAccount(contents []byte) (r *GoogleAccount, err error) {
 	log.Debugf("%s", contents)
 
 	// preferred is ignored on google
-	email, _, err := util.MailFromToken(strings.Split(r.TokenID, "."))
+	email, _, err := util.MailFromToken(strings.Split(r.TokenID, "."), "==")
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error retrieving google mail: %s", err.Error()))
 	}
@@ -103,19 +103,12 @@ func (g *GoogleAccount) Refresh() {
 		log.Errorf("Error reading response body from google request: %s", err.Error())
 	}
 
+	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s",
+		g.TokenType, g.ExpiresIn, g.AccessToken, g.RefreshToken, g.TokenID)
+
 	log.Debugf("%s\n", contents)
+	err = json.Unmarshal(contents, &g)
 
-	//TODO CRUD events
-	//getAllEvents("primary") //TESTED
-	//createEvent("primary", nil) //TESTED
-	//updateEvent("primary", "eventID", nil)//TESTED
-	//deleteEvent("primary", "eventID")//TESTED
-	//getEvent("primary", "eventID") //TESTED
-
-	//TODO CRUD calendars
-	//getAllCalendars() //TESTED
-	//getCalendar("ID") //TESTED
-	//updateCalendar("ID", []byte(`"Hola":"Adios"`)) //TESTED
-	//deleteCalendar("ID") //TESTED
-	//createCalendar([]byte(`"Hola":"Adios"`)) //TESTED
+	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s",
+		g.TokenType, g.ExpiresIn, g.AccessToken, g.RefreshToken, g.TokenID)
 }

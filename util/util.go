@@ -16,12 +16,14 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
-func MailFromToken(tokens []string) (email string, preferred bool, err error) {
+func MailFromToken(tokens []string, addFinal string) (email string, preferred bool, err error) {
 	encodedToken := strings.Replace(
 		strings.Replace(tokens[1], "-", "_", -1),
-		"+", "/", -1) + "=="
+		"+", "/", -1) + addFinal
 	log.Debugf("EncodedToken: %s", encodedToken)
+
 	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
+
 	if err != nil {
 		log.Errorf("Error decoding token: %s", err.Error())
 	}

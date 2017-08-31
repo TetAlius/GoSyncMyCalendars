@@ -22,6 +22,7 @@ func NewOutlookHandler() (outlook *Outlook) {
 func (o *Outlook) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugln("Starting outlook petition")
 	route, err := util.CallAPIRoot("outlook/login")
+	log.Debugln(route)
 	if err != nil {
 		log.Errorf("Error generating URL: %s", err.Error())
 		return
