@@ -62,7 +62,6 @@ import (
 type OutlookAccount struct {
 	TokenType         string `json:"token_type"`
 	ExpiresIn         int    `json:"expires_in"`
-	Scope             string `json:"scope"`
 	AccessToken       string `json:"access_token"`
 	RefreshToken      string `json:"refresh_token"`
 	TokenID           string `json:"id_token"`
@@ -134,7 +133,7 @@ var calendar2 = []byte(`{
 }`)
 
 // TokenRefresh TODO
-func (o *OutlookAccount) Refresh() {
+func (o *OutlookAccount) Refresh() (err error) {
 	client := http.Client{}
 	//check if token is DEAD!!!
 
@@ -172,14 +171,14 @@ func (o *OutlookAccount) Refresh() {
 	if err != nil {
 		log.Errorf("Error reading response body from outlook request: %s", err.Error())
 	}
-	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nScope: %s\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
-		o.TokenType, o.ExpiresIn, o.Scope, o.AccessToken, o.RefreshToken, o.TokenID, o.AnchorMailbox, o.PreferredUsername)
+	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
+		o.TokenType, o.ExpiresIn, o.AccessToken, o.RefreshToken, o.TokenID, o.AnchorMailbox, o.PreferredUsername)
 
 	log.Debugf("%s\n", contents)
 	err = json.Unmarshal(contents, &o)
 
-	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nScope: %s\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
-		o.TokenType, o.ExpiresIn, o.Scope, o.AccessToken, o.RefreshToken, o.TokenID, o.AnchorMailbox, o.PreferredUsername)
+	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
+		o.TokenType, o.ExpiresIn, o.AccessToken, o.RefreshToken, o.TokenID, o.AnchorMailbox, o.PreferredUsername)
 
 }
 
