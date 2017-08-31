@@ -12,53 +12,6 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-////Config TODO: improve this calls
-//var Config struct {
-//	outlookConfig `json:"outlook"`
-//}
-//
-//// Config TODO
-//type outlookConfig struct {
-//	ID          string `json:"client_id"`
-//	Secret      string `json:"client_secret"`
-//	RedirectURI string `json:"redirect_uri"`
-//	LoginURI    string `json:"login_uri"`
-//	Version     string `json:"version"`
-//	Scope       string `json:"scope"`
-//}
-//
-//// Requests TODO
-//var Requests struct {
-//	RootURI     string `json:"root_uri"`
-//	Version     string `json:"version"`
-//	UserContext string `json:"user_context"`
-//	Calendars   string `json:"calendars"`
-//	Events      string `json:"events"`
-//}
-
-//// Responses TODO: this will be change to type and not var when I store the access_token on the BD
-//var Responses struct {
-//	TokenType         string `json:"token_type"`
-//	ExpiresIn         int    `json:"expires_in"`
-//	Scope             string `json:"scope"`
-//	AccessToken       string `json:"access_token"`
-//	RefreshToken      string `json:"refresh_token"`
-//	TokenID           string `json:"id_token"`
-//	AnchorMailbox     string
-//	PreferredUsername bool
-//}
-//
-//type Response struct {
-//	TokenType         string `json:"token_type"`
-//	ExpiresIn         int    `json:"expires_in"`
-//	Scope             string `json:"scope"`
-//	AccessToken       string `json:"access_token"`
-//	RefreshToken      string `json:"refresh_token"`
-//	TokenID           string `json:"id_token"`
-//	AnchorMailbox     string
-//	PreferredUsername bool
-//}
-
 type OutlookAccount struct {
 	TokenType         string `json:"token_type"`
 	ExpiresIn         int    `json:"expires_in"`
