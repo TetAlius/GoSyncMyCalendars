@@ -39,6 +39,7 @@ func TestGoogleSignInHandler(t *testing.T) {
 		t.Fail()
 	}
 
+	os.Setenv("API_ROOT", os.Getenv("API_ROOT_TEST"))
 }
 
 func requestGoogleSignIn(t *testing.T) *http.Response {
