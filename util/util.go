@@ -17,6 +17,9 @@ import (
 )
 
 func MailFromToken(tokens []string, addFinal string) (email string, preferred bool, err error) {
+	if len(tokens) < 2 {
+		return "", false, errors.New("TokenID was not parsed correctly")
+	}
 	encodedToken := strings.Replace(
 		strings.Replace(tokens[1], "-", "_", -1),
 		"+", "/", -1) + addFinal
@@ -57,6 +60,9 @@ func MailFromToken(tokens []string, addFinal string) (email string, preferred bo
 func CallAPIRoot(route string) (apiRoute string, err error) {
 	client := http.Client{}
 	root := os.Getenv("API_ROOT")
+	if len(root) == 0 {
+		return "", errors.New("API_ROOT not given on environment")
+	}
 	req, err := http.NewRequest("GET", root+route, nil)
 
 	if err != nil {

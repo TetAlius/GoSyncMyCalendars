@@ -105,7 +105,7 @@ func (o *OutlookAccount) Refresh() (err error) {
 	params, err := util.CallAPIRoot("outlook/token/refresh-params")
 	log.Debugf("Params: %s", fmt.Sprintf(params, o.RefreshToken))
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
+		log.Errorf("Error generating params: %s", err.Error())
 		return
 	}
 
