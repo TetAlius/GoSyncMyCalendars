@@ -12,7 +12,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-type OutlookAccount struct {
+type Account struct {
 	TokenType         string `json:"token_type"`
 	ExpiresIn         int    `json:"expires_in"`
 	AccessToken       string `json:"access_token"`
@@ -27,7 +27,7 @@ type Error struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-func NewAccount(contents []byte) (r *OutlookAccount, err error) {
+func NewAccount(contents []byte) (r *Account, err error) {
 	err = json.Unmarshal(contents, &r)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error unmarshaling outlook response: %s", err.Error()))
@@ -91,7 +91,7 @@ var calendar2 = []byte(`{
 }`)
 
 // TokenRefresh TODO
-func (o *OutlookAccount) Refresh() (err error) {
+func (o *Account) Refresh() (err error) {
 	client := http.Client{}
 	//check if token is DEAD!!!
 
@@ -149,11 +149,11 @@ func (o *OutlookAccount) Refresh() (err error) {
 	return
 }
 
-func (o *OutlookAccount) authorizationRequest() (auth string) {
+func (o *Account) authorizationRequest() (auth string) {
 	return o.TokenType + " " + o.AccessToken
 }
 
-func (o *OutlookAccount) checkResponseError(contents []byte) (err error) {
+func (o *Account) checkResponseError(contents []byte) (err error) {
 	e := new(Error)
 	err = json.Unmarshal(contents, &e)
 	if e.empty() {

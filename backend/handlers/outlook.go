@@ -63,7 +63,7 @@ func (o *Outlook) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Error creating new account request: %s", err.Error())
 	}
-	go func(account *outlook.OutlookAccount) {
+	go func(account *outlook.Account) {
 		log.Debugln(account)
 		account.GetAllCalendars()
 		account.Refresh()

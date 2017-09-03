@@ -3,6 +3,7 @@ package google
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -12,7 +13,6 @@ import (
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
-	"github.com/pkg/errors"
 )
 
 type Account struct {
