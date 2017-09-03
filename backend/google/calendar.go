@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"errors"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -43,12 +45,12 @@ func (g *Account) GetAllCalendars() {
 
 // GET https://www.googleapis.com/calendar/v3/calendars/primary
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary This is the one used
-func (g *Account) GetPrimaryCalendar() {
+func (g *Account) GetPrimaryCalendar() (err error) {
 	log.Debugln("getPrimaryCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/primary")
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
-		return
+		log.Errorf("%s", err.Error())
+		return errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
 	}
 
 	contents, err :=
@@ -65,6 +67,7 @@ func (g *Account) GetPrimaryCalendar() {
 
 	log.Debugf("Contents: %s", contents)
 
+	return
 }
 
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarID}
