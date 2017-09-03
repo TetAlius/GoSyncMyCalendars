@@ -12,6 +12,7 @@ import (
 )
 
 func TestNewAccount(t *testing.T) {
+	setupApiRoot()
 	// Bad Info inside Json
 	b := []byte(`{"Name":"Bob","Food":"Pickle"}`)
 	_, err := outlook.NewAccount(b)
@@ -39,6 +40,7 @@ func TestNewAccount(t *testing.T) {
 }
 
 func TestOutlookAccount_Refresh(t *testing.T) {
+	setupApiRoot()
 	//Empty initialized info account
 	account := new(outlook.Account)
 	err := account.Refresh()
@@ -55,7 +57,6 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 	}
 
 	os.Setenv("API_ROOT", "")
-
 	err = account.Refresh()
 	logger.Debugln(err)
 
@@ -76,4 +77,8 @@ func setup() (account *outlook.Account) {
 		PreferredUsername: false,
 	}
 	return
+}
+
+func setupApiRoot() {
+	os.Setenv("API_ROOT", os.Getenv("API_ROOT_TEST"))
 }

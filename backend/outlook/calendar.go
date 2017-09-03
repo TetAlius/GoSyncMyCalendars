@@ -10,13 +10,13 @@ import (
 )
 
 // GET https://outlook.office.com/api/v2.0/me/calendars
-func (o *Account) GetAllCalendars() {
+func (o *Account) GetAllCalendars() (err error) {
 	log.Debugln("getAllCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
-		return
+		log.Errorf("%s", err.Error())
+		return errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
 	}
 
 	contents, err := util.DoRequest("GET",
@@ -51,7 +51,7 @@ func (o *Account) GetPrimaryCalendar() (err error) {
 
 	if err != nil {
 		log.Errorf("%s", err.Error())
-		return errors.New(fmt.Sprintf("Error getting all calendars for email %s. %s", o.AnchorMailbox, err.Error()))
+		return errors.New(fmt.Sprintf("Error getting primary calendar for email %s. %s", o.AnchorMailbox, err.Error()))
 	}
 
 	log.Debugf("%s\n", contents)
