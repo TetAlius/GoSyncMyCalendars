@@ -9,7 +9,7 @@ import (
 )
 
 // GET https://outlook.office.com/api/v2.0/me/calendars
-func (o *OutlookAccount) GetAllCalendars() {
+func (o *Account) GetAllCalendars() {
 	log.Debugln("getAllCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
@@ -33,7 +33,7 @@ func (o *OutlookAccount) GetAllCalendars() {
 }
 
 //GET https://outlook.office.com/api/v2.0/me/calendar
-func (o *OutlookAccount) GetPrimaryCalendar() {
+func (o *Account) GetPrimaryCalendar() (err error) {
 	log.Debugln("getPrimaryCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/primary")
@@ -56,7 +56,7 @@ func (o *OutlookAccount) GetPrimaryCalendar() {
 }
 
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
-func (o *OutlookAccount) GetCalendar(calendarID string) {
+func (o *Account) GetCalendar(calendarID string) {
 	log.Debugln("getCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
@@ -79,7 +79,7 @@ func (o *OutlookAccount) GetCalendar(calendarID string) {
 }
 
 // POST https://outlook.office.com/api/v2.0/me/calendars
-func (o *OutlookAccount) CreateCalendar(calendarData []byte) {
+func (o *Account) CreateCalendar(calendarData []byte) {
 	log.Debugln("createCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
@@ -103,7 +103,7 @@ func (o *OutlookAccount) CreateCalendar(calendarData []byte) {
 }
 
 // PATCH https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
-func (o *OutlookAccount) UpdateCalendar(calendarID string, calendarData []byte) {
+func (o *Account) UpdateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
@@ -136,7 +136,7 @@ func (o *OutlookAccount) UpdateCalendar(calendarID string, calendarData []byte) 
 
 // DELETE https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 //Does not return json if OK, only status 204
-func (o *OutlookAccount) DeleteCalendar(calendarID string) {
+func (o *Account) DeleteCalendar(calendarID string) {
 	log.Debugln("deleteCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
