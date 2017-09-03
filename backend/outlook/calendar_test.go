@@ -6,6 +6,7 @@ import (
 )
 
 func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
+	setupApiRoot()
 	account := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
