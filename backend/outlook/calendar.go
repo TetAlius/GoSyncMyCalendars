@@ -30,6 +30,7 @@ func (o *Account) GetAllCalendars() (err error) {
 	}
 
 	log.Debugf("%s\n", contents)
+	return
 
 }
 
