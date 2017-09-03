@@ -40,7 +40,7 @@ func TestNewAccount(t *testing.T) {
 
 func TestOutlookAccount_Refresh(t *testing.T) {
 	//Empty initialized info account
-	account := new(outlook.OutlookAccount)
+	account := new(outlook.Account)
 	err := account.Refresh()
 	logger.Debugln(err)
 	if err == nil {
@@ -65,8 +65,8 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 
 }
 
-func setup() (account *outlook.OutlookAccount) {
-	account = &outlook.OutlookAccount{
+func setup() (account *outlook.Account) {
+	account = &outlook.Account{
 		TokenType:         os.Getenv("OUTLOOK_TOKEN_TYPE"),
 		ExpiresIn:         3600,
 		AccessToken:       os.Getenv("OUTLOOK_ACCESS_TOKEN"),
