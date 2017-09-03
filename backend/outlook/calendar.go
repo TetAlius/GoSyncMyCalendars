@@ -2,6 +2,7 @@ package outlook
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -38,8 +39,8 @@ func (o *Account) GetPrimaryCalendar() (err error) {
 
 	route, err := util.CallAPIRoot("outlook/calendars/primary")
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
-		return
+		log.Errorf("%s", err.Error())
+		return errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
 	}
 
 	contents, err := util.DoRequest("GET",
@@ -49,10 +50,12 @@ func (o *Account) GetPrimaryCalendar() (err error) {
 		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error getting all calendars for email %s. %s", o.AnchorMailbox, err.Error())
+		log.Errorf("%s", err.Error())
+		return errors.New(fmt.Sprintf("Error getting all calendars for email %s. %s", o.AnchorMailbox, err.Error()))
 	}
 
 	log.Debugf("%s\n", contents)
+	return
 }
 
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
