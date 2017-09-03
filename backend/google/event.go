@@ -89,7 +89,7 @@ var eventUpdated = []byte(`{
 }`)
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (g *GoogleAccount) GetAllEventsFromCalendar(calendarID string) {
+func (g *Account) GetAllEventsFromCalendar(calendarID string) {
 	log.Debugln("getAllEvents google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -113,7 +113,7 @@ func (g *GoogleAccount) GetAllEventsFromCalendar(calendarID string) {
 }
 
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (g *GoogleAccount) CreateEvent(calendarID string, eventData []byte) {
+func (g *Account) CreateEvent(calendarID string, eventData []byte) {
 	log.Debugln("createEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -137,7 +137,7 @@ func (g *GoogleAccount) CreateEvent(calendarID string, eventData []byte) {
 }
 
 //PUT https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (g *GoogleAccount) UpdateEvent(eventData []byte, ids ...string) {
+func (g *Account) UpdateEvent(eventData []byte, ids ...string) {
 	log.Debugln("updateEvent google")
 	//TODO: Test if ids are two given
 
@@ -163,7 +163,7 @@ func (g *GoogleAccount) UpdateEvent(eventData []byte, ids ...string) {
 }
 
 //DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (g *GoogleAccount) DeleteEvent(ids ...string) {
+func (g *Account) DeleteEvent(ids ...string) {
 	log.Debugln("deleteEvent google")
 	//TODO: Test if ids are two given
 
@@ -189,7 +189,7 @@ func (g *GoogleAccount) DeleteEvent(ids ...string) {
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (g *GoogleAccount) GetEvent(ids ...string) {
+func (g *Account) GetEvent(ids ...string) {
 	log.Debugln("getEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")

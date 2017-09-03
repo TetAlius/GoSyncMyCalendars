@@ -66,7 +66,7 @@ func (g *Google) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO: DB to implement
 	account, err := google.NewAccount(contents)
 
-	go func(account *google.GoogleAccount) {
+	go func(account *google.Account) {
 		log.Debugln(account)
 		account.GetAllCalendars()
 		account.Refresh()

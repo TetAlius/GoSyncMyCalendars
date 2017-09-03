@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GoogleAccount struct {
+type Account struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
 	ExpiresIn    int    `json:"expires_in"`
@@ -24,7 +24,7 @@ type GoogleAccount struct {
 	Email        string
 }
 
-func NewAccount(contents []byte) (r *GoogleAccount, err error) {
+func NewAccount(contents []byte) (r *Account, err error) {
 	err = json.Unmarshal(contents, &r)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error unmarshaling google responses: %s", err.Error()))
@@ -42,7 +42,7 @@ func NewAccount(contents []byte) (r *GoogleAccount, err error) {
 	return
 }
 
-func (g *GoogleAccount) authorizationRequest() string {
+func (g *Account) authorizationRequest() string {
 	return fmt.Sprintf("%s %s", g.TokenType, g.AccessToken)
 }
 
@@ -63,7 +63,7 @@ func GenerateRandomState() (rs string) {
 }
 
 //TokenRefresh TODO doc
-func (g *GoogleAccount) Refresh() {
+func (g *Account) Refresh() {
 	client := http.Client{}
 
 	route, err := util.CallAPIRoot("google/token/uri")
