@@ -21,18 +21,18 @@ type Accounter interface {
 	Refresh()
 
 	GetAllCalendars()
-	GetPrimaryCalendar()
-	GetCalendar(calendarID string)
-	CreateCalendar(calendarData []byte)
-	UpdateCalendar(calendarID string, calendarData []byte)
-	DeleteCalendar(calendarID string)
+	GetPrimaryCalendar() error
+	GetCalendar(string)
+	CreateCalendar([]byte)
+	UpdateCalendar(string, []byte)
+	DeleteCalendar(string)
 
-	GetAllEventsFromCalendar(calendarID string)
-	CreateEvent(calendarID string, eventData []byte)
+	GetAllEventsFromCalendar(string)
+	CreateEvent(string, []byte)
 
-	UpdateEvent(eventData []byte, ids ...string)
-	DeleteEvent(ids ...string)
-	GetEvent(ids ...string)
+	UpdateEvent([]byte, ...string)
+	DeleteEvent(...string)
+	GetEvent(...string)
 }
 
 //NewBackend creates a backend
