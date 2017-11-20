@@ -81,6 +81,11 @@ var calendar2 = []byte(`{
   "Name": "Social"contents
 }`)
 
+type RefreshError struct {
+	Code    string `json:"error,omitempty"`
+	Message string `json:"error_description,omitempty"`
+}
+
 // TokenRefresh TODO
 func (o *Account) Refresh() (err error) {
 	client := http.Client{}
@@ -122,6 +127,16 @@ func (o *Account) Refresh() (err error) {
 	if err != nil {
 		log.Errorf("Error reading response body from outlook request: %s", err.Error())
 		return
+	}
+
+	if resp.StatusCode != 201 && resp.StatusCode != 204 {
+		e := new(RefreshError)
+		err = json.Unmarshal(contents, &e)
+		log.Errorln(e.Code)
+		log.Errorln(e.Message)
+		if len(e.Code) != 0 && len(e.Message) != 0 {
+			return errors.New(fmt.Sprintf("code: %s. message: %s", e.Code, e.Message))
+		}
 	}
 
 	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",

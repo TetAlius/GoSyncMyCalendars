@@ -15,12 +15,18 @@ func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 	setupApiRoot()
 	account := setup()
 	//Refresh previous petition in order to have tokens updated
-	account.Refresh()
+	err := account.Refresh()
+	if err != nil {
+		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
+	}
 
-	err := account.GetPrimaryCalendar()
+	log.Debugln("Started")
+	err = account.GetPrimaryCalendar()
 	if err != nil {
 		log.Infoln(err.Error())
 		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
 	}
 
 	os.Setenv("API_ROOT", "")
@@ -28,6 +34,7 @@ func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 	err = account.GetPrimaryCalendar()
 	if err == nil {
 		t.Fail()
+		t.Fatal("something went wrong. Expected an error found nil")
 	}
 
 }
@@ -40,7 +47,6 @@ func TestAccount_GetAllCalendars(t *testing.T) {
 
 	err := account.GetAllCalendars()
 	if err != nil {
-		log.Infoln(err.Error())
 		t.Fail()
 	}
 
