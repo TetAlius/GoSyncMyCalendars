@@ -22,11 +22,6 @@ type Account struct {
 	PreferredUsername bool
 }
 
-type Error struct {
-	Err              string `json:"error"`
-	ErrorDescription string `json:"error_description"`
-}
-
 func NewAccount(contents []byte) (r *Account, err error) {
 	err = json.Unmarshal(contents, &r)
 	if err != nil {
@@ -82,10 +77,6 @@ type CalendarInfo struct {
 	ChangeKey string `json:"ChangeKey"`
 }
 
-var calendar = []byte(`{
-  "Name": "Social events"
-}`)
-
 var calendar2 = []byte(`{
   "Name": "Social"contents
 }`)
@@ -138,7 +129,6 @@ func (o *Account) Refresh() (err error) {
 
 	log.Debugf("%s\n", contents)
 	err = json.Unmarshal(contents, &o)
-	err = o.checkResponseError(contents)
 	if err != nil {
 		log.Errorf("There was an error with the outlook request: %s", err.Error())
 		return
@@ -151,17 +141,4 @@ func (o *Account) Refresh() (err error) {
 
 func (o *Account) authorizationRequest() (auth string) {
 	return o.TokenType + " " + o.AccessToken
-}
-
-func (o *Account) checkResponseError(contents []byte) (err error) {
-	e := new(Error)
-	err = json.Unmarshal(contents, &e)
-	if e.empty() {
-		return nil
-	}
-	return errors.New(fmt.Sprintf("Error: %s. Description: %s", e.Err, e.ErrorDescription))
-}
-
-func (e *Error) empty() bool {
-	return len(e.Err) == 0 && len(e.ErrorDescription) == 0
 }
