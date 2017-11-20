@@ -47,6 +47,7 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 	logger.Debugln(err)
 	if err == nil {
 		t.Fail()
+		t.Fatal("something went wrong. Expected an error found nil")
 	}
 
 	//Good info account
@@ -54,6 +55,7 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 	err = account.Refresh()
 	if err != nil {
 		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
 	}
 
 	os.Setenv("API_ROOT", "")
@@ -62,6 +64,7 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 
 	if err == nil {
 		t.Fail()
+		t.Fatal("something went wrong. Expected an error found nil")
 	}
 
 }
