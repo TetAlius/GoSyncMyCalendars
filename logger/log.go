@@ -120,6 +120,12 @@ func init() {
 		warningHandle = os.Stdout
 		errorHandle = os.Stdout
 		fatalHandle = os.Stdout
+	case "testing-travis":
+		debugHandle = ioutil.Discard
+		infoHandle = ioutil.Discard
+		warningHandle = ioutil.Discard
+		errorHandle = ioutil.Discard
+		fatalHandle = ioutil.Discard
 	default:
 		fd, err := os.OpenFile("./gsmc-develop.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
