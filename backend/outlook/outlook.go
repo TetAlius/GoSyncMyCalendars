@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -81,26 +83,45 @@ var calendar2 = []byte(`{
 
 // TokenRefresh TODO
 func (o *Account) Refresh() (err error) {
+	client := http.Client{}
 	//check if token is DEAD!!!
+
 	route, err := util.CallAPIRoot("outlook/token/uri")
 	log.Debugln(route)
 	if err != nil {
-		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
+		log.Errorf("Error generating URL: %s", err.Error())
+		return
 	}
 
 	params, err := util.CallAPIRoot("outlook/token/refresh-params")
 	log.Debugf("Params: %s", fmt.Sprintf(params, o.RefreshToken))
 	if err != nil {
-		return errors.New(fmt.Sprintf("error generating params: %s", err.Error()))
+		log.Errorf("Error generating params: %s", err.Error())
+		return
 	}
 
-	contents, err := util.DoRequest("POST",
+	req, err := http.NewRequest("POST",
 		route,
-		strings.NewReader(fmt.Sprintf(params, o.RefreshToken)),
-		o.authorizationRequest(),
-		o.AnchorMailbox)
+		strings.NewReader(fmt.Sprintf(params, o.RefreshToken)))
+
 	if err != nil {
-		return errors.New(fmt.Sprintf("there was an error with the refresh: %s", err.Error()))
+		log.Errorf("Error creating new request: %s", err.Error())
+		return
+	}
+
+	req.Header.Set("Content-Type",
+		"application/x-www-form-urlencoded")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error doing outlook request: %s", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body from outlook request: %s", err.Error())
+		return
 	}
 
 	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
@@ -109,7 +130,8 @@ func (o *Account) Refresh() (err error) {
 	log.Debugf("%s\n", contents)
 	err = json.Unmarshal(contents, &o)
 	if err != nil {
-		return errors.New(fmt.Sprintf("there was an error with the outlook request: %s", err.Error()))
+		log.Errorf("There was an error with the outlook request: %s", err.Error())
+		return
 	}
 
 	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
