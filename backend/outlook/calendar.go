@@ -2,6 +2,7 @@ package outlook
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -60,7 +61,7 @@ func (o *Account) GetPrimaryCalendar() (err error) {
 }
 
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
-func (o *Account) GetCalendar(calendarID string) {
+func (o *Account) GetCalendar(calendarID string) (calendar CalendarInfo, err error) {
 	log.Debugln("getCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
@@ -80,10 +81,13 @@ func (o *Account) GetCalendar(calendarID string) {
 	}
 
 	log.Debugf("%s\n", contents)
+
+	err = json.Unmarshal(contents, &calendar)
+	return
 }
 
 // POST https://outlook.office.com/api/v2.0/me/calendars
-func (o *Account) CreateCalendar(calendarData []byte) {
+func (o *Account) CreateCalendar(calendarData []byte) (calendar CalendarInfo, err error) {
 	log.Debugln("createCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
@@ -104,10 +108,14 @@ func (o *Account) CreateCalendar(calendarData []byte) {
 
 	log.Debugf("%s\n", contents)
 
+	err = json.Unmarshal(contents, &calendar)
+
+	return
+
 }
 
 // PATCH https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
-func (o *Account) UpdateCalendar(calendarID string, calendarData []byte) {
+func (o *Account) UpdateCalendar(calendarID string, calendarData []byte) (calendar CalendarInfo, err error) {
 	log.Debugln("updateCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
@@ -127,6 +135,10 @@ func (o *Account) UpdateCalendar(calendarID string, calendarData []byte) {
 	}
 
 	log.Debugf("%s\n", contents)
+
+	err = json.Unmarshal(contents, &calendar)
+
+	return
 }
 
 //TODO check if calendar is primary or birthdays if it is, the following error is send
