@@ -83,6 +83,14 @@ func CallAPIRoot(route string) (apiRoute string, err error) {
 	return strings.Replace(string(contents[:]), "\"", "", -1), nil
 }
 
+type Error struct {
+	ConcreteError `json:"error,omitempty"`
+}
+type ConcreteError struct {
+	Code    string `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
 //DoRequest TODO Creates and executes the request for all petitions
 //and returns the JSON so that it can be parsed into the correct struct
 func DoRequest(method string, url string, body io.Reader, authorization string, anchorMailbox string) (contents []byte, err error) {
@@ -115,5 +123,17 @@ func DoRequest(method string, url string, body io.Reader, authorization string, 
 	if err != nil {
 		log.Errorf("Error reading response body: %s", err.Error())
 	}
+
+	// TODO: Check if this is the same for google
+	if resp.StatusCode != 201 && resp.StatusCode != 204 {
+		e := new(Error)
+		err = json.Unmarshal(contents, &e)
+		log.Errorln(e.Code)
+		log.Errorln(e.Message)
+		if len(e.Code) != 0 && len(e.Message) != 0 {
+			return nil, errors.New(fmt.Sprintf("code: %s. message: %s", e.Code, e.Message))
+		}
+	}
+
 	return
 }
