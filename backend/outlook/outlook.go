@@ -43,7 +43,7 @@ type Sensitivity string
 // Specifies the color theme to distinguish the calendar from other calendars in a UI.
 // The property values are: LightBlue=0, LightGreen=1, LightOrange=2, LightGray=3, LightYellow=4, LightTeal=5,
 // LightPink=6, LightBrown=7, LightRed=8, MaxColor=9, Auto=-1
-type CalendarColor int32
+type CalendarColor string
 
 // The importance of the event: Low, Normal, High.
 type Importance string
@@ -64,26 +64,26 @@ type CalendarResponse struct {
 
 type CalendarListResponse struct {
 	OdataContext string         `json:"@odata.context"`
-	Value        []CalendarInfo `json:"value"`
+	Calendars    []CalendarInfo `json:"value"`
 }
 
 // CalendarInfo TODO
 type CalendarInfo struct {
-	OdataID string `json:"@odata.id"`
+	OdataID string `json:"@odata.id,omitempty"`
 
-	CalendarView        []EventInfo   `json:"CalendarView"`
-	CanEdit             bool          `json:"CanEdit"`
-	CanShare            bool          `json:"CanShare"`
-	CanViewPrivateItems bool          `json:"CanViewPrivateItems"`
-	ChangeKey           string        `json:"ChangeKey"`
-	Color               CalendarColor `json:"Color"`
-	Events              []EventInfo   `json:"Events"`
+	CalendarView        []EventInfo   `json:"CalendarView,omitempty"`
+	CanEdit             bool          `json:"CanEdit,omitempty"`
+	CanShare            bool          `json:"CanShare,omitempty"`
+	CanViewPrivateItems bool          `json:"CanViewPrivateItems,omitempty"`
+	ChangeKey           string        `json:"ChangeKey,omitempty"`
+	Color               CalendarColor `json:"Color,omitempty"`
+	Events              []EventInfo   `json:"Events,omitempty"`
 	ID                  string        `json:"Id"`
-	IsDefaultCalendar   bool          `json:"IsDefaultCalendar"`
-	IsShared            bool          `json:"IsShared"`
-	IsSharedWithMe      bool          `json:"IsSharedWithMe"`
-	Name                string        `json:"Name"`
-	Owner               Recipient     `json:"Owner"`
+	IsDefaultCalendar   bool          `json:"IsDefaultCalendar,omitempty"`
+	IsShared            bool          `json:"IsShared,omitempty"`
+	IsSharedWithMe      bool          `json:"IsSharedWithMe,omitempty"`
+	Name                string        `json:"Name,omitempty"`
+	Owner               Recipient     `json:"Owner,omitempty"`
 	//MultiValueExtendedProperties  []Properties  `json:"MultiValueExtendedProperties"`
 	//SingleValueExtendedProperties []Properties  `json:"SingleValueExtendedProperties"`
 }
