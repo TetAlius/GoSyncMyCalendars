@@ -2,6 +2,7 @@ package outlook
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -10,7 +11,7 @@ import (
 
 // GET https://outlook.office.com/api/v2.0/me/events
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
-func (o *Account) GetAllEventsFromCalendar(calendarID string) {
+func (o *Account) GetAllEventsFromCalendar(calendarID string) (events []EventInfo, err error) {
 	log.Debugln("getAllEvents outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -29,29 +30,13 @@ func (o *Account) GetAllEventsFromCalendar(calendarID string) {
 	}
 
 	log.Debugf("%s\n", contents)
+
+	err = json.Unmarshal(contents, &events)
+	return
 }
 
-//TODO: delete this
-var event = []byte(`{
-  "Subject": "Discuss the Calendar REST API",
-  "Body": {
-    "ContentType": "HTML",
-    "Content": "I think it will meet our requirements!"
-  },
-  "Start": {
-      "DateTime": "2016-02-02T18:00:00",
-      "TimeZone": "Pacific Standard Time"
-  },
-  "End": {
-      "DateTime": "2016-02-02T19:00:00",
-      "TimeZone": "Pacific Standard Time"
-  },
-	"ReminderMinutesBeforeStart": "30",
-  "IsReminderOn": "false"
-}`)
-
 // POST https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
-func (o *Account) CreateEvent(calendarID string, eventData []byte) {
+func (o *Account) CreateEvent(calendarID string, eventData []byte) (event EventInfo, err error) {
 	log.Debugln("createEvent outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -61,7 +46,7 @@ func (o *Account) CreateEvent(calendarID string, eventData []byte) {
 
 	contents, err := util.DoRequest("POST",
 		fmt.Sprintf(route, calendarID),
-		bytes.NewBuffer(event),
+		bytes.NewBuffer(eventData),
 		o.authorizationRequest(),
 		o.AnchorMailbox)
 
@@ -70,6 +55,9 @@ func (o *Account) CreateEvent(calendarID string, eventData []byte) {
 	}
 
 	log.Debugf("%s\n", contents)
+
+	err = json.Unmarshal(contents, &event)
+	return
 }
 
 var update = []byte(`{
