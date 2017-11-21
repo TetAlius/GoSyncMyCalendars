@@ -10,14 +10,18 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+var calendar2 = []byte(`{
+  "Name": "Social"contents
+}`)
+
 // GET https://outlook.office.com/api/v2.0/me/calendars
-func (o *Account) GetAllCalendars() (err error) {
+func (o *Account) GetAllCalendars() (calendars []CalendarInfo, err error) {
 	log.Debugln("getAllCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
 	if err != nil {
 		log.Errorf("%s", err.Error())
-		return errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
+		return calendars, errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
 	}
 
 	contents, err := util.DoRequest("GET",
@@ -31,18 +35,22 @@ func (o *Account) GetAllCalendars() (err error) {
 	}
 
 	log.Debugf("%s\n", contents)
-	return
+
+	calendarResponse := new(CalendarListResponse)
+	err = json.Unmarshal(contents, &calendarResponse)
+
+	return calendarResponse.Calendars, err
 
 }
 
 //GET https://outlook.office.com/api/v2.0/me/calendar
-func (o *Account) GetPrimaryCalendar() (err error) {
+func (o *Account) GetPrimaryCalendar() (calendar CalendarInfo, err error) {
 	log.Debugln("getPrimaryCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/primary")
 	if err != nil {
 		log.Errorf("%s", err.Error())
-		return errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
+		return calendar, errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
 	}
 
 	contents, err := util.DoRequest("GET",
@@ -53,11 +61,15 @@ func (o *Account) GetPrimaryCalendar() (err error) {
 
 	if err != nil {
 		log.Errorf("%s", err.Error())
-		return errors.New(fmt.Sprintf("Error getting primary calendar for email %s. %s", o.AnchorMailbox, err.Error()))
+		return calendar, errors.New(fmt.Sprintf("Error getting primary calendar for email %s. %s", o.AnchorMailbox, err.Error()))
 	}
 
 	log.Debugf("%s\n", contents)
-	return
+
+	calendarResponse := new(CalendarResponse)
+	err = json.Unmarshal(contents, &calendarResponse)
+
+	return calendarResponse.CalendarInfo, err
 }
 
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
@@ -82,8 +94,10 @@ func (o *Account) GetCalendar(calendarID string) (calendar CalendarInfo, err err
 
 	log.Debugf("%s\n", contents)
 
-	err = json.Unmarshal(contents, &calendar)
-	return
+	calendarResponse := new(CalendarResponse)
+	err = json.Unmarshal(contents, &calendarResponse)
+
+	return calendarResponse.CalendarInfo, err
 }
 
 // POST https://outlook.office.com/api/v2.0/me/calendars
@@ -108,9 +122,10 @@ func (o *Account) CreateCalendar(calendarData []byte) (calendar CalendarInfo, er
 
 	log.Debugf("%s\n", contents)
 
-	err = json.Unmarshal(contents, &calendar)
+	calendarResponse := new(CalendarResponse)
+	err = json.Unmarshal(contents, &calendarResponse)
 
-	return
+	return calendarResponse.CalendarInfo, err
 
 }
 
@@ -136,9 +151,10 @@ func (o *Account) UpdateCalendar(calendarID string, calendarData []byte) (calend
 
 	log.Debugf("%s\n", contents)
 
-	err = json.Unmarshal(contents, &calendar)
+	calendarResponse := new(CalendarResponse)
+	err = json.Unmarshal(contents, &calendarResponse)
 
-	return
+	return calendarResponse.CalendarInfo, err
 }
 
 //TODO check if calendar is primary or birthdays if it is, the following error is send
