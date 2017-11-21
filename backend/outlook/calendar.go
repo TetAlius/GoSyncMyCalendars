@@ -74,6 +74,9 @@ func (o *Account) GetPrimaryCalendar() (calendar CalendarInfo, err error) {
 
 // GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 func (o *Account) GetCalendar(calendarID string) (calendar CalendarInfo, err error) {
+	if len(calendarID) == 0 {
+		return calendar, errors.New("no ID for calendar was given")
+	}
 	log.Debugln("getCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
@@ -101,18 +104,22 @@ func (o *Account) GetCalendar(calendarID string) (calendar CalendarInfo, err err
 }
 
 // POST https://outlook.office.com/api/v2.0/me/calendars
-func (o *Account) CreateCalendar(calendarData []byte) (calendar CalendarInfo, err error) {
+func (o *Account) CreateCalendar(calendarDataInfo *CalendarInfo) (calendar CalendarInfo, err error) {
 	log.Debugln("createCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
-		return
+		return calendar, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
+	}
+
+	data, err := json.Marshal(calendarDataInfo)
+	if err != nil {
+		return calendar, errors.New(fmt.Sprintf("error marshalling calendar data: %s", err.Error()))
 	}
 
 	contents, err := util.DoRequest("POST",
 		route,
-		bytes.NewBuffer(calendarData),
+		bytes.NewBuffer(data),
 		o.authorizationRequest(),
 		o.AnchorMailbox)
 
@@ -130,23 +137,28 @@ func (o *Account) CreateCalendar(calendarData []byte) (calendar CalendarInfo, er
 }
 
 // PATCH https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
-func (o *Account) UpdateCalendar(calendarID string, calendarData []byte) (calendar CalendarInfo, err error) {
+func (o *Account) UpdateCalendar(calendarData CalendarInfo) (calendar CalendarInfo, err error) {
 	log.Debugln("updateCalendar outlook")
+	log.Debugf("calendar json: %s", calendarData)
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
-		return
+		return calendar, errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
+	}
+
+	data, err := json.Marshal(calendarData)
+	if err != nil {
+		return calendar, errors.New(fmt.Sprintf("error marshalling calendar data: %s", err.Error()))
 	}
 
 	contents, err := util.DoRequest("PATCH",
-		fmt.Sprintf(route, calendarID),
-		bytes.NewBuffer(calendarData),
+		fmt.Sprintf(route, calendarData.ID),
+		bytes.NewBuffer(data),
 		o.authorizationRequest(),
 		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error updateing a calendar for email %s. %s", o.AnchorMailbox, err.Error())
+		return calendar, errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", o.AnchorMailbox, err.Error()))
 	}
 
 	log.Debugf("%s\n", contents)

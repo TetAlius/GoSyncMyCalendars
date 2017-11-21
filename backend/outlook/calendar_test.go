@@ -8,6 +8,7 @@ import (
 
 	"fmt"
 
+	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
@@ -18,15 +19,16 @@ func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 	err := account.Refresh()
 	if err != nil {
 		t.Fail()
-		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
+		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
+		return
 	}
 
 	log.Debugln("Started")
 	_, err = account.GetPrimaryCalendar()
 	if err != nil {
-		log.Infoln(err.Error())
 		t.Fail()
-		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
+		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
+		return
 	}
 
 	os.Setenv("API_ROOT", "")
@@ -35,6 +37,7 @@ func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
+		return
 	}
 
 }
@@ -48,6 +51,8 @@ func TestAccount_GetAllCalendars(t *testing.T) {
 	_, err := account.GetAllCalendars()
 	if err != nil {
 		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
+		return
 	}
 
 	os.Setenv("API_ROOT", "")
@@ -55,6 +60,8 @@ func TestAccount_GetAllCalendars(t *testing.T) {
 	_, err = account.GetAllCalendars()
 	if err == nil {
 		t.Fail()
+		t.Fatal("something went wrong. Expected error found nil")
+		return
 	}
 }
 
@@ -68,15 +75,18 @@ func TestAccount_CreateCalendar(t *testing.T) {
   		"Name": "Travis"
 	}`)
 
-	calendar, err := account.CreateCalendar(calendarJSON)
+	calendarData := new(outlook.CalendarInfo)
+	err := json.Unmarshal(calendarJSON, &calendarData)
+
+	calendar, err := account.CreateCalendar(calendarData)
 
 	if err != nil {
 		log.Errorln(err.Error())
 		t.Fail()
+		return
 	}
 
 	os.Setenv("OUTLOOK_CALENDAR_ID", calendar.ID)
-	log.Infof("CalendarID: %s", calendar.ID)
 	os.Setenv("OUTLOOK_CALENDAR_NAME", calendar.Name)
 }
 
@@ -92,14 +102,16 @@ func TestAccount_GetCalendar(t *testing.T) {
 	calendar, err := account.GetCalendar(calendarID)
 
 	if err != nil {
-		log.Errorln(err.Error())
 		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
+		return
 	}
 
 	if calendarName != calendar.Name {
-		log.Errorf("expected %s got %s", calendarName, calendar.Name)
+		t.Fail()
+		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.Name)
+		return
 	}
-	log.Debugln(calendarID)
 }
 
 func TestAccount_UpdateCalendar(t *testing.T) {
@@ -109,32 +121,28 @@ func TestAccount_UpdateCalendar(t *testing.T) {
 	account.Refresh()
 
 	calendarID := os.Getenv("OUTLOOK_CALENDAR_ID")
-
 	oldCalendar, err := account.GetCalendar(calendarID)
 
 	if err != nil {
-		log.Errorln(err.Error())
 		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
+		return
 	}
 	oldCalendar.Name = fmt.Sprintf("TravisRenamed%s", calendarID)
 
-	calendarJSON, err := json.Marshal(oldCalendar)
+	calendar, err := account.UpdateCalendar(oldCalendar)
 
 	if err != nil {
-		log.Errorln(err)
 		t.Fail()
-	}
-
-	calendar, err := account.UpdateCalendar(calendarID, calendarJSON)
-
-	if err != nil {
-		log.Errorln(err.Error())
-		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
+		return
 	}
 
 	if oldCalendar.Name != calendar.Name {
 		log.Errorf("expected %s got %s", oldCalendar.Name, calendar.Name)
 		t.Fail()
+		t.Fatalf("something went wrong. Expected %s got %s. Error: %s", oldCalendar.Name, calendar.Name, err.Error())
+		return
 	}
 
 	os.Setenv("OUTLOOK_CALENDAR_ID", calendar.ID)
