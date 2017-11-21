@@ -283,9 +283,9 @@ func (o *Account) Refresh() (err error) {
 	if resp.StatusCode != 201 && resp.StatusCode != 204 {
 		e := new(RefreshError)
 		err = json.Unmarshal(contents, &e)
-		log.Errorln(e.Code)
-		log.Errorln(e.Message)
 		if len(e.Code) != 0 && len(e.Message) != 0 {
+			log.Errorln(e.Code)
+			log.Errorln(e.Message)
 			return errors.New(fmt.Sprintf("code: %s. message: %s", e.Code, e.Message))
 		}
 	}
