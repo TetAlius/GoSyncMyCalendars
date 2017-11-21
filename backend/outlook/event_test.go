@@ -47,7 +47,7 @@ func TestAccount_CreateEvent(t *testing.T) {
 		t.Fatalf("error creating new event: %s", err.Error())
 	}
 
-	t.log("Not implemented yet")
+	t.Log("Not implemented yet")
 }
 
 func TestAccount_GetAllEventsFromCalendar(t *testing.T) {
