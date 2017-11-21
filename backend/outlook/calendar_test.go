@@ -42,7 +42,7 @@ func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 
 }
 
-func TestAccount_GetAllCalendars(t *testing.T) {
+func TestOutlookAccount_GetAllCalendars(t *testing.T) {
 	setupApiRoot()
 	account := setup()
 	//Refresh previous petition in order to have tokens updated
@@ -65,7 +65,7 @@ func TestAccount_GetAllCalendars(t *testing.T) {
 	}
 }
 
-func TestAccount_CreateCalendar(t *testing.T) {
+func TestOutlookAccount_CreateCalendar(t *testing.T) {
 	setupApiRoot()
 	account := setup()
 	//Refresh previous petition in order to have tokens updated
@@ -90,7 +90,7 @@ func TestAccount_CreateCalendar(t *testing.T) {
 	os.Setenv("OUTLOOK_CALENDAR_NAME", calendar.Name)
 }
 
-func TestAccount_GetCalendar(t *testing.T) {
+func TestOutlookAccount_GetCalendar(t *testing.T) {
 	setupApiRoot()
 	account := setup()
 	//Refresh previous petition in order to have tokens updated
@@ -114,7 +114,7 @@ func TestAccount_GetCalendar(t *testing.T) {
 	}
 }
 
-func TestAccount_UpdateCalendar(t *testing.T) {
+func TestOutlookAccount_UpdateCalendar(t *testing.T) {
 	setupApiRoot()
 	account := setup()
 	//Refresh previous petition in order to have tokens updated
@@ -149,7 +149,7 @@ func TestAccount_UpdateCalendar(t *testing.T) {
 	os.Setenv("OUTLOOK_CALENDAR_NAME", calendar.Name)
 }
 
-func TestAccount_DeleteCalendar(t *testing.T) {
+func TestOutlookAccount_DeleteCalendar(t *testing.T) {
 	setupApiRoot()
 	account := setup()
 	//Refresh previous petition in order to have tokens updated
