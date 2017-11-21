@@ -18,6 +18,8 @@ func TestNewAccount(t *testing.T) {
 	_, err := outlook.NewAccount(b)
 	if err == nil {
 		t.Fail()
+		t.Fatal("something went wrong. Expected an error found nil")
+		return
 	}
 
 	//Bad formatted JSON
@@ -25,6 +27,8 @@ func TestNewAccount(t *testing.T) {
 	_, err = outlook.NewAccount(b)
 	if err == nil {
 		t.Fail()
+		t.Fatal("something went wrong. Expected an error found nil")
+		return
 	}
 
 	//Correct information given
@@ -32,10 +36,14 @@ func TestNewAccount(t *testing.T) {
 	b, err = json.Marshal(account)
 	if err != nil {
 		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
+		return
 	}
 	_, err = outlook.NewAccount(b)
 	if err != nil {
 		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
+		return
 	}
 }
 
@@ -48,6 +56,7 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
+		return
 	}
 
 	//Good info account
@@ -56,6 +65,7 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
+		return
 	}
 
 	os.Setenv("API_ROOT", "")
@@ -65,6 +75,7 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
+		return
 	}
 
 }
