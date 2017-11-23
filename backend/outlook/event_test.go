@@ -6,7 +6,7 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
-func TestAccount_CreateEvent(t *testing.T) {
+func TestOutlookAccount_CreateEvent(t *testing.T) {
 	setupApiRoot()
 	account := setup()
 
@@ -50,18 +50,39 @@ func TestAccount_CreateEvent(t *testing.T) {
 	t.Log("Not implemented yet")
 }
 
-func TestAccount_GetAllEventsFromCalendar(t *testing.T) {
+func TestOutlookAccount_GetAllEventsFromCalendar(t *testing.T) {
+	setupApiRoot()
+	account := setup()
+
+	err := account.Refresh()
+	if err != nil {
+		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
+	}
+
+	calendar, err := account.GetPrimaryCalendar()
+	if err != nil {
+		log.Infoln(err.Error())
+		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
+	}
+	_, err = account.GetAllEventsFromCalendar(calendar.ID)
+	if err != nil {
+		t.Fail()
+		t.Fatalf("error creating new event: %s", err.Error())
+	}
+
+	t.Log("Not implemented yet")
+}
+
+func TestOutlookAccount_GetEvent(t *testing.T) {
 	t.Log("Not Implemented yet")
 }
 
-func TestAccount_GetEvent(t *testing.T) {
+func TestOutlookAccount_UpdateEvent(t *testing.T) {
 	t.Log("Not Implemented yet")
 }
 
-func TestAccount_UpdateEvent(t *testing.T) {
-	t.Log("Not Implemented yet")
-}
-
-func TestAccount_DeleteEvent(t *testing.T) {
+func TestOutlookAccount_DeleteEvent(t *testing.T) {
 	t.Log("Not Implemented yet")
 }
