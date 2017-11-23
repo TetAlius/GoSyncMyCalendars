@@ -17,6 +17,9 @@ import (
 )
 
 func MailFromToken(tokens []string, addFinal string) (email string, preferred bool, err error) {
+	if len(tokens) < 2 {
+		return "", false, errors.New("TokenID was not parsed correctly")
+	}
 	encodedToken := strings.Replace(
 		strings.Replace(tokens[1], "-", "_", -1),
 		"+", "/", -1) + addFinal
@@ -57,6 +60,9 @@ func MailFromToken(tokens []string, addFinal string) (email string, preferred bo
 func CallAPIRoot(route string) (apiRoute string, err error) {
 	client := http.Client{}
 	root := os.Getenv("API_ROOT")
+	if len(root) == 0 {
+		return "", errors.New("API_ROOT not given on environment")
+	}
 	req, err := http.NewRequest("GET", root+route, nil)
 
 	if err != nil {
@@ -75,6 +81,14 @@ func CallAPIRoot(route string) (apiRoute string, err error) {
 	}
 
 	return strings.Replace(string(contents[:]), "\"", "", -1), nil
+}
+
+type Error struct {
+	ConcreteError `json:"error,omitempty"`
+}
+type ConcreteError struct {
+	Code    string `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 //DoRequest TODO Creates and executes the request for all petitions
@@ -109,5 +123,17 @@ func DoRequest(method string, url string, body io.Reader, authorization string, 
 	if err != nil {
 		log.Errorf("Error reading response body: %s", err.Error())
 	}
+
+	// TODO: Check if this is the same for google
+	if resp.StatusCode != 201 && resp.StatusCode != 204 {
+		e := new(Error)
+		err = json.Unmarshal(contents, &e)
+		if len(e.Code) != 0 && len(e.Message) != 0 {
+			log.Errorln(e.Code)
+			log.Errorln(e.Message)
+			return nil, errors.New(fmt.Sprintf("code: %s. message: %s", e.Code, e.Message))
+		}
+	}
+
 	return
 }

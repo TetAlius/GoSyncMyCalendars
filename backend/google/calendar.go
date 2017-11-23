@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"errors"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -19,7 +21,7 @@ type calendarResp struct {
 }
 
 //GET https://www.googleapis.com/calendar/v3/users/me/calendarList
-func (g *GoogleAccount) GetAllCalendars() {
+func (g *Account) GetAllCalendars() {
 	log.Debugln("getAllCalendars google")
 	route, err := util.CallAPIRoot("google/calendars")
 	if err != nil {
@@ -43,12 +45,12 @@ func (g *GoogleAccount) GetAllCalendars() {
 
 // GET https://www.googleapis.com/calendar/v3/calendars/primary
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary This is the one used
-func (g *GoogleAccount) GetPrimaryCalendar() {
+func (g *Account) GetPrimaryCalendar() (err error) {
 	log.Debugln("getPrimaryCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/primary")
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
-		return
+		log.Errorf("%s", err.Error())
+		return errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
 	}
 
 	contents, err :=
@@ -65,10 +67,11 @@ func (g *GoogleAccount) GetPrimaryCalendar() {
 
 	log.Debugf("Contents: %s", contents)
 
+	return
 }
 
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarID}
-func (g *GoogleAccount) GetCalendar(calendarID string) {
+func (g *Account) GetCalendar(calendarID string) {
 	log.Debugln("getCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -97,7 +100,7 @@ var calendar = []byte(`{"summary":"CalendarGO"}`)
 var calendarUpdate = []byte(`{"summary":"Updated CalendarGO"}`)
 
 // POST https://www.googleapis.com/calendar/v3/calendars
-func (g *GoogleAccount) CreateCalendar(calendarData []byte) {
+func (g *Account) CreateCalendar(calendarData []byte) {
 	log.Debugln("createCalendar google")
 	route, err := util.CallAPIRoot("google/calendars")
 	if err != nil {
@@ -122,7 +125,7 @@ func (g *GoogleAccount) CreateCalendar(calendarData []byte) {
 }
 
 // PUT https://www.googleapis.com/calendar/v3/calendars/{calendarId}
-func (g *GoogleAccount) UpdateCalendar(calendarID string, calendarData []byte) {
+func (g *Account) UpdateCalendar(calendarID string, calendarData []byte) {
 	log.Debugln("updateCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -147,7 +150,7 @@ func (g *GoogleAccount) UpdateCalendar(calendarID string, calendarData []byte) {
 }
 
 // DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarId}
-func (g *GoogleAccount) DeleteCalendar(calendarID string) {
+func (g *Account) DeleteCalendar(calendarID string) {
 	log.Debugln("Delete calendar")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
