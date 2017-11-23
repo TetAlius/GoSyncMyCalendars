@@ -104,7 +104,7 @@ func (o *Account) GetCalendar(calendarID string) (calendar CalendarInfo, err err
 }
 
 // POST https://outlook.office.com/api/v2.0/me/calendars
-func (o *Account) CreateCalendar(calendarDataInfo *CalendarInfo) (calendar CalendarInfo, err error) {
+func (o *Account) CreateCalendar(calendarDataInfo CalendarInfo) (calendar CalendarInfo, err error) {
 	log.Debugln("createCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
@@ -180,13 +180,15 @@ func (o *Account) UpdateCalendar(calendarData CalendarInfo) (calendar CalendarIn
 
 // DELETE https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 //Does not return json if OK, only status 204
-func (o *Account) DeleteCalendar(calendarID string) {
+func (o *Account) DeleteCalendar(calendarID string) (err error) {
 	log.Debugln("deleteCalendar outlook")
+	if len(calendarID) == 0 {
+		return errors.New("no ID for calendar was given")
+	}
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
-		return
+		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
 	contents, err := util.DoRequest("DELETE",
@@ -196,8 +198,9 @@ func (o *Account) DeleteCalendar(calendarID string) {
 		o.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error deleting a calendar for email %s. %s", o.AnchorMailbox, err.Error())
+		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", o.AnchorMailbox, err.Error()))
 	}
 
 	log.Debugf("%s\n", contents)
+	return
 }
