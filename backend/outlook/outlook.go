@@ -79,55 +79,64 @@ type CalendarInfo struct {
 	Color               CalendarColor `json:"Color,omitempty"`
 	Events              []EventInfo   `json:"Events,omitempty"`
 	ID                  string        `json:"Id"`
-	IsDefaultCalendar   bool          `json:"IsDefaultCalendar,omitempty"`
-	IsShared            bool          `json:"IsShared,omitempty"`
-	IsSharedWithMe      bool          `json:"IsSharedWithMe,omitempty"`
 	Name                string        `json:"Name,omitempty"`
 	Owner               Recipient     `json:"Owner,omitempty"`
-	//MultiValueExtendedProperties  []Properties  `json:"MultiValueExtendedProperties"`
-	//SingleValueExtendedProperties []Properties  `json:"SingleValueExtendedProperties"`
+
+	//	IsDefaultCalendar             bool         `json:"IsDefaultCalendar,omitempty"`
+	//	IsShared                      bool         `json:"IsShared,omitempty"`
+	//	IsSharedWithMe                bool         `json:"IsSharedWithMe,omitempty"`
+	//	MultiValueExtendedProperties  []Properties `json:"MultiValueExtendedProperties"`
+	//	SingleValueExtendedProperties []Properties `json:"SingleValueExtendedProperties"`
 }
 
-type EventInfo struct {
-	OdataID   string `json:"@odata.id"`
-	OdataEtag string `json:"@odata.etag"`
+type EventResponse struct {
+	OdataContext string `json:"@odata.context"`
+	EventInfo
+}
 
-	Attachments                []Attachment        `json:"Attachments"`
-	Attendees                  []Attendee          `json:"Attendees"`
-	Body                       ItemBody            `json:"Body"`
-	BodyPreview                string              `json:"BodyPreview"`
-	Calendar                   CalendarInfo        `json:"Calendar"`
-	Categories                 []string            `json:"Categories"`
-	ChangeKey                  string              `json:"ChangeKey"`
-	CreatedDateTime            string              `json:"CreatedDateTime"` //"2014-10-19T23:13:47.3959685Z"
-	End                        DateTimeTimeZone    `json:"End"`
-	HasAttachments             bool                `json:"HasAttachments"`
-	ICalUID                    string              `json:"iCalUID"`
+type EventListResponse struct {
+	OdataContext string      `json:"@odata.context"`
+	Events       []EventInfo `json:"value"`
+}
+type EventInfo struct {
+	OdataID   string `json:"@odata.id,omitempty"`
+	OdataEtag string `json:"@odata.etag,omitempty"`
+
+	Attachments                []Attachment        `json:"Attachments,omitempty"`
+	Attendees                  []Attendee          `json:"Attendees,omitempty"`
+	Body                       ItemBody            `json:"Body,omitempty"`
+	BodyPreview                string              `json:"BodyPreview,omitempty"`
+	Calendar                   CalendarInfo        `json:"Calendar,omitempty"`
+	Categories                 []string            `json:"Categories,omitempty"`
+	ChangeKey                  string              `json:"ChangeKey,omitempty"`
+	CreatedDateTime            string              `json:"CreatedDateTime,omitempty"` //"2014-10-19T23:13:47.3959685Z"
+	End                        DateTimeTimeZone    `json:"End,omitempty"`
+	HasAttachments             bool                `json:"HasAttachments,omitempty"`
+	ICalUID                    string              `json:"iCalUID,omitempty"`
 	ID                         string              `json:"Id"`
-	Importance                 Importance          `json:"Importance"`
-	Instances                  []EventInfo         `json:"Instances"`
-	IsAllDay                   bool                `json:"IsAllday"`
-	IsCancelled                bool                `json:"IsCancelled"`
-	IsOrganizer                bool                `json:"IsOrganizer"`
-	IsReminderOn               bool                `json:"IsReminderOn"`
-	LastModifiedDateTime       string              `json:"LastModifiedDateTime"` //"2014-10-19T23:13:47.6772234Z"
-	Location                   Location            `json:"Location"`
-	Locations                  []Location          `json:"Location"`
-	OnlineMeetingUrl           string              `json:"OnlineMeetingUrl"`
-	Organizer                  Recipient           `json:"Organizer"`
-	OriginalStartTimeZone      string              `json:"OriginalStartTimeZone"`
-	OriginalEndTimeZone        string              `json:"OriginalEndTimeZone"`
-	Recurrence                 PatternedRecurrence `json:"Recurrence"`
-	ReminderMinutesBeforeStart int32               `json:"ReminderMinutesBeforeStart"`
-	ResponseRequested          bool                `json:"ResponseRequested"`
-	ResponseStatus             ResponseStatus      `json:"ResponseStatus"`
-	Sensitivity                Sensitivity         `json:"Sensitivity"`
-	SeriesMasterID             string              `json:"SeriesMasterId"`
-	ShowAs                     FreeBusyStatus      `json:"ShowAs"`
-	Start                      DateTimeTimeZone    `json:"Start"`
-	Subject                    string              `json:"Subject"`
-	Type                       EventType           `json:"Type"`
-	WebLink                    string              `json:"WebLink"`
+	Importance                 Importance          `json:"Importance,omitempty"`
+	Instances                  []EventInfo         `json:"Instances,omitempty"`
+	IsAllDay                   bool                `json:"IsAllday,omitempty"`
+	IsCancelled                bool                `json:"IsCancelled,omitempty"`
+	IsOrganizer                bool                `json:"IsOrganizer,omitempty"`
+	IsReminderOn               bool                `json:"IsReminderOn,omitempty"`
+	LastModifiedDateTime       string              `json:"LastModifiedDateTime,omitempty"` //"2014-10-19T23:13:47.6772234Z"
+	Location                   Location            `json:"Location,omitempty"`
+	OnlineMeetingUrl           string              `json:"OnlineMeetingUrl,omitempty"`
+	Organizer                  Recipient           `json:"Organizer,omitempty"`
+	OriginalStartTimeZone      string              `json:"OriginalStartTimeZone,omitempty"`
+	OriginalEndTimeZone        string              `json:"OriginalEndTimeZone,omitempty"`
+	Recurrence                 PatternedRecurrence `json:"Recurrence,omitempty"`
+	ReminderMinutesBeforeStart int32               `json:"ReminderMinutesBeforeStart,omitempty"`
+	ResponseRequested          bool                `json:"ResponseRequested,omitempty"`
+	ResponseStatus             ResponseStatus      `json:"ResponseStatus,omitempty"`
+	Sensitivity                Sensitivity         `json:"Sensitivity,omitempty"`
+	SeriesMasterID             string              `json:"SeriesMasterId,omitempty"`
+	ShowAs                     FreeBusyStatus      `json:"ShowAs,omitempty"`
+	Start                      DateTimeTimeZone    `json:"Start,omitempty"`
+	Subject                    string              `json:"Subject,omitempty"`
+	Type                       EventType           `json:"Type,omitempty"`
+	WebLink                    string              `json:"WebLink,omitempty"`
 
 	//Extensions                 []Extension         `json:"Extensions"`
 }

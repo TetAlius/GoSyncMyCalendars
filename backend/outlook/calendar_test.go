@@ -78,7 +78,7 @@ func TestOutlookAccount_CreateCalendar(t *testing.T) {
 	calendarData := new(outlook.CalendarInfo)
 	err := json.Unmarshal(calendarJSON, &calendarData)
 
-	calendar, err := account.CreateCalendar(calendarData)
+	calendar, err := account.CreateCalendar(*calendarData)
 
 	if err != nil {
 		log.Errorln(err.Error())
@@ -139,9 +139,8 @@ func TestOutlookAccount_UpdateCalendar(t *testing.T) {
 	}
 
 	if oldCalendar.Name != calendar.Name {
-		log.Errorf("expected %s got %s", oldCalendar.Name, calendar.Name)
 		t.Fail()
-		t.Fatalf("something went wrong. Expected %s got %s. Error: %s", oldCalendar.Name, calendar.Name, err.Error())
+		t.Fatalf("something went wrong. Expected %s got %s", oldCalendar.Name, calendar.Name)
 		return
 	}
 
@@ -158,5 +157,9 @@ func TestOutlookAccount_DeleteCalendar(t *testing.T) {
 	calendarID := os.Getenv("OUTLOOK_CALENDAR_ID")
 	log.Debugln(calendarID)
 
-	account.DeleteCalendar(calendarID)
+	err := account.DeleteCalendar(calendarID)
+	if err != nil {
+		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
+	}
 }
