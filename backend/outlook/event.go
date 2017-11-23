@@ -30,9 +30,10 @@ func (o *Account) GetAllEventsFromCalendar(calendarID string) (events []EventInf
 	}
 
 	log.Debugf("%s\n", contents)
+	eventListResponse := new(EventListResponse)
+	err = json.Unmarshal(contents, &eventListResponse)
 
-	err = json.Unmarshal(contents, &events)
-	return
+	return eventListResponse.Events, err
 }
 
 // POST https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
