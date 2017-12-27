@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/TetAlius/GoSyncMyCalendars/backend/outlook"
+	"github.com/TetAlius/GoSyncMyCalendars/api/outlook"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )

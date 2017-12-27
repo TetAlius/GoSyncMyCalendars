@@ -98,7 +98,7 @@ func DoRequest(method string, url string, body io.Reader, authorization string, 
 
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		log.Errorf("Error creating new request: %s", err.Error())
+		return contents, errors.New(fmt.Sprintf("error creating new request: %s", err.Error()))
 	}
 
 	//Add the authorization to the header
@@ -114,14 +114,14 @@ func DoRequest(method string, url string, body io.Reader, authorization string, 
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf("Error doing request: %s", err.Error())
+		return contents, errors.New(fmt.Sprintf("error doing request: %s", err.Error()))
 	}
 
 	defer resp.Body.Close()
 	//TODO parse errors and content
 	contents, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("Error reading response body: %s", err.Error())
+		return contents, errors.New(fmt.Sprintf("error reading response body: %s", err.Error()))
 	}
 
 	// TODO: Check if this is the same for google
@@ -129,8 +129,6 @@ func DoRequest(method string, url string, body io.Reader, authorization string, 
 		e := new(Error)
 		err = json.Unmarshal(contents, &e)
 		if len(e.Code) != 0 && len(e.Message) != 0 {
-			log.Errorln(e.Code)
-			log.Errorln(e.Message)
 			return nil, errors.New(fmt.Sprintf("code: %s. message: %s", e.Code, e.Message))
 		}
 	}
