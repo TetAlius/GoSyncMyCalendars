@@ -1,5 +1,7 @@
 package api
 
+import "fmt"
+
 type AccountManager interface {
 	Refresh() error
 
@@ -25,4 +27,13 @@ type EventManager interface {
 	Create(AccountManager) error
 	Update(AccountManager) error
 	Delete(AccountManager) error
+}
+
+type RefreshError struct {
+	Code    string `json:"error,omitempty"`
+	Message string `json:"error_description,omitempty"`
+}
+
+func (err RefreshError) Error() string {
+	return fmt.Sprintf("code: %s. message: %s", err.Code, err.Message)
 }
