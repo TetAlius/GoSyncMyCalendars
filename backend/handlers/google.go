@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/TetAlius/GoSyncMyCalendars/backend/google"
+	"github.com/TetAlius/GoSyncMyCalendars/api/google"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
