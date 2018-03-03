@@ -13,54 +13,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type CalendarListResponse struct {
-	Kind          string      `json:"kind"`
-	Etag          string      `json:"etag"`
-	NextPageToken string      `json:"nextPageToken"`
-	NextSyncToken string      `json:"nextSyncToken"`
-	Calendars     []*Calendar `json:"items"`
-}
-
-type Calendar struct {
-	//From CalendarLIST resource
-	ID              string `json:"id"`
-	Name            string `json:"summary"`
-	Description     string `json:"description,omitempty"`
-	Location        string `json:"location,omitempty"`
-	TmeZone         string `json:"timeZone,omitempty"`
-	SummaryOverride string `json:"summaryOverride,omitempty"`
-	ColorId         string `json:"colorId,omitempty"`
-	BackgroundColor string `json:"backgroundColor,omitempty"`
-	ForegroundColor string `json:"foregroundColor,omitempty"`
-	Hidden          bool   `json:"hidden,omitempty"`
-	Selected        bool   `json:"selected,omitempty"`
-	// Only valid accessRoles with 'writer' or 'owner'
-	AccessRole           string     `json:"accessRole,omitempty"`
-	DefaultReminders     []Reminder `json:"defaultReminders,omitempty"`
-	Primary              bool       `json:"primary,omitempty"`
-	Deleted              bool       `json:"deleted,omitempty"`
-	ConferenceProperties `json:"conferenceProperties,omitempty"`
-	NotificationSetting  `json:"notificationSettings,omitempty"`
-}
-
-type Reminder struct {
-	Method  string `json:"method,omitempty"`
-	Minutes int32  `json:"minutes,omitempty"`
-}
-
-type NotificationSetting struct {
-	Notifications []Notification `json:"notifications,omitempty"`
-}
-
-type Notification struct {
-	Type   string `json:"type,omitempty"`
-	Method string `json:"method,omitempty"`
-}
-
-type ConferenceProperties struct {
-	AllowedConferenceSolutionTypes []string `json:"allowedConferenceSolutionTypes,omitempty"`
-}
-
 // PUT https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
 func (calendar *Calendar) Update(a api.AccountManager) (err error) {
 	log.Debugln("updateCalendar google")

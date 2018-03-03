@@ -11,48 +11,6 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-type CalendarResponse struct {
-	OdataContext string `json:"@odata.context"`
-	*Calendar
-}
-
-type CalendarListResponse struct {
-	OdataContext string      `json:"@odata.context"`
-	Calendars    []*Calendar `json:"value"`
-}
-
-// CalendarInfo TODO
-type Calendar struct {
-	OdataID string `json:"@odata.id,omitempty"`
-
-	CalendarView        []Event       `json:"CalendarView,omitempty"`
-	CanEdit             bool          `json:"CanEdit,omitempty"`
-	CanShare            bool          `json:"CanShare,omitempty"`
-	CanViewPrivateItems bool          `json:"CanViewPrivateItems,omitempty"`
-	ChangeKey           string        `json:"ChangeKey,omitempty"`
-	Color               CalendarColor `json:"Color,omitempty"`
-	Events              []Event       `json:"Events,omitempty"`
-	ID                  string        `json:"Id"`
-	Name                string        `json:"Name,omitempty"`
-	Owner               EmailAddress  `json:"Owner,omitempty"`
-
-	//	IsDefaultCalendar             bool         `json:"IsDefaultCalendar,omitempty"`
-	//	IsShared                      bool         `json:"IsShared,omitempty"`
-	//	IsSharedWithMe                bool         `json:"IsSharedWithMe,omitempty"`
-	//	MultiValueExtendedProperties  []Properties `json:"MultiValueExtendedProperties"`
-	//	SingleValueExtendedProperties []Properties `json:"SingleValueExtendedProperties"`
-}
-
-// Specifies the color theme to distinguish the calendar from other calendars in a UI.
-// The property values are: LightBlue=0, LightGreen=1, LightOrange=2, LightGray=3,
-// LightYellow=4, LightTeal=5, LightPink=6, LightBrown=7, LightRed=8, MaxColor=9, Auto=-1
-type CalendarColor string
-
-type EmailAddress struct {
-	Address string `json:"Address,omitempty"`
-	Name    string `json:"Name,omitempty"`
-}
-
 func (calendar *Calendar) Create(a api.AccountManager) (err error) {
 	log.Debugln("createCalendars outlook")
 

@@ -13,16 +13,6 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-type Account struct {
-	TokenType         string `json:"token_type"`
-	ExpiresIn         int    `json:"expires_in"`
-	AccessToken       string `json:"access_token"`
-	RefreshToken      string `json:"refresh_token"`
-	TokenID           string `json:"id_token"`
-	AnchorMailbox     string
-	PreferredUsername bool
-}
-
 func NewAccount(contents []byte) (a *Account, err error) {
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
