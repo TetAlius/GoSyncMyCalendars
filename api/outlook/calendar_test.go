@@ -21,18 +21,23 @@ func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {
 	var calendarJSON = []byte(`{
   		"Name": "Travis"
 	}`)
-	err := json.Unmarshal(calendarJSON, &calendar)
-	if err != nil {
-		t.Fail()
-		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
-	}
 
 	// wrong call to create calendar
-	err = calendarWrong.Create(account)
+	err := calendarWrong.Create(account)
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
+		return
+	}
+
+	t.Fail()
+	t.Fatal()
+	return
+
+	err = json.Unmarshal(calendarJSON, &calendar)
+	if err != nil {
+		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 		return
 	}
 
