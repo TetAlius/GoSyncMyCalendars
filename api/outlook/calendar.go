@@ -75,6 +75,10 @@ func (calendar *Calendar) Create(a api.AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
+	err = createResponseError(contents)
+	if err != nil {
+		return err
+	}
 
 	log.Debugf("%s\n", contents)
 
@@ -108,6 +112,10 @@ func (calendar *Calendar) Update(a api.AccountManager) error {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
+	err = createResponseError(contents)
+	if err != nil {
+		return err
+	}
 
 	log.Debugf("%s\n", contents)
 
@@ -138,6 +146,10 @@ func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
+	err = createResponseError(contents)
+	if err != nil {
+		return err
+	}
 
 	log.Debugf("%s\n", contents)
 	return
@@ -159,6 +171,11 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all events of a calendar for email %s. %s", a.Mail(), err.Error()))
+	}
+
+	err = createResponseError(contents)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Debugf("%s\n", contents)
@@ -193,6 +210,10 @@ func (calendar *Calendar) GetEvent(a api.AccountManager, ID string) (event api.E
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting an event of a calendar for email %s. %s", a.Mail(), err.Error()))
+	}
+	err = createResponseError(contents)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Debugf("%s\n", contents)

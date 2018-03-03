@@ -113,7 +113,11 @@ func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error)
 		a.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error getting all calendars for email %s. %s", a.AnchorMailbox, err.Error())
+		return nil, errors.New(fmt.Sprintf("Error getting all calendars for email %s. %s", a.AnchorMailbox, err.Error()))
+	}
+	err = createResponseError(contents)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Debugf("%s\n", contents)
@@ -147,7 +151,11 @@ func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, 
 		a.AnchorMailbox)
 
 	if err != nil {
-		log.Errorf("Error getting a calendar for email %s. %s", a.AnchorMailbox, err.Error())
+		return nil, errors.New(fmt.Sprintf("Error getting a calendar for email %s. %s", a.AnchorMailbox, err.Error()))
+	}
+	err = createResponseError(contents)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Debugf("%s\n", contents)
@@ -176,6 +184,10 @@ func (a *Account) GetPrimaryCalendar() (calendar api.CalendarManager, err error)
 	if err != nil {
 		log.Errorf("%s", err.Error())
 		return calendar, errors.New(fmt.Sprintf("Error getting primary calendar for email %s. %s", a.AnchorMailbox, err.Error()))
+	}
+	err = createResponseError(contents)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Debugf("%s\n", contents)

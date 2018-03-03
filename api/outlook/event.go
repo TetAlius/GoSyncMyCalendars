@@ -201,6 +201,10 @@ func (event *Event) Create(a api.AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating event in a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
+	err = createResponseError(contents)
+	if err != nil {
+		return err
+	}
 
 	eventResponse := EventResponse{OdataContext: "", Event: event}
 	err = json.Unmarshal(contents, &eventResponse)
@@ -233,6 +237,11 @@ func (event *Event) Update(a api.AccountManager) (err error) {
 		return errors.New(fmt.Sprintf("error updating event of a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
 
+	err = createResponseError(contents)
+	if err != nil {
+		return err
+	}
+
 	eventResponse := EventResponse{OdataContext: "", Event: event}
 	err = json.Unmarshal(contents, &eventResponse)
 
@@ -260,6 +269,11 @@ func (event *Event) Delete(a api.AccountManager) (err error) {
 	if err != nil {
 		log.Errorf("error deleting event of a calendar for email %s. %s", a.Mail(), err.Error())
 		return errors.New(fmt.Sprintf("error deleting event of a calendar for email %s. %s", a.Mail(), err.Error()))
+	}
+
+	err = createResponseError(contents)
+	if err != nil {
+		return err
 	}
 
 	log.Debugf("%s\n", contents)
