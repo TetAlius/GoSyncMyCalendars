@@ -98,7 +98,7 @@ func (a *Account) Refresh() (err error) {
 //GET https://www.googleapis.com/calendar/v3/users/me/calendarList
 func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error) {
 	log.Debugln("getAllCalendars google")
-	route, err := util.CallAPIRoot("google/calendars")
+	route, err := util.CallAPIRoot("google/calendarlist")
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
