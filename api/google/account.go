@@ -114,6 +114,10 @@ func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.Mail(), err.Error()))
 	}
+	err = createResponseError(contents)
+	if err != nil {
+		return nil, err
+	}
 
 	log.Debugf("%s\n", contents)
 
@@ -146,6 +150,10 @@ func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting calendar for email %s. %s", a.Email, err.Error()))
 	}
+	err = createResponseError(contents)
+	if err != nil {
+		return nil, err
+	}
 
 	calendarResponse := new(Calendar)
 	err = json.Unmarshal(contents, &calendarResponse)
@@ -174,6 +182,10 @@ func (a *Account) GetPrimaryCalendar() (calendar api.CalendarManager, err error)
 
 	if err != nil {
 		return calendar, errors.New(fmt.Sprintf("error getting primary calendar for email %s. %s", a.Email, err.Error()))
+	}
+	err = createResponseError(contents)
+	if err != nil {
+		return nil, err
 	}
 
 	calendarResponse := new(Calendar)
