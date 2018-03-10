@@ -57,7 +57,7 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 	}
 
 	//	good call to get calendar
-	_, err = account.GetCalendar(calendar.ID)
+	_, err = account.GetCalendar(calendar.GetID())
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -160,7 +160,7 @@ func TestGoogleCalendar_GetEvent(t *testing.T) {
 	event := allEvents[0].(*google.Event)
 	calendar := event.Calendar
 
-	_, err = calendar.GetEvent(account, "")
+	_, err = calendar.GetEvent(account, "asdasd")
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")

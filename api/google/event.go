@@ -32,7 +32,7 @@ func (event *Event) Create(a api.AccountManager) (err error) {
 	event.Calendar = calendar
 
 	contents, err := util.DoRequest("POST",
-		fmt.Sprintf(route, event.Calendar.ID),
+		fmt.Sprintf(route, event.Calendar.GetID()),
 		bytes.NewBuffer(data),
 		a.AuthorizationRequest(),
 		"")
@@ -70,7 +70,7 @@ func (event *Event) Update(a api.AccountManager) (err error) {
 	event.Calendar = calendar
 
 	contents, err := util.DoRequest("PUT",
-		fmt.Sprintf(route, event.Calendar.ID, event.ID),
+		fmt.Sprintf(route, event.Calendar.GetID(), event.ID),
 		bytes.NewBuffer(data),
 		a.AuthorizationRequest(),
 		"")
@@ -102,7 +102,7 @@ func (event *Event) Delete(a api.AccountManager) (err error) {
 
 	contents, err := util.DoRequest(
 		"DELETE",
-		fmt.Sprintf(route, event.Calendar.ID, event.ID),
+		fmt.Sprintf(route, event.Calendar.GetID(), event.ID),
 		nil,
 		a.AuthorizationRequest(),
 		"")

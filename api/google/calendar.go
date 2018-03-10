@@ -7,6 +7,8 @@ import (
 
 	"encoding/json"
 
+	"net/url"
+
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
@@ -29,7 +31,7 @@ func (calendar *Calendar) Update(a api.AccountManager) (err error) {
 	contents, err :=
 		util.DoRequest(
 			"PUT",
-			fmt.Sprintf(route, calendar.ID),
+			fmt.Sprintf(route, calendar.GetID()),
 			bytes.NewBuffer(data),
 			a.AuthorizationRequest(),
 			"")
@@ -59,7 +61,7 @@ func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
 
 	contents, err := util.DoRequest(
 		"DELETE",
-		fmt.Sprintf(route, calendar.ID),
+		fmt.Sprintf(route, calendar.GetID()),
 		nil,
 		a.AuthorizationRequest(),
 		"")
@@ -73,7 +75,7 @@ func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
 	}
 
 	if len(contents) != 0 {
-		return errors.New(fmt.Sprintf("error deleting google calendar %s: %s", calendar.ID, contents))
+		return errors.New(fmt.Sprintf("error deleting google calendar %s: %s", calendar.GetID(), contents))
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -124,7 +126,7 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 	}
 
 	contents, err := util.DoRequest("GET",
-		fmt.Sprintf(route, calendar.ID),
+		fmt.Sprintf(route, calendar.GetID()),
 		nil,
 		a.AuthorizationRequest(),
 		"")
@@ -160,7 +162,7 @@ func (calendar *Calendar) GetEvent(a api.AccountManager, ID string) (event api.E
 
 	contents, err := util.DoRequest(
 		"GET",
-		fmt.Sprintf(route, calendar.ID, ID),
+		fmt.Sprintf(route, calendar.GetID(), ID),
 		nil,
 		a.AuthorizationRequest(),
 		"")
@@ -186,5 +188,5 @@ func (calendar *Calendar) GetEvent(a api.AccountManager, ID string) (event api.E
 }
 
 func (calendar Calendar) GetID() string {
-	return calendar.ID
+	return url.QueryEscape(calendar.ID)
 }

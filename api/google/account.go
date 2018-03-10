@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"net/url"
+
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
@@ -126,6 +128,7 @@ func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error)
 func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, err error) {
 	log.Debugln("getCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
+	log.Debugln(route)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
@@ -133,7 +136,7 @@ func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, 
 	contents, err :=
 		util.DoRequest(
 			"GET",
-			fmt.Sprintf(route, calendarID),
+			fmt.Sprintf(route, url.QueryEscape(calendarID)),
 			nil,
 			a.AuthorizationRequest(),
 			"")
