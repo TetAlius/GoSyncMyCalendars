@@ -1,10 +1,11 @@
 package outlook_test
 
 import (
-	"encoding/json"
 	"testing"
 
 	"fmt"
+
+	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/api/outlook"
@@ -17,23 +18,14 @@ func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {
 	account.Refresh()
 
 	var calendar outlook.Calendar
+	calendar.Name = fmt.Sprintf("Travis%d", time.Now().UnixNano())
 	var calendarWrong outlook.Calendar
-	var calendarJSON = []byte(`{
-  		"Name": "Travis"
-	}`)
 
 	// wrong call to create calendar
 	err := calendarWrong.Create(account)
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
-		return
-	}
-
-	err = json.Unmarshal(calendarJSON, &calendar)
-	if err != nil {
-		t.Fail()
-		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 		return
 	}
 
