@@ -49,7 +49,7 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 	}
 
 	// wrong call to get calendar
-	_, err = account.GetCalendar("")
+	_, err = account.GetCalendar("asdasd")
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")

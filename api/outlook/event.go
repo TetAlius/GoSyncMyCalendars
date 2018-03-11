@@ -25,7 +25,7 @@ func (event *Event) Create(a api.AccountManager) (err error) {
 	log.Debugln(data)
 
 	contents, err := util.DoRequest("POST",
-		fmt.Sprintf(route, event.Calendar.ID),
+		fmt.Sprintf(route, event.Calendar.GetID()),
 		bytes.NewBuffer(data),
 		a.AuthorizationRequest(),
 		a.Mail())

@@ -31,7 +31,7 @@ func (calendar *Calendar) Update(a api.AccountManager) (err error) {
 	contents, err :=
 		util.DoRequest(
 			"PUT",
-			fmt.Sprintf(route, calendar.GetID()),
+			fmt.Sprintf(route, calendar.GetQueryID()),
 			bytes.NewBuffer(data),
 			a.AuthorizationRequest(),
 			"")
@@ -61,7 +61,7 @@ func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
 
 	contents, err := util.DoRequest(
 		"DELETE",
-		fmt.Sprintf(route, calendar.GetID()),
+		fmt.Sprintf(route, calendar.GetQueryID()),
 		nil,
 		a.AuthorizationRequest(),
 		"")
@@ -126,7 +126,7 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 	}
 
 	contents, err := util.DoRequest("GET",
-		fmt.Sprintf(route, calendar.GetID()),
+		fmt.Sprintf(route, calendar.GetQueryID()),
 		nil,
 		a.AuthorizationRequest(),
 		"")
@@ -152,7 +152,7 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (calendar *Calendar) GetEvent(a api.AccountManager, ID string) (event api.EventManager, err error) {
+func (calendar *Calendar) GetEvent(a api.AccountManager, eventID string) (event api.EventManager, err error) {
 	log.Debugln("getEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
@@ -162,7 +162,7 @@ func (calendar *Calendar) GetEvent(a api.AccountManager, ID string) (event api.E
 
 	contents, err := util.DoRequest(
 		"GET",
-		fmt.Sprintf(route, calendar.GetID(), ID),
+		fmt.Sprintf(route, calendar.GetQueryID(), eventID),
 		nil,
 		a.AuthorizationRequest(),
 		"")
@@ -187,6 +187,10 @@ func (calendar *Calendar) GetEvent(a api.AccountManager, ID string) (event api.E
 	return
 }
 
+func (calendar Calendar) GetQueryID() string {
+	return url.QueryEscape(calendar.GetID())
+}
+
 func (calendar Calendar) GetID() string {
-	return url.QueryEscape(calendar.ID)
+	return calendar.ID
 }

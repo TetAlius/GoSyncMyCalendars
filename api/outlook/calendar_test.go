@@ -30,10 +30,6 @@ func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {
 		return
 	}
 
-	t.Fail()
-	t.Fatal()
-	return
-
 	err = json.Unmarshal(calendarJSON, &calendar)
 	if err != nil {
 		t.Fail()
@@ -58,7 +54,7 @@ func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {
 	}
 
 	//	good call to get calendar
-	_, err = account.GetCalendar(calendar.ID)
+	_, err = account.GetCalendar(calendar.GetID())
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())

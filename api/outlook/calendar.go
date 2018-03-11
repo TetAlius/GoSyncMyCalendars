@@ -62,7 +62,7 @@ func (calendar *Calendar) Update(a api.AccountManager) error {
 	}
 
 	contents, err := util.DoRequest("PATCH",
-		fmt.Sprintf(route, calendar.ID),
+		fmt.Sprintf(route, calendar.GetID()),
 		bytes.NewBuffer(data),
 		a.AuthorizationRequest(),
 		a.Mail())
@@ -86,7 +86,7 @@ func (calendar *Calendar) Update(a api.AccountManager) error {
 
 func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
 	log.Debugln("deleteCalendar outlook")
-	if len(calendar.ID) == 0 {
+	if len(calendar.GetID()) == 0 {
 		return errors.New("no ID for calendar was given")
 	}
 
@@ -96,7 +96,7 @@ func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
 	}
 
 	contents, err := util.DoRequest("DELETE",
-		fmt.Sprintf(route, calendar.ID),
+		fmt.Sprintf(route, calendar.GetID()),
 		nil,
 		a.AuthorizationRequest(),
 		a.Mail())
@@ -122,7 +122,7 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 	}
 
 	contents, err := util.DoRequest("GET",
-		fmt.Sprintf(route, calendar.ID),
+		fmt.Sprintf(route, calendar.GetID()),
 		nil,
 		a.AuthorizationRequest(),
 		a.Mail())
