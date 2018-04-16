@@ -29,6 +29,13 @@ type EventManager interface {
 	Delete(AccountManager) error
 }
 
+type SubscriptionManager interface {
+	Subscribe(AccountManager, CalendarManager) error
+	Renew(AccountManager) error
+	Delete(AccountManager) error
+	GetID() string
+}
+
 type RefreshError struct {
 	Code    string `json:"error,omitempty"`
 	Message string `json:"error_description,omitempty"`
