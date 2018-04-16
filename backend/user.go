@@ -20,11 +20,10 @@ const (
 
 // User has the info for the user
 type User struct {
-	Name     string
-	Surname  string
-	Email    string
-	Pswd     string
-	Accounts []*Accounter
+	Name    string
+	Surname string
+	Email   string
+	Pswd    string
 }
 
 // Save generates passwords and saves info to DB
