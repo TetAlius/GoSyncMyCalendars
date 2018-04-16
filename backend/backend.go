@@ -5,41 +5,20 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/TetAlius/GoSyncMyCalendars/backend/handlers"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 //Backend object
 type Server struct {
-	IP             net.IP
-	Port           int
-	googleHandler  *handlers.Google
-	outlookHandler *handlers.Outlook
-}
-
-type Accounter interface {
-	Refresh()
-
-	GetAllCalendars()
-	GetPrimaryCalendar() error
-	GetCalendar(string)
-	CreateCalendar([]byte)
-	UpdateCalendar(string, []byte)
-	DeleteCalendar(string)
-
-	GetAllEventsFromCalendar(string)
-	CreateEvent(string, []byte)
-
-	UpdateEvent([]byte, ...string)
-	DeleteEvent(...string)
-	GetEvent(...string)
+	IP      net.IP
+	Port    int
+	workers *[]Worker
 }
 
 //NewBackend creates a backend
 func NewServer(ip string, port int) *Server {
-	googleHandler := handlers.NewGoogleHandler()
-	outlookHandler := handlers.NewOutlookHandler()
-	server := Server{net.ParseIP(ip), port, googleHandler, outlookHandler}
+	workers := new([]Worker)
+	server := Server{net.ParseIP(ip), port, workers}
 	return &server
 }
 
@@ -48,8 +27,10 @@ func (s *Server) Start() {
 	log.Debugln("Start backend")
 	webServerMux := http.NewServeMux()
 
-	webServerMux.HandleFunc("/google", s.googleHandler.TokenHandler)
-	webServerMux.HandleFunc("/outlook", s.outlookHandler.TokenHandler)
+	webServerMux.HandleFunc("/google", s.GoogleTokenHandler)
+	webServerMux.HandleFunc("/google/watcher", s.GoogleWatcherHandler)
+	webServerMux.HandleFunc("/outlook", s.OutlookTokenHandler)
+	webServerMux.HandleFunc("/outlook/watcher", s.OutlookWatcherHandler)
 
 	laddr := s.IP.String() + ":" + strconv.Itoa(s.Port)
 	log.Infof("Backend server listening at %s", laddr)
