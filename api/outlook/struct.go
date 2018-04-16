@@ -234,6 +234,31 @@ type FreeBusyStatus string
 // The event type: SingleInstance, Occurrence, Exception, SeriesMaster.
 type EventType string
 
+type Subscription struct {
+	Type               string `json:"@odata.type,omitempty"`
+	Resource           string `json:"Resource,omitempty"`
+	NotificationURL    string `json:"NotificationURL,omitempty"`
+	ChangeType         string `json:"ChangeType,omitempty"`
+	ID                 string `json:"id,omitempty"`
+	ClientState        string `json:"ClientState,omitempty"`
+	ExpirationDateTime string `json:"SubscriptionExpirationDateTime,omitempty"`
+}
+
+type Notification struct {
+	Subscriptions []SubscriptionNotification `json:"value"`
+}
+
+type SubscriptionNotification struct {
+	SubscriptionID                 string       `json:"SubscriptionId"`
+	SubscriptionExpirationDateTime string       `json:"SubscriptionExpirationDateTime"`
+	SequenceNumber                 int32        `json:"SequenceNumber"`
+	Date                           ResourceData `json:"ResourceData"`
+}
+
+type ResourceData struct {
+	ID string `json:"Id"`
+}
+
 func createResponseError(contents []byte) (err error) {
 	e := new(Error)
 	err = json.Unmarshal(contents, &e)
