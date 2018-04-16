@@ -7,7 +7,16 @@ before_install:
   - go get -t -v ./...
   - chmod +x ./scripts/cibuild.sh
   - chmod +x ./scripts/test.sh
-
+  # Download ngrok
+  - curl -sO https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+  - unzip $PWD/ngrok-stable-linux-amd64.zip
+  - chmod +x $PWD/ngrok
+  # Download json parser for determining ngrok tunnel
+  - curl -sO http://stedolan.github.io/jq/download/linux64/jq
+  - chmod +x $PWD/jq
+  # Open ngrok tunnel
+  - $PWD/ngrok authtoken $NGROK_AUTH
+  - $PWD/ngrok http -bind-tls=true 8081 > /dev/null &
 script:
   - ./scripts/cibuild.sh
 
