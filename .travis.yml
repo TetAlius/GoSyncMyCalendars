@@ -13,7 +13,7 @@ before_install:
   - chmod +x $PWD/ngrok
   # Open ngrok tunnel
   - $PWD/ngrok authtoken $NGROK_AUTH
-  - $PWD/ngrok http -bind-tls=true 8081 > /dev/null &
+  - $PWD/ngrok http -bind-tls=true -region eu 8081 > /dev/null &
 script:
   - ./scripts/cibuild.sh
 
