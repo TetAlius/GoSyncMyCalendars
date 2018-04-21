@@ -10,22 +10,19 @@ import (
 
 	"os"
 
+	"fmt"
+
 	"github.com/TetAlius/GoSyncMyCalendars/api/outlook"
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
-
-	"fmt"
 )
 
-type TunnelJSON struct {
-	Tunnels []Tunnel `json:"tunnels"`
-}
 type Tunnel struct {
 	PublicURL string `json:"public_url"`
 	Proto     string `json:"proto"`
 }
 
 func setupNgrok(t *testing.T) {
-	resp, err := http.Get("http://localhost:4040/api/tunnels")
+	resp, err := http.Get("http://localhost:4040/api/tunnels/gosync")
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong: %s", err.Error())
@@ -39,14 +36,14 @@ func setupNgrok(t *testing.T) {
 		return
 	}
 
-	response := new(TunnelJSON)
+	response := new(Tunnel)
 	err = json.Unmarshal(contents, &response)
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong: %s", err.Error())
 		return
 	}
-	ngrokURI := response.Tunnels[0].PublicURL
+	ngrokURI := response.PublicURL
 
 	os.Setenv("NGROK_URI", ngrokURI)
 	if len(os.Getenv("NGROK_URI")) < 0 {

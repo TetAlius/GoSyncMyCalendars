@@ -10,7 +10,7 @@ before_install:
   - chmod +x ./ngrok
   # Open ngrok tunnel
   - ./ngrok authtoken $NGROK_AUTH
-  - ./ngrok http -bind-tls=true -region eu 8081 > /dev/null &
+  - ./ngrok start -config ./.ngrok.yml > /dev/null &
   - go get -t -v ./...
   - chmod +x ./scripts/cibuild.sh
   - chmod +x ./scripts/test.sh
