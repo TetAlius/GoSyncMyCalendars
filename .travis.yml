@@ -4,16 +4,16 @@ go:
   - 1.x
 
 before_install:
+  # Download ngrok
+  - curl -sO https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+  - unzip ./ngrok-stable-linux-amd64.zip
+  - chmod +x ./ngrok
+  # Open ngrok tunnel
+  - ./ngrok authtoken $NGROK_AUTH
+  - ./ngrok http -bind-tls=true 8081 > /dev/null &
   - go get -t -v ./...
   - chmod +x ./scripts/cibuild.sh
   - chmod +x ./scripts/test.sh
-  # Download ngrok
-  - curl -sO https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
-  - unzip $PWD/ngrok-stable-linux-amd64.zip
-  - chmod +x $PWD/ngrok
-  # Open ngrok tunnel
-  - $PWD/ngrok authtoken $NGROK_AUTH
-  - $PWD/ngrok http -bind-tls=true -region eu 8081 > /dev/null &
 script:
   - ./scripts/cibuild.sh
 
