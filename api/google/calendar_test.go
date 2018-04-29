@@ -1,4 +1,4 @@
-package google_test
+package api_test
 
 import (
 	"encoding/json"

@@ -1,11 +1,10 @@
-package google_test
+package api_test
 
 import (
 	"encoding/json"
 	"os"
 	"testing"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api/google"
 	"github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 

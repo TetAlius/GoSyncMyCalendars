@@ -1,4 +1,4 @@
-package google
+package api
 
 import (
 	"encoding/json"

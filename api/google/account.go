@@ -1,4 +1,4 @@
-package google
+package api
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func NewAccount(contents []byte) (a *GoogleAccount, err error) {
+func NewGoogleAccount(contents []byte) (a *GoogleAccount, err error) {
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error unmarshaling google responses: %s", err.Error()))
