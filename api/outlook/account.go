@@ -13,10 +13,10 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func NewAccount(contents []byte) (a *Account, err error) {
+func NewAccount(contents []byte) (a *OutlookAccount, err error) {
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error unmarshaling outlook response: %s", err.Error()))
+		return nil, errors.New(fmt.Sprintf("error unmarshaling outlook response: %s", err.Error()))
 	}
 
 	email, preferred, err := util.MailFromToken(strings.Split(a.TokenID, "."), "=")
@@ -28,7 +28,7 @@ func NewAccount(contents []byte) (a *Account, err error) {
 	return
 }
 
-func (a *Account) Refresh() (err error) {
+func (a *OutlookAccount) Refresh() (err error) {
 	client := http.Client{}
 	//check if token is DEAD!!!
 
@@ -87,13 +87,13 @@ func (a *Account) Refresh() (err error) {
 	return
 }
 
-func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error) {
+func (a *OutlookAccount) GetAllCalendars() (calendars []api.CalendarManager, err error) {
 	log.Debugln("getAllCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
 	if err != nil {
 		log.Errorf("%s", err.Error())
-		return calendars, errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
+		return calendars, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
 	contents, err := util.DoRequest("GET",
@@ -103,7 +103,7 @@ func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error)
 		a.AnchorMailbox)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error getting all calendars for email %s. %s", a.AnchorMailbox, err.Error()))
+		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.AnchorMailbox, err.Error()))
 	}
 	err = createResponseError(contents)
 	if err != nil {
@@ -112,7 +112,7 @@ func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error)
 
 	log.Debugf("%s\n", contents)
 
-	calendarResponse := new(CalendarListResponse)
+	calendarResponse := new(OutlookCalendarListResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
 
 	calendars = make([]api.CalendarManager, len(calendarResponse.Calendars))
@@ -122,7 +122,7 @@ func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error)
 	return
 }
 
-func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, err error) {
+func (a *OutlookAccount) GetCalendar(calendarID string) (calendar api.CalendarManager, err error) {
 	if len(calendarID) == 0 {
 		return calendar, errors.New("no ID for calendar was given")
 	}
@@ -130,7 +130,7 @@ func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, 
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
+		log.Errorf("error generating URL: %s", err.Error())
 		return
 	}
 
@@ -141,7 +141,7 @@ func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, 
 		a.AnchorMailbox)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error getting a calendar for email %s. %s", a.AnchorMailbox, err.Error()))
+		return nil, errors.New(fmt.Sprintf("error getting a calendar for email %s. %s", a.AnchorMailbox, err.Error()))
 	}
 	err = createResponseError(contents)
 	if err != nil {
@@ -150,19 +150,19 @@ func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, 
 
 	log.Debugf("%s\n", contents)
 
-	calendarResponse := new(CalendarResponse)
+	calendarResponse := new(OutlookCalendarResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
 
-	return calendarResponse.Calendar, err
+	return calendarResponse.OutlookCalendar, err
 }
 
-func (a *Account) GetPrimaryCalendar() (calendar api.CalendarManager, err error) {
+func (a *OutlookAccount) GetPrimaryCalendar() (calendar api.CalendarManager, err error) {
 	log.Debugln("getPrimaryCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/primary")
 	if err != nil {
 		log.Errorf("%s", err.Error())
-		return calendar, errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
+		return calendar, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
 	contents, err := util.DoRequest("GET",
@@ -173,7 +173,7 @@ func (a *Account) GetPrimaryCalendar() (calendar api.CalendarManager, err error)
 
 	if err != nil {
 		log.Errorf("%s", err.Error())
-		return calendar, errors.New(fmt.Sprintf("Error getting primary calendar for email %s. %s", a.AnchorMailbox, err.Error()))
+		return calendar, errors.New(fmt.Sprintf("error getting primary calendar for email %s. %s", a.AnchorMailbox, err.Error()))
 	}
 	err = createResponseError(contents)
 	if err != nil {
@@ -182,16 +182,16 @@ func (a *Account) GetPrimaryCalendar() (calendar api.CalendarManager, err error)
 
 	log.Debugf("%s\n", contents)
 
-	calendarResponse := new(CalendarResponse)
+	calendarResponse := new(OutlookCalendarResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
 
-	return calendarResponse.Calendar, err
+	return calendarResponse.OutlookCalendar, err
 }
 
-func (a *Account) AuthorizationRequest() (auth string) {
+func (a *OutlookAccount) AuthorizationRequest() (auth string) {
 	return fmt.Sprintf("%s %s", a.TokenType, a.AccessToken)
 }
 
-func (a *Account) Mail() string {
+func (a *OutlookAccount) Mail() string {
 	return a.AnchorMailbox
 }

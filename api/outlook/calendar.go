@@ -11,7 +11,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func (calendar *Calendar) Create(a api.AccountManager) (err error) {
+func (calendar *OutlookCalendar) Create(a api.AccountManager) (err error) {
 	log.Debugln("createCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
@@ -40,7 +40,7 @@ func (calendar *Calendar) Create(a api.AccountManager) (err error) {
 
 	log.Debugf("%s\n", contents)
 
-	calendarResponse := CalendarResponse{OdataContext: "", Calendar: calendar}
+	calendarResponse := OutlookCalendarResponse{OdataContext: "", OutlookCalendar: calendar}
 	err = json.Unmarshal(contents, &calendarResponse)
 
 	log.Debugf("Response: %s", contents)
@@ -48,12 +48,12 @@ func (calendar *Calendar) Create(a api.AccountManager) (err error) {
 	return err
 }
 
-func (calendar *Calendar) Update(a api.AccountManager) error {
+func (calendar *OutlookCalendar) Update(a api.AccountManager) error {
 	log.Debugln("updateCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
 	if err != nil {
-		return errors.New(fmt.Sprintf("Error generating URL: %s", err.Error()))
+		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
 	data, err := json.Marshal(calendar)
@@ -77,14 +77,14 @@ func (calendar *Calendar) Update(a api.AccountManager) error {
 
 	log.Debugf("%s\n", contents)
 
-	calendarResponse := CalendarResponse{OdataContext: "", Calendar: calendar}
+	calendarResponse := OutlookCalendarResponse{OdataContext: "", OutlookCalendar: calendar}
 	err = json.Unmarshal(contents, &calendarResponse)
 
 	return err
 
 }
 
-func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
+func (calendar *OutlookCalendar) Delete(a api.AccountManager) (err error) {
 	log.Debugln("deleteCalendar outlook")
 	if len(calendar.GetID()) == 0 {
 		return errors.New("no ID for calendar was given")
@@ -114,7 +114,7 @@ func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
 
 }
 
-func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.EventManager, err error) {
+func (calendar *OutlookCalendar) GetAllEvents(a api.AccountManager) (events []api.EventManager, err error) {
 	log.Debugln("getAllEvents outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -137,7 +137,7 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 	}
 
 	log.Debugf("%s\n", contents)
-	eventListResponse := new(EventListResponse)
+	eventListResponse := new(OutlookEventListResponse)
 	err = json.Unmarshal(contents, &eventListResponse)
 
 	events = make([]api.EventManager, len(eventListResponse.Events))
@@ -149,7 +149,7 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 }
 
 // GET https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (calendar *Calendar) GetEvent(a api.AccountManager, ID string) (event api.EventManager, err error) {
+func (calendar *OutlookCalendar) GetEvent(a api.AccountManager, ID string) (event api.EventManager, err error) {
 	log.Debugln("getEvent outlook")
 	if len(ID) == 0 {
 		return nil, errors.New("an ID for the event must be given")
@@ -175,14 +175,14 @@ func (calendar *Calendar) GetEvent(a api.AccountManager, ID string) (event api.E
 	}
 
 	log.Debugf("%s\n", contents)
-	eventResponse := new(EventResponse)
+	eventResponse := new(OutlookEventResponse)
 	err = json.Unmarshal(contents, &eventResponse)
 
 	eventResponse.Calendar = calendar
-	event = eventResponse.Event
+	event = eventResponse.OutlookEvent
 
 	return
 }
-func (calendar *Calendar) GetID() string {
+func (calendar *OutlookCalendar) GetID() string {
 	return calendar.ID
 }

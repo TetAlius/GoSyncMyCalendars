@@ -13,8 +13,8 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func NewSubscription(ID string, notificationURL string, changeType string) (subscription *Subscription) {
-	subscription = new(Subscription)
+func NewSubscription(ID string, notificationURL string, changeType string) (subscription *OutlookSubscription) {
+	subscription = new(OutlookSubscription)
 	subscription.NotificationURL = notificationURL
 	subscription.ChangeType = changeType
 	subscription.ID = ID
@@ -22,8 +22,8 @@ func NewSubscription(ID string, notificationURL string, changeType string) (subs
 	return
 }
 
-func manageRenewalData(subscription *Subscription) (data []byte, err error) {
-	renewal := new(Subscription)
+func manageRenewalData(subscription *OutlookSubscription) (data []byte, err error) {
+	renewal := new(OutlookSubscription)
 	renewal.Type = subscription.Type
 	renewal.ExpirationDateTime = subscription.ExpirationDateTime
 	data, err = json.Marshal(renewal)
@@ -31,7 +31,7 @@ func manageRenewalData(subscription *Subscription) (data []byte, err error) {
 }
 
 // POST https://outlook.office.com/api/v2.0/me/subscriptions
-func (subscription *Subscription) Subscribe(a api.AccountManager, calendar api.CalendarManager) (err error) {
+func (subscription *OutlookSubscription) Subscribe(a api.AccountManager, calendar api.CalendarManager) (err error) {
 	log.Debugln("subscribe calendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/subscription")
@@ -68,7 +68,7 @@ func (subscription *Subscription) Subscribe(a api.AccountManager, calendar api.C
 }
 
 //PATCH https://outlook.office.com/api/v2.0/me/subscriptions/{subscriptionId}
-func (subscription *Subscription) Renew(a api.AccountManager) (err error) {
+func (subscription *OutlookSubscription) Renew(a api.AccountManager) (err error) {
 	log.Debugln("subscribe calendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/subscription")
@@ -95,7 +95,7 @@ func (subscription *Subscription) Renew(a api.AccountManager) (err error) {
 }
 
 //DELETE https://outlook.office.com/api/v2.0/me/subscriptions('{subscriptionId}')
-func (subscription *Subscription) Delete(a api.AccountManager) (err error) {
+func (subscription *OutlookSubscription) Delete(a api.AccountManager) (err error) {
 	log.Debugln("Delete outlook subscription")
 	route, err := util.CallAPIRoot("outlook/subscription")
 	if err != nil {
@@ -116,6 +116,6 @@ func (subscription *Subscription) Delete(a api.AccountManager) (err error) {
 	return
 }
 
-func (subscription *Subscription) GetID() string {
+func (subscription *OutlookSubscription) GetID() string {
 	return subscription.ID
 }

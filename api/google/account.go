@@ -15,10 +15,10 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func NewAccount(contents []byte) (a *Account, err error) {
+func NewAccount(contents []byte) (a *GoogleAccount, err error) {
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error unmarshaling google responses: %s", err.Error()))
+		return nil, errors.New(fmt.Sprintf("error unmarshaling google responses: %s", err.Error()))
 	}
 
 	log.Debugf("%s", contents)
@@ -26,14 +26,14 @@ func NewAccount(contents []byte) (a *Account, err error) {
 	// preferred is ignored on google
 	email, _, err := util.MailFromToken(strings.Split(a.TokenID, "."), "==")
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error retrieving google mail: %s", err.Error()))
+		return nil, errors.New(fmt.Sprintf("error retrieving google mail: %s", err.Error()))
 	}
 
 	a.Email = email
 	return
 }
 
-func (a *Account) Refresh() (err error) {
+func (a *GoogleAccount) Refresh() (err error) {
 	client := http.Client{}
 
 	route, err := util.CallAPIRoot("google/token/uri")
@@ -89,7 +89,7 @@ func (a *Account) Refresh() (err error) {
 }
 
 //GET https://www.googleapis.com/calendar/v3/users/me/calendarList
-func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error) {
+func (a *GoogleAccount) GetAllCalendars() (calendars []api.CalendarManager, err error) {
 	log.Debugln("getAllCalendars google")
 	route, err := util.CallAPIRoot("google/calendar-list")
 	if err != nil {
@@ -114,7 +114,7 @@ func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error)
 
 	log.Debugf("%s\n", contents)
 
-	calendarResponse := new(CalendarListResponse)
+	calendarResponse := new(GoogleCalendarListResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
 
 	calendars = make([]api.CalendarManager, len(calendarResponse.Calendars))
@@ -125,7 +125,7 @@ func (a *Account) GetAllCalendars() (calendars []api.CalendarManager, err error)
 }
 
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarID}
-func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, err error) {
+func (a *GoogleAccount) GetCalendar(calendarID string) (calendar api.CalendarManager, err error) {
 	log.Debugln("getCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	log.Debugln(route)
@@ -149,7 +149,7 @@ func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, 
 		return nil, err
 	}
 
-	calendarResponse := new(Calendar)
+	calendarResponse := new(GoogleCalendar)
 	err = json.Unmarshal(contents, &calendarResponse)
 	log.Debugln(contents)
 
@@ -159,7 +159,7 @@ func (a *Account) GetCalendar(calendarID string) (calendar api.CalendarManager, 
 
 // GET https://www.googleapis.com/calendar/v3/calendars/primary
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary This is the one used
-func (a *Account) GetPrimaryCalendar() (calendar api.CalendarManager, err error) {
+func (a *GoogleAccount) GetPrimaryCalendar() (calendar api.CalendarManager, err error) {
 	log.Debugln("getPrimaryCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/primary")
 	if err != nil {
@@ -182,17 +182,17 @@ func (a *Account) GetPrimaryCalendar() (calendar api.CalendarManager, err error)
 		return nil, err
 	}
 
-	calendarResponse := new(Calendar)
+	calendarResponse := new(GoogleCalendar)
 	err = json.Unmarshal(contents, &calendarResponse)
 	log.Debugln(contents)
 
 	return calendarResponse, err
 }
 
-func (a *Account) AuthorizationRequest() string {
+func (a *GoogleAccount) AuthorizationRequest() string {
 	return fmt.Sprintf("%s %s", a.TokenType, a.AccessToken)
 }
 
-func (a *Account) Mail() string {
+func (a *GoogleAccount) Mail() string {
 	return a.Email
 }

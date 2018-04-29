@@ -13,7 +13,7 @@ import (
 )
 
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (event *Event) Create(a api.AccountManager) (err error) {
+func (event *GoogleEvent) Create(a api.AccountManager) (err error) {
 	log.Debugln("createEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -52,7 +52,7 @@ func (event *Event) Create(a api.AccountManager) (err error) {
 }
 
 // PUT https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (event *Event) Update(a api.AccountManager) (err error) {
+func (event *GoogleEvent) Update(a api.AccountManager) (err error) {
 	log.Debugln("updateEvent google")
 	//TODO: Test if ids are two given
 
@@ -90,13 +90,13 @@ func (event *Event) Update(a api.AccountManager) (err error) {
 }
 
 // DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (event *Event) Delete(a api.AccountManager) (err error) {
+func (event *GoogleEvent) Delete(a api.AccountManager) (err error) {
 	log.Debugln("deleteEvent google")
 	//TODO: Test if ids are two given
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
+		log.Errorf("error generating URL: %s", err.Error())
 		return
 	}
 
@@ -108,7 +108,7 @@ func (event *Event) Delete(a api.AccountManager) (err error) {
 		"")
 
 	if err != nil {
-		log.Errorf("Error deleting event of g calendar for email %s. %s", a.Mail(), err.Error())
+		log.Errorf("error deleting event of g calendar for email %s. %s", a.Mail(), err.Error())
 	}
 
 	log.Debugf("Contents: %s", contents)

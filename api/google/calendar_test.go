@@ -21,8 +21,8 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 		return
 	}
 
-	var calendar google.Calendar
-	var calendarWrong google.Calendar
+	var calendar google.GoogleCalendar
+	var calendarWrong google.GoogleCalendar
 	var calendarJSON = []byte(`{
   		"summary": "Travis"
 	}`)
@@ -104,7 +104,7 @@ func TestGoogleCalendar_GetAllEvents(t *testing.T) {
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var calendarWrong google.Calendar
+	var calendarWrong google.GoogleCalendar
 
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
@@ -150,14 +150,14 @@ func TestGoogleCalendar_GetEvent(t *testing.T) {
 		if err != nil {
 			t.Fail()
 			t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s",
-				calendar.(*google.Calendar).Name, err.Error())
+				calendar.(*google.GoogleCalendar).Name, err.Error())
 			return
 		}
 		allEvents = append(allEvents, events...)
 
 	}
 
-	event := allEvents[0].(*google.Event)
+	event := allEvents[0].(*google.GoogleEvent)
 	calendar := event.Calendar
 
 	_, err = calendar.GetEvent(account, "asdasd")

@@ -48,7 +48,7 @@ func TestNewAccount(t *testing.T) {
 func TestOutlookAccount_Refresh(t *testing.T) {
 	setupApiRoot()
 	//Empty initialized info account
-	account := new(outlook.Account)
+	account := new(outlook.OutlookAccount)
 	err := account.Refresh()
 	log.Debugln(err)
 	if err == nil {
@@ -121,8 +121,8 @@ func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 		return
 	}
 
-	os.Setenv("OUTLOOK_CALENDAR_ID", calendar.(*outlook.Calendar).ID)
-	os.Setenv("OUTLOOK_CALENDAR_NAME", calendar.(*outlook.Calendar).Name)
+	os.Setenv("OUTLOOK_CALENDAR_ID", calendar.(*outlook.OutlookCalendar).ID)
+	os.Setenv("OUTLOOK_CALENDAR_NAME", calendar.(*outlook.OutlookCalendar).Name)
 
 	os.Setenv("API_ROOT", "")
 	// Bad calling to GetPrimaryCalendar
@@ -152,16 +152,16 @@ func TestOutlookAccount_GetCalendar(t *testing.T) {
 		return
 	}
 
-	if calendarName != calendar.(*outlook.Calendar).Name {
+	if calendarName != calendar.(*outlook.OutlookCalendar).Name {
 		t.Fail()
-		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.(*outlook.Calendar).Name)
+		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.(*outlook.OutlookCalendar).Name)
 		return
 	}
 
 }
 
-func setup() (account *outlook.Account) {
-	account = &outlook.Account{
+func setup() (account *outlook.OutlookAccount) {
+	account = &outlook.OutlookAccount{
 		TokenType:         os.Getenv("OUTLOOK_TOKEN_TYPE"),
 		ExpiresIn:         3600,
 		AccessToken:       os.Getenv("OUTLOOK_ACCESS_TOKEN"),

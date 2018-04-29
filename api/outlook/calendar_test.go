@@ -17,9 +17,9 @@ func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var calendar outlook.Calendar
+	var calendar outlook.OutlookCalendar
 	calendar.Name = fmt.Sprintf("Travis%d", time.Now().UnixNano())
-	var calendarWrong outlook.Calendar
+	var calendarWrong outlook.OutlookCalendar
 
 	// wrong call to create calendar
 	err := calendarWrong.Create(account)
@@ -94,7 +94,7 @@ func TestOutlookCalendar_GetAllEvents(t *testing.T) {
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var calendarWrong outlook.Calendar
+	var calendarWrong outlook.OutlookCalendar
 
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
@@ -140,14 +140,14 @@ func TestOutlookCalendar_GetEvent(t *testing.T) {
 		if err != nil {
 			t.Fail()
 			t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s",
-				calendar.(*outlook.Calendar).Name, err.Error())
+				calendar.(*outlook.OutlookCalendar).Name, err.Error())
 			return
 		}
 		allEvents = append(allEvents, events...)
 
 	}
 
-	event := allEvents[0].(*outlook.Event)
+	event := allEvents[0].(*outlook.OutlookEvent)
 	calendar := event.Calendar
 
 	_, err = calendar.GetEvent(account, "")

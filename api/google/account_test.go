@@ -51,7 +51,7 @@ func TestNewAccount(t *testing.T) {
 func TestGoogleAccount_Refresh(t *testing.T) {
 	setupApiRoot()
 	//Empty initialized info account
-	account := new(google.Account)
+	account := new(google.GoogleAccount)
 	err := account.Refresh()
 	if err == nil {
 		t.Fail()
@@ -121,10 +121,10 @@ func TestGoogleAccount_GetPrimaryCalendar(t *testing.T) {
 		return
 	}
 
-	logger.Debugln(calendar.(*google.Calendar).ID)
-	logger.Debugln(calendar.(*google.Calendar).Name)
-	os.Setenv("GOOGLE_CALENDAR_ID", calendar.(*google.Calendar).ID)
-	os.Setenv("GOOGLE_CALENDAR_NAME", calendar.(*google.Calendar).Name)
+	logger.Debugln(calendar.(*google.GoogleCalendar).ID)
+	logger.Debugln(calendar.(*google.GoogleCalendar).Name)
+	os.Setenv("GOOGLE_CALENDAR_ID", calendar.(*google.GoogleCalendar).ID)
+	os.Setenv("GOOGLE_CALENDAR_NAME", calendar.(*google.GoogleCalendar).Name)
 
 	os.Setenv("API_ROOT", "")
 	// Bad calling to GetPrimaryCalendar
@@ -157,16 +157,16 @@ func TestGoogleAccount_GetCalendar(t *testing.T) {
 		return
 	}
 
-	if calendarName != calendar.(*google.Calendar).Name {
+	if calendarName != calendar.(*google.GoogleCalendar).Name {
 		t.Fail()
-		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.(*google.Calendar).Name)
+		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.(*google.GoogleCalendar).Name)
 		return
 	}
 
 }
 
-func setup() (account *google.Account) {
-	account = &google.Account{
+func setup() (account *google.GoogleAccount) {
+	account = &google.GoogleAccount{
 		TokenType:    os.Getenv("GOOGLE_TOKEN_TYPE"),
 		ExpiresIn:    3600,
 		AccessToken:  os.Getenv("GOOGLE_ACCESS_TOKEN"),

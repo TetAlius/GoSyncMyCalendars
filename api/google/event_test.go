@@ -14,9 +14,9 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var event google.Event
-	event.Summary = "Discuss the Calendar REST API"
-	event.Start = new(google.Time)
+	var event google.GoogleEvent
+	event.Summary = "Discuss the GoogleCalendar REST API"
+	event.Start = new(google.GoogleTime)
 	event.Start.Date = time.Now().Format("2006-01-02")
 	event.End = event.Start
 
@@ -26,7 +26,7 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 		return
 	}
-	event.Calendar = calendar.(*google.Calendar)
+	event.Calendar = calendar.(*google.GoogleCalendar)
 
 	// good call to create event
 	err = event.Create(account)
@@ -44,7 +44,7 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 		return
 	}
 
-	ev.(*google.Event).Summary = "Update"
+	ev.(*google.GoogleEvent).Summary = "Update"
 
 	// good call to update event
 	err = ev.Update(account)

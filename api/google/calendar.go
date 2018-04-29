@@ -16,7 +16,7 @@ import (
 )
 
 // PUT https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
-func (calendar *Calendar) Update(a api.AccountManager) (err error) {
+func (calendar *GoogleCalendar) Update(a api.AccountManager) (err error) {
 	log.Debugln("updateCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -37,7 +37,7 @@ func (calendar *Calendar) Update(a api.AccountManager) (err error) {
 			"")
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("Error updating a calendar for email %s. %s", a.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
 
 	err = createResponseError(contents)
@@ -52,7 +52,7 @@ func (calendar *Calendar) Update(a api.AccountManager) (err error) {
 }
 
 // DELETE https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
-func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
+func (calendar *GoogleCalendar) Delete(a api.AccountManager) (err error) {
 	log.Debugln("Delete calendar")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -67,7 +67,7 @@ func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
 		"")
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("Error deleting a calendar for email %s. %s", a.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
 	err = createResponseError(contents)
 	if err != nil {
@@ -84,7 +84,7 @@ func (calendar *Calendar) Delete(a api.AccountManager) (err error) {
 }
 
 // POST https://www.googleapis.com/calendar/v3/calendars
-func (calendar *Calendar) Create(a api.AccountManager) (err error) {
+func (calendar *GoogleCalendar) Create(a api.AccountManager) (err error) {
 	log.Debugln("createCalendar google")
 	route, err := util.CallAPIRoot("google/calendars")
 	if err != nil {
@@ -117,7 +117,7 @@ func (calendar *Calendar) Create(a api.AccountManager) (err error) {
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.EventManager, err error) {
+func (calendar *GoogleCalendar) GetAllEvents(a api.AccountManager) (events []api.EventManager, err error) {
 	log.Debugln("getAllEvents google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -132,7 +132,7 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 		"")
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error getting all events of g calendar for email %s. %s", a.Mail(), err.Error()))
+		return nil, errors.New(fmt.Sprintf("error getting all events of g calendar for email %s. %s", a.Mail(), err.Error()))
 	}
 	err = createResponseError(contents)
 	if err != nil {
@@ -140,7 +140,7 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 	}
 
 	log.Debugf("%s\n", contents)
-	eventList := new(EventList)
+	eventList := new(GoogleEventList)
 	err = json.Unmarshal(contents, &eventList)
 
 	events = make([]api.EventManager, len(eventList.Events))
@@ -152,7 +152,7 @@ func (calendar *Calendar) GetAllEvents(a api.AccountManager) (events []api.Event
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (calendar *Calendar) GetEvent(a api.AccountManager, eventID string) (event api.EventManager, err error) {
+func (calendar *GoogleCalendar) GetEvent(a api.AccountManager, eventID string) (event api.EventManager, err error) {
 	log.Debugln("getEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
@@ -178,7 +178,7 @@ func (calendar *Calendar) GetEvent(a api.AccountManager, eventID string) (event 
 	}
 
 	log.Debugf("%s\n", contents)
-	eventResponse := new(Event)
+	eventResponse := new(GoogleEvent)
 	err = json.Unmarshal(contents, &eventResponse)
 
 	eventResponse.Calendar = calendar
@@ -187,10 +187,10 @@ func (calendar *Calendar) GetEvent(a api.AccountManager, eventID string) (event 
 	return
 }
 
-func (calendar Calendar) GetQueryID() string {
+func (calendar GoogleCalendar) GetQueryID() string {
 	return url.QueryEscape(calendar.GetID())
 }
 
-func (calendar Calendar) GetID() string {
+func (calendar GoogleCalendar) GetID() string {
 	return calendar.ID
 }

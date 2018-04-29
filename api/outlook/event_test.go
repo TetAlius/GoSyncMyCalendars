@@ -12,8 +12,8 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var event outlook.Event
-	event.Subject = "Discuss the Calendar REST API"
+	var event outlook.OutlookEvent
+	event.Subject = "Discuss the OutlookCalendar REST API"
 
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
@@ -21,7 +21,7 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 		return
 	}
-	event.Calendar = calendar.(*outlook.Calendar)
+	event.Calendar = calendar.(*outlook.OutlookCalendar)
 
 	// good call to create event
 	err = event.Create(account)
@@ -39,7 +39,7 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 		return
 	}
 
-	ev.(*outlook.Event).Subject = "Update"
+	ev.(*outlook.OutlookEvent).Subject = "Update"
 
 	// good call to update event
 	err = ev.Update(account)

@@ -6,16 +6,16 @@ import (
 	"fmt"
 )
 
-type Error struct {
-	ConcreteError `json:"error,omitempty"`
+type GoogleError struct {
+	GoogleConcreteError `json:"error,omitempty"`
 }
-type ConcreteError struct {
+type GoogleConcreteError struct {
 	Code    int32  `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
 }
 
 func createResponseError(contents []byte) (err error) {
-	e := new(Error)
+	e := new(GoogleError)
 	err = json.Unmarshal(contents, &e)
 	if e.Code != 0 && len(e.Message) != 0 {
 		return errors.New(fmt.Sprintf("code: %d. message: %s", e.Code, e.Message))
@@ -23,7 +23,7 @@ func createResponseError(contents []byte) (err error) {
 	return nil
 }
 
-type Account struct {
+type GoogleAccount struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
 	ExpiresIn    int    `json:"expires_in"`
@@ -32,15 +32,15 @@ type Account struct {
 	Email        string
 }
 
-type CalendarListResponse struct {
-	Kind          string      `json:"kind"`
-	Etag          string      `json:"etag"`
-	NextPageToken string      `json:"nextPageToken"`
-	NextSyncToken string      `json:"nextSyncToken"`
-	Calendars     []*Calendar `json:"items"`
+type GoogleCalendarListResponse struct {
+	Kind          string            `json:"kind"`
+	Etag          string            `json:"etag"`
+	NextPageToken string            `json:"nextPageToken"`
+	NextSyncToken string            `json:"nextSyncToken"`
+	Calendars     []*GoogleCalendar `json:"items"`
 }
 
-type Calendar struct {
+type GoogleCalendar struct {
 	//From CalendarLIST resource
 	ID              string `json:"id"`
 	Name            string `json:"summary"`
@@ -54,78 +54,78 @@ type Calendar struct {
 	Hidden          bool   `json:"hidden,omitempty"`
 	Selected        bool   `json:"selected,omitempty"`
 	// Only valid accessRoles with 'writer' or 'owner'
-	AccessRole           string     `json:"accessRole,omitempty"`
-	DefaultReminders     []Reminder `json:"defaultReminders,omitempty"`
-	Primary              bool       `json:"primary,omitempty"`
-	Deleted              bool       `json:"deleted,omitempty"`
-	ConferenceProperties `json:"conferenceProperties,omitempty"`
-	NotificationSetting  `json:"notificationSettings,omitempty"`
+	AccessRole                 string           `json:"accessRole,omitempty"`
+	DefaultReminders           []GoogleReminder `json:"defaultReminders,omitempty"`
+	Primary                    bool             `json:"primary,omitempty"`
+	Deleted                    bool             `json:"deleted,omitempty"`
+	GoogleConferenceProperties `json:"conferenceProperties,omitempty"`
+	GoogleNotificationSetting  `json:"notificationSettings,omitempty"`
 }
 
-type Reminder struct {
+type GoogleReminder struct {
 	Method  string `json:"method,omitempty"`
 	Minutes int32  `json:"minutes,omitempty"`
 }
 
-type NotificationSetting struct {
-	Notifications []Notification `json:"notifications,omitempty"`
+type GoogleNotificationSetting struct {
+	Notifications []GoogleNotification `json:"notifications,omitempty"`
 }
 
-type Notification struct {
+type GoogleNotification struct {
 	Type   string `json:"type,omitempty"`
 	Method string `json:"method,omitempty"`
 }
 
-type ConferenceProperties struct {
+type GoogleConferenceProperties struct {
 	AllowedConferenceSolutionTypes []string `json:"allowedConferenceSolutionTypes,omitempty"`
 }
 
-type EventList struct {
-	Events []*Event `json:"items"`
+type GoogleEventList struct {
+	Events []*GoogleEvent `json:"items"`
 }
-type Event struct {
-	Calendar                *Calendar       `json:"calendar,omitempty"`
-	Kind                    string          `json:"kind,omitempty"`
-	Etag                    string          `json:"etag,omitempty"`
-	ID                      string          `json:"id"`
-	Status                  string          `json:"status,omitempty"`
-	HTMLLink                string          `json:"htmlLink,omitempty"`
-	Created                 string          `json:"created,omitempty"`
-	Updated                 string          `json:"updated,omitempty"`
-	Summary                 string          `json:"summary,omitempty"`
-	Description             string          `json:"description,omitempty"`
-	Location                string          `json:"location,omitempty"`
-	ColorID                 string          `json:"colorId,omitempty"`
-	Creator                 *Person         `json:"creator,omitempty"`
-	Organizer               *Person         `json:"organizer,omitempty"`
-	Start                   *Time           `json:"start,omitempty"`
-	End                     *Time           `json:"end,omitempty"`
-	EndTimeUnspecified      bool            `json:"endTimeUnspecified,omitempty"`
-	Recurrence              []string        `json:"recurrence,omitempty"`
-	RecurringEventId        string          `json:"recurringEventId,omitempty"`
-	OriginalStartTime       *Time           `json:"originalStartTime,omitempty"`
-	Transparency            string          `json:"transparency,omitempty"`
-	Visibility              string          `json:"visibility,omitempty"`
-	ICalUID                 string          `json:"iCalUID,omitempty"`
-	Sequence                int32           `json:"sequence,omitempty"`
-	Attendees               []Person        `json:"attendees,omitempty"`
-	AttendeesOmitted        bool            `json:"attendeesOmitted,omitempty"`
-	HangoutLink             string          `json:"hangoutLink,omitempty"`
-	ConferenceData          *ConferenceData `json:"conferenceData,omitempty"`
-	Gadget                  *Gadget         `json:"gadget,omitempty"`
-	AnyoneCanAddSelf        bool            `json:"anyoneCanAddSelf,omitempty"`
-	GuestsCanInviteOthers   bool            `json:"guestsCanInviteOthers,omitempty"`
-	GuestsCanModify         bool            `json:"guestsCanModify,omitempty"`
-	GuestsCanSeeOtherGuests bool            `json:"guestsCanSeeOtherGuests,omitempty"`
-	PrivateCopy             bool            `json:"privateCopy,omitempty"`
-	Locked                  bool            `json:"locked,omitempty"`
-	Reminders               EventReminder   `json:"reminders,omitempty"`
-	Source                  *Source         `json:"source,omitempty"`
-	Attachments             []Attachment    `json:"attachments,omitempty"`
+type GoogleEvent struct {
+	Calendar                *GoogleCalendar       `json:"calendar,omitempty"`
+	Kind                    string                `json:"kind,omitempty"`
+	Etag                    string                `json:"etag,omitempty"`
+	ID                      string                `json:"id"`
+	Status                  string                `json:"status,omitempty"`
+	HTMLLink                string                `json:"htmlLink,omitempty"`
+	Created                 string                `json:"created,omitempty"`
+	Updated                 string                `json:"updated,omitempty"`
+	Summary                 string                `json:"summary,omitempty"`
+	Description             string                `json:"description,omitempty"`
+	Location                string                `json:"location,omitempty"`
+	ColorID                 string                `json:"colorId,omitempty"`
+	Creator                 *GooglePerson         `json:"creator,omitempty"`
+	Organizer               *GooglePerson         `json:"organizer,omitempty"`
+	Start                   *GoogleTime           `json:"start,omitempty"`
+	End                     *GoogleTime           `json:"end,omitempty"`
+	EndTimeUnspecified      bool                  `json:"endTimeUnspecified,omitempty"`
+	Recurrence              []string              `json:"recurrence,omitempty"`
+	RecurringEventId        string                `json:"recurringEventId,omitempty"`
+	OriginalStartTime       *GoogleTime           `json:"originalStartTime,omitempty"`
+	Transparency            string                `json:"transparency,omitempty"`
+	Visibility              string                `json:"visibility,omitempty"`
+	ICalUID                 string                `json:"iCalUID,omitempty"`
+	Sequence                int32                 `json:"sequence,omitempty"`
+	Attendees               []GooglePerson        `json:"attendees,omitempty"`
+	AttendeesOmitted        bool                  `json:"attendeesOmitted,omitempty"`
+	HangoutLink             string                `json:"hangoutLink,omitempty"`
+	ConferenceData          *GoogleConferenceData `json:"conferenceData,omitempty"`
+	Gadget                  *GoogleGadget         `json:"gadget,omitempty"`
+	AnyoneCanAddSelf        bool                  `json:"anyoneCanAddSelf,omitempty"`
+	GuestsCanInviteOthers   bool                  `json:"guestsCanInviteOthers,omitempty"`
+	GuestsCanModify         bool                  `json:"guestsCanModify,omitempty"`
+	GuestsCanSeeOtherGuests bool                  `json:"guestsCanSeeOtherGuests,omitempty"`
+	PrivateCopy             bool                  `json:"privateCopy,omitempty"`
+	Locked                  bool                  `json:"locked,omitempty"`
+	Reminders               GoogleEventReminder   `json:"reminders,omitempty"`
+	Source                  *GoogleSource         `json:"source,omitempty"`
+	Attachments             []GoogleAttachment    `json:"attachments,omitempty"`
 	//ExtendedProperties
 }
 
-type Person struct {
+type GooglePerson struct {
 	ID               string `json:"id,omitempty"`
 	Email            string `json:"email,omitempty"`
 	DisplayName      string `json:"displayName,omitempty"`
@@ -137,35 +137,35 @@ type Person struct {
 	Comment          string `json:"comment,omitempty"`
 	AdditionalGuests int32  `json:"additionalGuests,omitempty"`
 }
-type Time struct {
+type GoogleTime struct {
 	Date     string `json:"date,omitempty"`
 	DateTime string `json:"dateTime,omitempty"`
 	TimeZone string `json:"timeZone,omitempty"`
 }
 
-type ConferenceData struct {
-	CreateRequest *CreateRequest `json:"createRequest,omitempty"`
-	EntryPoints   []EntryPoint   `json:"entryPoints,omitempty"`
+type GoogleConferenceData struct {
+	CreateRequest *GoogleCreateRequest `json:"createRequest,omitempty"`
+	EntryPoints   []GoogleEntryPoint   `json:"entryPoints,omitempty"`
 	//ConferenceSolution ConferenceSolution `json:"conferenceSolution"`
 	ConferenceID string `json:"conferenceId,omitempty"`
 	Signature    string `json:"signature,omitempty"`
 }
 
-type CreateRequest struct {
-	RequestID             string       `json:"requestId,omitempty"`
-	ConferenceSolutionKey *SolutionKey `json:"conferenceSolutionKey,omitempty"`
-	Status                *Status      `json:"status,omitempty"`
+type GoogleCreateRequest struct {
+	RequestID             string             `json:"requestId,omitempty"`
+	ConferenceSolutionKey *GoogleSolutionKey `json:"conferenceSolutionKey,omitempty"`
+	Status                *GoogleStatus      `json:"status,omitempty"`
 }
 
-type SolutionKey struct {
+type GoogleSolutionKey struct {
 	Type string `json:"type,omitempty"`
 }
 
-type Status struct {
+type GoogleStatus struct {
 	Code string `json:"statusCode,omitempty"`
 }
 
-type EntryPoint struct {
+type GoogleEntryPoint struct {
 	EntryPointType string `json:"entryPointType,omitempty"`
 	URI            string `json:"uri,omitempty"`
 	Label          string `json:"label,omitempty"`
@@ -175,7 +175,7 @@ type EntryPoint struct {
 	Passcode       string `json:"passcode,omitempty"`
 	Password       string `json:"password,omitempty"`
 }
-type Gadget struct {
+type GoogleGadget struct {
 	Type     string `json:"type,omitempty"`
 	Title    string `json:"title,omitempty"`
 	Link     string `json:"link,omitempty"`
@@ -185,16 +185,16 @@ type Gadget struct {
 	Display  string `json:"display,omitempty"`
 	//Preferences
 }
-type EventReminder struct {
-	UseDefault bool       `json:"useDefault,omitempty"`
-	Overrides  []Reminder `json:"overrides,omitempty"`
+type GoogleEventReminder struct {
+	UseDefault bool             `json:"useDefault,omitempty"`
+	Overrides  []GoogleReminder `json:"overrides,omitempty"`
 }
-type Source struct {
+type GoogleSource struct {
 	URL   string `json:"url,omitempty"`
 	Title string `json:"title,omitempty"`
 }
 
-type Attachment struct {
+type GoogleAttachment struct {
 	FileURL  string `json:"fileUrl,omitempty"`
 	Title    string `json:"title,omitempty"`
 	MimeType string `json:"mimeType,omitempty"`

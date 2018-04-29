@@ -19,14 +19,14 @@ func (s *Server) GoogleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	route, err := util.CallAPIRoot("google/token/uri")
 	log.Debugln(route)
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
+		log.Errorf("error generating URL: %s", err.Error())
 		serverError(w)
 		return
 	}
 	params, err := util.CallAPIRoot("google/token/request-params")
 	log.Debugln(params)
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
+		log.Errorf("error generating URL: %s", err.Error())
 		serverError(w)
 		return
 	}
@@ -43,7 +43,7 @@ func (s *Server) GoogleTokenHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf(params, code)))
 
 	if err != nil {
-		log.Errorf("Error creating new google request: %s", err.Error())
+		log.Errorf("error creating new google request: %s", err.Error())
 		serverError(w)
 		return
 	}
@@ -53,7 +53,7 @@ func (s *Server) GoogleTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf("Error doing google request: %s", err.Error())
+		log.Errorf("error doing google request: %s", err.Error())
 		serverError(w)
 		return
 	}
@@ -61,7 +61,7 @@ func (s *Server) GoogleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("Error reading response body from google request: %s", err.Error())
+		log.Errorf("error reading response body from google request: %s", err.Error())
 		serverError(w)
 		return
 	}
@@ -69,7 +69,7 @@ func (s *Server) GoogleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO: DB to implement
 	account, err := google.NewAccount(contents)
 
-	go func(account *google.Account) {
+	go func(account *google.GoogleAccount) {
 		log.Debugln(account)
 		account.GetAllCalendars()
 		account.Refresh()
@@ -86,14 +86,14 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	route, err := util.CallAPIRoot("outlook/token/uri")
 	log.Debugln(route)
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
+		log.Errorf("error generating URL: %s", err.Error())
 		serverError(w)
 		return
 	}
 	params, err := util.CallAPIRoot("outlook/token/request-params")
 	log.Debugln(params)
 	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
+		log.Errorf("error generating URL: %s", err.Error())
 		serverError(w)
 		return
 	}
@@ -106,7 +106,7 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		strings.NewReader(
 			fmt.Sprintf(params, code)))
 	if err != nil {
-		log.Errorf("Error creating new outlook request: %s", err.Error())
+		log.Errorf("error creating new outlook request: %s", err.Error())
 		serverError(w)
 		return
 	}
@@ -116,7 +116,7 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf("Error doing outlook request: %s", err.Error())
+		log.Errorf("error doing outlook request: %s", err.Error())
 		serverError(w)
 		return
 	}
@@ -124,7 +124,7 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("Error reading response body from outlook request: %s", err.Error())
+		log.Errorf("error reading response body from outlook request: %s", err.Error())
 		serverError(w)
 		return
 	}
@@ -132,11 +132,11 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO: DB to implement
 	account, err := outlook.NewAccount(contents)
 	if err != nil {
-		log.Errorf("Error creating new account request: %s", err.Error())
+		log.Errorf("error creating new account request: %s", err.Error())
 		serverError(w)
 		return
 	}
-	go func(account *outlook.Account) {
+	go func(account *outlook.OutlookAccount) {
 		log.Debugln(account)
 		account.GetAllCalendars()
 		account.Refresh()
@@ -160,7 +160,7 @@ func (s *Server) OutlookWatcherHandler(w http.ResponseWriter, r *http.Request) {
 				serverError(w)
 				return
 			}
-			notification := new(outlook.Notification)
+			notification := new(outlook.OutlookNotification)
 			err = json.Unmarshal(contents, &notification)
 			if err != nil {
 				serverError(w)

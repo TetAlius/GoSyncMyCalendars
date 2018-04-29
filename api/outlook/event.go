@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (event *Event) Create(a api.AccountManager) (err error) {
+func (event *OutlookEvent) Create(a api.AccountManager) (err error) {
 	log.Debugln("createEvent outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -38,14 +38,14 @@ func (event *Event) Create(a api.AccountManager) (err error) {
 		return err
 	}
 
-	eventResponse := EventResponse{OdataContext: "", Event: event}
+	eventResponse := OutlookEventResponse{OdataContext: "", OutlookEvent: event}
 	err = json.Unmarshal(contents, &eventResponse)
 
 	log.Debugf("Response: %s", contents)
 	return
 }
 
-func (event *Event) Update(a api.AccountManager) (err error) {
+func (event *OutlookEvent) Update(a api.AccountManager) (err error) {
 	log.Debugln("updateEvent outlook")
 
 	route, err := util.CallAPIRoot("outlook/events/id")
@@ -74,7 +74,7 @@ func (event *Event) Update(a api.AccountManager) (err error) {
 		return err
 	}
 
-	eventResponse := EventResponse{OdataContext: "", Event: event}
+	eventResponse := OutlookEventResponse{OdataContext: "", OutlookEvent: event}
 	err = json.Unmarshal(contents, &eventResponse)
 
 	log.Debugf("Response: %s", contents)
@@ -82,7 +82,7 @@ func (event *Event) Update(a api.AccountManager) (err error) {
 }
 
 // DELETE https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (event *Event) Delete(a api.AccountManager) (err error) {
+func (event *OutlookEvent) Delete(a api.AccountManager) (err error) {
 	log.Debugln("deleteEvent outlook")
 
 	route, err := util.CallAPIRoot("outlook/events/id")
