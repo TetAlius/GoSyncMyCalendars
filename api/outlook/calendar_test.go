@@ -1,4 +1,4 @@
-package outlook_test
+package api_test
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
-	"github.com/TetAlius/GoSyncMyCalendars/api/outlook"
+	outlook "github.com/TetAlius/GoSyncMyCalendars/api/outlook"
 )
 
 func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {

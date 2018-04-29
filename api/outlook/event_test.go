@@ -1,9 +1,9 @@
-package outlook_test
+package api_test
 
 import (
 	"testing"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api/outlook"
+	outlook "github.com/TetAlius/GoSyncMyCalendars/api/outlook"
 )
 
 func TestEventCalendar_EventLifeCycle(t *testing.T) {

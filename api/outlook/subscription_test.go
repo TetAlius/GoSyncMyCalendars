@@ -1,4 +1,4 @@
-package outlook_test
+package api_test
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ import (
 
 	"fmt"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api/outlook"
+	outlook "github.com/TetAlius/GoSyncMyCalendars/api/outlook"
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
 )
 

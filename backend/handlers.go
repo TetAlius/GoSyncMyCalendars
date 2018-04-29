@@ -9,8 +9,8 @@ import (
 
 	"encoding/json"
 
-	api "github.com/TetAlius/GoSyncMyCalendars/api/google"
-	"github.com/TetAlius/GoSyncMyCalendars/api/outlook"
+	google "github.com/TetAlius/GoSyncMyCalendars/api/google"
+	outlook "github.com/TetAlius/GoSyncMyCalendars/api/outlook"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -67,9 +67,9 @@ func (s *Server) GoogleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//TODO: DB to implement
-	account, err := api.NewGoogleAccount(contents)
+	account, err := google.NewGoogleAccount(contents)
 
-	go func(account *api.GoogleAccount) {
+	go func(account *google.GoogleAccount) {
 		log.Debugln(account)
 		account.GetAllCalendars()
 		account.Refresh()

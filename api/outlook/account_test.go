@@ -1,11 +1,11 @@
-package outlook_test
+package api_test
 
 import (
 	"encoding/json"
 	"os"
 	"testing"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api/outlook"
+	outlook "github.com/TetAlius/GoSyncMyCalendars/api/outlook"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 

@@ -1,4 +1,4 @@
-package outlook
+package api
 
 import (
 	"bytes"
