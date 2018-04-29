@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	google "github.com/TetAlius/GoSyncMyCalendars/api/google"
 	"github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
@@ -12,7 +13,7 @@ func TestNewAccount(t *testing.T) {
 	setupApiRoot()
 	// Bad Info inside Json
 	b := []byte(`{"Name":"Bob","Food":"Pickle"}`)
-	_, err := google.NewAccount(b)
+	_, err := google.NewGoogleAccount(b)
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
@@ -21,7 +22,7 @@ func TestNewAccount(t *testing.T) {
 
 	//Bad formatted JSON
 	b = []byte(`{"id_token":"ASD.ASD.ASD","Food":"Pickle"`)
-	_, err = google.NewAccount(b)
+	_, err = google.NewGoogleAccount(b)
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
@@ -36,7 +37,7 @@ func TestNewAccount(t *testing.T) {
 		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
 		return
 	}
-	acc, err := google.NewAccount(b)
+	acc, err := google.NewGoogleAccount(b)
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found %s", err.Error())

@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
-	"github.com/TetAlius/GoSyncMyCalendars/api/google"
+	google "github.com/TetAlius/GoSyncMyCalendars/api/google"
 )
 
 func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {

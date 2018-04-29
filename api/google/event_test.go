@@ -5,7 +5,7 @@ import (
 
 	"time"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api/google"
+	google "github.com/TetAlius/GoSyncMyCalendars/api/google"
 )
 
 func TestEventCalendar_EventLifeCycle(t *testing.T) {
