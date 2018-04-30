@@ -1,6 +1,12 @@
 package api
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"reflect"
+
+	"github.com/TetAlius/GoSyncMyCalendars/logger"
+)
 
 type AccountManager interface {
 	Refresh() error
@@ -27,6 +33,8 @@ type EventManager interface {
 	Create(AccountManager) error
 	Update(AccountManager) error
 	Delete(AccountManager) error
+	GetID() string
+	GetCalendar() CalendarManager
 }
 
 type SubscriptionManager interface {
@@ -43,4 +51,18 @@ type RefreshError struct {
 
 func (err RefreshError) Error() string {
 	return fmt.Sprintf("code: %s. message: %s", err.Code, err.Message)
+}
+
+func Convert(from EventManager, to EventManager) (err error) {
+	var tag string
+	switch from.(type) {
+	case *OutlookEvent:
+		tag = "outlook"
+	case *GoogleEvent:
+		tag = "google"
+	default:
+		return errors.New(fmt.Sprintf("type: %s not suported", reflect.TypeOf(from)))
+	}
+	logger.Debugln(tag)
+	return
 }

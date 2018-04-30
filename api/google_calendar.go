@@ -9,14 +9,13 @@ import (
 
 	"net/url"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"github.com/pkg/errors"
 )
 
 // PUT https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
-func (calendar *GoogleCalendar) Update(a api.AccountManager) (err error) {
+func (calendar *GoogleCalendar) Update(a AccountManager) (err error) {
 	log.Debugln("updateCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -40,7 +39,7 @@ func (calendar *GoogleCalendar) Update(a api.AccountManager) (err error) {
 		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
 
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return err
 	}
@@ -52,7 +51,7 @@ func (calendar *GoogleCalendar) Update(a api.AccountManager) (err error) {
 }
 
 // DELETE https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
-func (calendar *GoogleCalendar) Delete(a api.AccountManager) (err error) {
+func (calendar *GoogleCalendar) Delete(a AccountManager) (err error) {
 	log.Debugln("Delete calendar")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -69,7 +68,7 @@ func (calendar *GoogleCalendar) Delete(a api.AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return err
 	}
@@ -84,7 +83,7 @@ func (calendar *GoogleCalendar) Delete(a api.AccountManager) (err error) {
 }
 
 // POST https://www.googleapis.com/calendar/v3/calendars
-func (calendar *GoogleCalendar) Create(a api.AccountManager) (err error) {
+func (calendar *GoogleCalendar) Create(a AccountManager) (err error) {
 	log.Debugln("createCalendar google")
 	route, err := util.CallAPIRoot("google/calendars")
 	if err != nil {
@@ -106,7 +105,7 @@ func (calendar *GoogleCalendar) Create(a api.AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return err
 	}
@@ -117,7 +116,7 @@ func (calendar *GoogleCalendar) Create(a api.AccountManager) (err error) {
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (calendar *GoogleCalendar) GetAllEvents(a api.AccountManager) (events []api.EventManager, err error) {
+func (calendar *GoogleCalendar) GetAllEvents(a AccountManager) (events []EventManager, err error) {
 	log.Debugln("getAllEvents google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -134,7 +133,7 @@ func (calendar *GoogleCalendar) GetAllEvents(a api.AccountManager) (events []api
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all events of g calendar for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +142,7 @@ func (calendar *GoogleCalendar) GetAllEvents(a api.AccountManager) (events []api
 	eventList := new(GoogleEventList)
 	err = json.Unmarshal(contents, &eventList)
 
-	events = make([]api.EventManager, len(eventList.Events))
+	events = make([]EventManager, len(eventList.Events))
 	for i, s := range eventList.Events {
 		s.Calendar = calendar
 		events[i] = s
@@ -152,7 +151,7 @@ func (calendar *GoogleCalendar) GetAllEvents(a api.AccountManager) (events []api
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (calendar *GoogleCalendar) GetEvent(a api.AccountManager, eventID string) (event api.EventManager, err error) {
+func (calendar *GoogleCalendar) GetEvent(a AccountManager, eventID string) (event EventManager, err error) {
 	log.Debugln("getEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
@@ -172,7 +171,7 @@ func (calendar *GoogleCalendar) GetEvent(a api.AccountManager, eventID string) (
 	}
 
 	log.Debugf("Contents: %s", contents)
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return nil, err
 	}
@@ -184,6 +183,48 @@ func (calendar *GoogleCalendar) GetEvent(a api.AccountManager, eventID string) (
 	eventResponse.Calendar = calendar
 	event = eventResponse
 
+	return
+}
+
+func (calendar *GoogleCalendar) Subscribe(a AccountManager) (err error) {
+	log.Debugln("subscribe calendar google")
+
+	route, err := util.CallAPIRoot("google/calendars/subscription")
+	log.Debugln(route)
+	if err != nil {
+		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
+	}
+
+	data := []byte(`{
+	  "id": "01234567-89ab-cdef-0123456789ab",
+	  "type": "web_hook",
+	  "address": "https://mcbjyngjgh.execute-api.eu-west-1.amazonaws.com/prod/testing"
+	}`)
+
+	contents, err := util.DoRequest("POST",
+		route,
+		bytes.NewBuffer(data),
+		a.AuthorizationRequest(),
+		a.Mail())
+
+	log.Debugf("%s\n", contents)
+	err = createGoogleResponseError(contents)
+	if err != nil {
+		return err
+	}
+
+	return
+}
+
+// There's no explicit way to renew subscription.
+// One new must be created
+func (calendar *GoogleCalendar) RenewSubscription(a AccountManager, subscriptionID string) (err error) {
+	panic("NOT YET IMPLEMENTED")
+	return
+}
+
+func (calendar *GoogleCalendar) DeleteSubscription(a AccountManager, subscriptionID string) (err error) {
+	panic("NOT YET IMPLEMENTED")
 	return
 }
 

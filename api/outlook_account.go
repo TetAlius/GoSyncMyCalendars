@@ -8,12 +8,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func NewAccount(contents []byte) (a *OutlookAccount, err error) {
+func NewOutlookAccount(contents []byte) (a *OutlookAccount, err error) {
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error unmarshaling outlook response: %s", err.Error()))
@@ -25,6 +24,15 @@ func NewAccount(contents []byte) (a *OutlookAccount, err error) {
 	}
 	a.AnchorMailbox = email
 	a.PreferredUsername = preferred
+	return
+}
+
+func RetrieveOutlookAccount(accessToken string, refreshToken string, tokenID string, anchorMailbox string) (a *OutlookAccount, err error) {
+	a = new(OutlookAccount)
+	a.AccessToken = accessToken
+	a.RefreshToken = refreshToken
+	a.TokenID = tokenID
+	a.AnchorMailbox = anchorMailbox
 	return
 }
 
@@ -67,7 +75,7 @@ func (a *OutlookAccount) Refresh() (err error) {
 	}
 
 	if resp.StatusCode != 201 && resp.StatusCode != 204 {
-		e := new(api.RefreshError)
+		e := new(RefreshError)
 		_ = json.Unmarshal(contents, &e)
 		if len(e.Code) != 0 && len(e.Message) != 0 {
 			log.Errorln(e.Code)
@@ -87,7 +95,7 @@ func (a *OutlookAccount) Refresh() (err error) {
 	return
 }
 
-func (a *OutlookAccount) GetAllCalendars() (calendars []api.CalendarManager, err error) {
+func (a *OutlookAccount) GetAllCalendars() (calendars []CalendarManager, err error) {
 	log.Debugln("getAllCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
@@ -105,7 +113,7 @@ func (a *OutlookAccount) GetAllCalendars() (calendars []api.CalendarManager, err
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.AnchorMailbox, err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return nil, err
 	}
@@ -115,14 +123,14 @@ func (a *OutlookAccount) GetAllCalendars() (calendars []api.CalendarManager, err
 	calendarResponse := new(OutlookCalendarListResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
 
-	calendars = make([]api.CalendarManager, len(calendarResponse.Calendars))
+	calendars = make([]CalendarManager, len(calendarResponse.Calendars))
 	for i, s := range calendarResponse.Calendars {
 		calendars[i] = s
 	}
 	return
 }
 
-func (a *OutlookAccount) GetCalendar(calendarID string) (calendar api.CalendarManager, err error) {
+func (a *OutlookAccount) GetCalendar(calendarID string) (calendar CalendarManager, err error) {
 	if len(calendarID) == 0 {
 		return calendar, errors.New("no ID for calendar was given")
 	}
@@ -143,7 +151,7 @@ func (a *OutlookAccount) GetCalendar(calendarID string) (calendar api.CalendarMa
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting a calendar for email %s. %s", a.AnchorMailbox, err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +164,7 @@ func (a *OutlookAccount) GetCalendar(calendarID string) (calendar api.CalendarMa
 	return calendarResponse.OutlookCalendar, err
 }
 
-func (a *OutlookAccount) GetPrimaryCalendar() (calendar api.CalendarManager, err error) {
+func (a *OutlookAccount) GetPrimaryCalendar() (calendar CalendarManager, err error) {
 	log.Debugln("getPrimaryCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/primary")
@@ -175,7 +183,7 @@ func (a *OutlookAccount) GetPrimaryCalendar() (calendar api.CalendarManager, err
 		log.Errorf("%s", err.Error())
 		return calendar, errors.New(fmt.Sprintf("error getting primary calendar for email %s. %s", a.AnchorMailbox, err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return nil, err
 	}

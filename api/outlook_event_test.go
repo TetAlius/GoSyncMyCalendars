@@ -3,16 +3,16 @@ package api_test
 import (
 	"testing"
 
-	outlook "github.com/TetAlius/GoSyncMyCalendars/api/outlook"
+	"github.com/TetAlius/GoSyncMyCalendars/api"
 )
 
-func TestEventCalendar_EventLifeCycle(t *testing.T) {
+func TestOutlookEventCalendar_EventLifeCycle(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	account, _ := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var event outlook.OutlookEvent
+	var event api.OutlookEvent
 	event.Subject = "Discuss the OutlookCalendar REST API"
 
 	calendar, err := account.GetPrimaryCalendar()
@@ -21,7 +21,7 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 		return
 	}
-	event.Calendar = calendar.(*outlook.OutlookCalendar)
+	event.Calendar = calendar.(*api.OutlookCalendar)
 
 	// good call to create event
 	err = event.Create(account)
@@ -39,7 +39,7 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 		return
 	}
 
-	ev.(*outlook.OutlookEvent).Subject = "Update"
+	ev.(*api.OutlookEvent).Subject = "Update"
 
 	// good call to update event
 	err = ev.Update(account)

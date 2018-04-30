@@ -10,7 +10,6 @@ import (
 
 	"net/url"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -70,7 +69,7 @@ func (a *GoogleAccount) Refresh() (err error) {
 		return errors.New(fmt.Sprintf("error reading response body from google request: %s", err.Error()))
 	}
 	if resp.StatusCode != 201 && resp.StatusCode != 204 {
-		e := new(api.RefreshError)
+		e := new(RefreshError)
 		_ = json.Unmarshal(contents, &e)
 		if len(e.Code) != 0 && len(e.Message) != 0 {
 			log.Errorln(e.Code)
@@ -89,7 +88,7 @@ func (a *GoogleAccount) Refresh() (err error) {
 }
 
 //GET https://www.googleapis.com/calendar/v3/users/me/calendarList
-func (a *GoogleAccount) GetAllCalendars() (calendars []api.CalendarManager, err error) {
+func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err error) {
 	log.Debugln("getAllCalendars google")
 	route, err := util.CallAPIRoot("google/calendar-list")
 	if err != nil {
@@ -107,7 +106,7 @@ func (a *GoogleAccount) GetAllCalendars() (calendars []api.CalendarManager, err 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +116,7 @@ func (a *GoogleAccount) GetAllCalendars() (calendars []api.CalendarManager, err 
 	calendarResponse := new(GoogleCalendarListResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
 
-	calendars = make([]api.CalendarManager, len(calendarResponse.Calendars))
+	calendars = make([]CalendarManager, len(calendarResponse.Calendars))
 	for i, s := range calendarResponse.Calendars {
 		calendars[i] = s
 	}
@@ -125,7 +124,7 @@ func (a *GoogleAccount) GetAllCalendars() (calendars []api.CalendarManager, err 
 }
 
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarID}
-func (a *GoogleAccount) GetCalendar(calendarID string) (calendar api.CalendarManager, err error) {
+func (a *GoogleAccount) GetCalendar(calendarID string) (calendar CalendarManager, err error) {
 	log.Debugln("getCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	log.Debugln(route)
@@ -144,7 +143,7 @@ func (a *GoogleAccount) GetCalendar(calendarID string) (calendar api.CalendarMan
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting calendar for email %s. %s", a.Email, err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +158,7 @@ func (a *GoogleAccount) GetCalendar(calendarID string) (calendar api.CalendarMan
 
 // GET https://www.googleapis.com/calendar/v3/calendars/primary
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary This is the one used
-func (a *GoogleAccount) GetPrimaryCalendar() (calendar api.CalendarManager, err error) {
+func (a *GoogleAccount) GetPrimaryCalendar() (calendar CalendarManager, err error) {
 	log.Debugln("getPrimaryCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/primary")
 	if err != nil {
@@ -177,7 +176,7 @@ func (a *GoogleAccount) GetPrimaryCalendar() (calendar api.CalendarManager, err 
 	if err != nil {
 		return calendar, errors.New(fmt.Sprintf("error getting primary calendar for email %s. %s", a.Email, err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return nil, err
 	}

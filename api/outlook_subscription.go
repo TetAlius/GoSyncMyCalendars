@@ -8,12 +8,11 @@ import (
 
 	"encoding/json"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func NewSubscription(ID string, notificationURL string, changeType string) (subscription *OutlookSubscription) {
+func NewOutlookSubscription(ID string, notificationURL string, changeType string) (subscription *OutlookSubscription) {
 	subscription = new(OutlookSubscription)
 	subscription.NotificationURL = notificationURL
 	subscription.ChangeType = changeType
@@ -31,7 +30,7 @@ func manageRenewalData(subscription *OutlookSubscription) (data []byte, err erro
 }
 
 // POST https://outlook.office.com/api/v2.0/me/subscriptions
-func (subscription *OutlookSubscription) Subscribe(a api.AccountManager, calendar api.CalendarManager) (err error) {
+func (subscription *OutlookSubscription) Subscribe(a AccountManager, calendar CalendarManager) (err error) {
 	log.Debugln("subscribe calendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/subscription")
@@ -57,7 +56,7 @@ func (subscription *OutlookSubscription) Subscribe(a api.AccountManager, calenda
 		a.Mail())
 
 	log.Debugf("%s\n", contents)
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return err
 	}
@@ -68,7 +67,7 @@ func (subscription *OutlookSubscription) Subscribe(a api.AccountManager, calenda
 }
 
 //PATCH https://outlook.office.com/api/v2.0/me/subscriptions/{subscriptionId}
-func (subscription *OutlookSubscription) Renew(a api.AccountManager) (err error) {
+func (subscription *OutlookSubscription) Renew(a AccountManager) (err error) {
 	log.Debugln("subscribe calendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/subscription")
@@ -89,13 +88,13 @@ func (subscription *OutlookSubscription) Renew(a api.AccountManager) (err error)
 		a.AuthorizationRequest(),
 		a.Mail())
 	log.Debugf("%s\n", contents)
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 
 	return
 }
 
 //DELETE https://outlook.office.com/api/v2.0/me/subscriptions('{subscriptionId}')
-func (subscription *OutlookSubscription) Delete(a api.AccountManager) (err error) {
+func (subscription *OutlookSubscription) Delete(a AccountManager) (err error) {
 	log.Debugln("Delete outlook subscription")
 	route, err := util.CallAPIRoot("outlook/subscription")
 	if err != nil {
@@ -109,7 +108,7 @@ func (subscription *OutlookSubscription) Delete(a api.AccountManager) (err error
 		a.AuthorizationRequest(),
 		a.Mail())
 	log.Debugf("%s\n", contents)
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return err
 	}

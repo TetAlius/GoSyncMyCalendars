@@ -8,18 +8,17 @@ import (
 	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
-	outlook "github.com/TetAlius/GoSyncMyCalendars/api/outlook"
 )
 
 func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	account, _ := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var calendar outlook.OutlookCalendar
+	var calendar api.OutlookCalendar
 	calendar.Name = fmt.Sprintf("Travis%d", time.Now().UnixNano())
-	var calendarWrong outlook.OutlookCalendar
+	var calendarWrong api.OutlookCalendar
 
 	// wrong call to create calendar
 	err := calendarWrong.Create(account)
@@ -90,11 +89,11 @@ func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {
 
 func TestOutlookCalendar_GetAllEvents(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	account, _ := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var calendarWrong outlook.OutlookCalendar
+	var calendarWrong api.OutlookCalendar
 
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
@@ -123,7 +122,7 @@ func TestOutlookCalendar_GetAllEvents(t *testing.T) {
 
 func TestOutlookCalendar_GetEvent(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	account, _ := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 	var allEvents []api.EventManager
@@ -140,14 +139,14 @@ func TestOutlookCalendar_GetEvent(t *testing.T) {
 		if err != nil {
 			t.Fail()
 			t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s",
-				calendar.(*outlook.OutlookCalendar).Name, err.Error())
+				calendar.(*api.OutlookCalendar).Name, err.Error())
 			return
 		}
 		allEvents = append(allEvents, events...)
 
 	}
 
-	event := allEvents[0].(*outlook.OutlookEvent)
+	event := allEvents[0].(*api.OutlookEvent)
 	calendar := event.Calendar
 
 	_, err = calendar.GetEvent(account, "")

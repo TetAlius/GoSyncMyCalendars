@@ -9,8 +9,7 @@ import (
 
 	"encoding/json"
 
-	google "github.com/TetAlius/GoSyncMyCalendars/api/google"
-	outlook "github.com/TetAlius/GoSyncMyCalendars/api/outlook"
+	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -67,9 +66,9 @@ func (s *Server) GoogleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//TODO: DB to implement
-	account, err := google.NewGoogleAccount(contents)
+	account, err := api.NewGoogleAccount(contents)
 
-	go func(account *google.GoogleAccount) {
+	go func(account *api.GoogleAccount) {
 		log.Debugln(account)
 		account.GetAllCalendars()
 		account.Refresh()
@@ -130,13 +129,13 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debugln(contents)
 	//TODO: DB to implement
-	account, err := outlook.NewAccount(contents)
+	account, err := api.NewOutlookAccount(contents)
 	if err != nil {
 		log.Errorf("error creating new account request: %s", err.Error())
 		serverError(w)
 		return
 	}
-	go func(account *outlook.OutlookAccount) {
+	go func(account *api.OutlookAccount) {
 		log.Debugln(account)
 		account.GetAllCalendars()
 		account.Refresh()
@@ -160,7 +159,7 @@ func (s *Server) OutlookWatcherHandler(w http.ResponseWriter, r *http.Request) {
 				serverError(w)
 				return
 			}
-			notification := new(outlook.OutlookNotification)
+			notification := new(api.OutlookNotification)
 			err = json.Unmarshal(contents, &notification)
 			if err != nil {
 				serverError(w)

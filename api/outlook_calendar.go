@@ -6,12 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func (calendar *OutlookCalendar) Create(a api.AccountManager) (err error) {
+func (calendar *OutlookCalendar) Create(a AccountManager) (err error) {
 	log.Debugln("createCalendars outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars")
@@ -33,7 +32,7 @@ func (calendar *OutlookCalendar) Create(a api.AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return err
 	}
@@ -48,7 +47,7 @@ func (calendar *OutlookCalendar) Create(a api.AccountManager) (err error) {
 	return err
 }
 
-func (calendar *OutlookCalendar) Update(a api.AccountManager) error {
+func (calendar *OutlookCalendar) Update(a AccountManager) error {
 	log.Debugln("updateCalendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/calendars/id")
@@ -70,7 +69,7 @@ func (calendar *OutlookCalendar) Update(a api.AccountManager) error {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return err
 	}
@@ -84,7 +83,7 @@ func (calendar *OutlookCalendar) Update(a api.AccountManager) error {
 
 }
 
-func (calendar *OutlookCalendar) Delete(a api.AccountManager) (err error) {
+func (calendar *OutlookCalendar) Delete(a AccountManager) (err error) {
 	log.Debugln("deleteCalendar outlook")
 	if len(calendar.GetID()) == 0 {
 		return errors.New("no ID for calendar was given")
@@ -104,7 +103,7 @@ func (calendar *OutlookCalendar) Delete(a api.AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return err
 	}
@@ -114,7 +113,7 @@ func (calendar *OutlookCalendar) Delete(a api.AccountManager) (err error) {
 
 }
 
-func (calendar *OutlookCalendar) GetAllEvents(a api.AccountManager) (events []api.EventManager, err error) {
+func (calendar *OutlookCalendar) GetAllEvents(a AccountManager) (events []EventManager, err error) {
 	log.Debugln("getAllEvents outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -131,7 +130,7 @@ func (calendar *OutlookCalendar) GetAllEvents(a api.AccountManager) (events []ap
 		return nil, errors.New(fmt.Sprintf("error getting all events of a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
 
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +139,7 @@ func (calendar *OutlookCalendar) GetAllEvents(a api.AccountManager) (events []ap
 	eventListResponse := new(OutlookEventListResponse)
 	err = json.Unmarshal(contents, &eventListResponse)
 
-	events = make([]api.EventManager, len(eventListResponse.Events))
+	events = make([]EventManager, len(eventListResponse.Events))
 	for i, s := range eventListResponse.Events {
 		s.Calendar = calendar
 		events[i] = s
@@ -149,7 +148,7 @@ func (calendar *OutlookCalendar) GetAllEvents(a api.AccountManager) (events []ap
 }
 
 // GET https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (calendar *OutlookCalendar) GetEvent(a api.AccountManager, ID string) (event api.EventManager, err error) {
+func (calendar *OutlookCalendar) GetEvent(a AccountManager, ID string) (event EventManager, err error) {
 	log.Debugln("getEvent outlook")
 	if len(ID) == 0 {
 		return nil, errors.New("an ID for the event must be given")
@@ -169,7 +168,7 @@ func (calendar *OutlookCalendar) GetEvent(a api.AccountManager, ID string) (even
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting an event of a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createOutlookResponseError(contents)
 	if err != nil {
 		return nil, err
 	}

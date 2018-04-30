@@ -14,7 +14,7 @@ type GoogleConcreteError struct {
 	Message string `json:"message,omitempty"`
 }
 
-func createResponseError(contents []byte) (err error) {
+func createGoogleResponseError(contents []byte) (err error) {
 	e := new(GoogleError)
 	err = json.Unmarshal(contents, &e)
 	if e.Code != 0 && len(e.Message) != 0 {

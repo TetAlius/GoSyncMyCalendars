@@ -79,8 +79,9 @@ type OutlookEventListResponse struct {
 type OutlookEvent struct {
 	OdataID string `json:"@odata.id,omitempty"`
 	//OdataEtag string `json:"@odata.etag,omitempty"`
+	Relations []string `json:"-"`
 
-	Calendar *OutlookCalendar
+	Calendar *OutlookCalendar `json:"-"`
 
 	Attachments     []OutlookAttachment      `json:"Attachments,omitempty"`
 	Attendees       []OutlookAttendee        `json:"Attendees,omitempty"`
@@ -259,7 +260,7 @@ type OutlookResourceData struct {
 	ID string `json:"Id"`
 }
 
-func createResponseError(contents []byte) (err error) {
+func createOutlookResponseError(contents []byte) (err error) {
 	e := new(OutlookError)
 	err = json.Unmarshal(contents, &e)
 	if len(e.Code) != 0 && len(e.Message) != 0 {

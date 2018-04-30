@@ -5,15 +5,15 @@ import (
 	"os"
 	"testing"
 
-	google "github.com/TetAlius/GoSyncMyCalendars/api/google"
-	"github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/api"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
-func TestNewAccount(t *testing.T) {
+func TestNewOutlookAccount(t *testing.T) {
 	setupApiRoot()
 	// Bad Info inside Json
 	b := []byte(`{"Name":"Bob","Food":"Pickle"}`)
-	_, err := google.NewGoogleAccount(b)
+	_, err := api.NewOutlookAccount(b)
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
@@ -22,7 +22,7 @@ func TestNewAccount(t *testing.T) {
 
 	//Bad formatted JSON
 	b = []byte(`{"id_token":"ASD.ASD.ASD","Food":"Pickle"`)
-	_, err = google.NewGoogleAccount(b)
+	_, err = api.NewOutlookAccount(b)
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
@@ -30,29 +30,27 @@ func TestNewAccount(t *testing.T) {
 	}
 
 	//Correct information given
-	account := setup()
+	account, _ := setup()
 	b, err = json.Marshal(account)
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
 		return
 	}
-	acc, err := google.NewGoogleAccount(b)
+	_, err = api.NewOutlookAccount(b)
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
 		return
 	}
-
-	acc.GetAllCalendars()
-
 }
 
-func TestGoogleAccount_Refresh(t *testing.T) {
+func TestOutlookAccount_Refresh(t *testing.T) {
 	setupApiRoot()
 	//Empty initialized info account
-	account := new(google.GoogleAccount)
+	account := new(api.OutlookAccount)
 	err := account.Refresh()
+	log.Debugln(err)
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
@@ -60,7 +58,7 @@ func TestGoogleAccount_Refresh(t *testing.T) {
 	}
 
 	//Good info account
-	account = setup()
+	account, _ = setup()
 	err = account.Refresh()
 	if err != nil {
 		t.Fail()
@@ -70,6 +68,7 @@ func TestGoogleAccount_Refresh(t *testing.T) {
 
 	os.Setenv("API_ROOT", "")
 	err = account.Refresh()
+	log.Debugln(err)
 
 	if err == nil {
 		t.Fail()
@@ -79,9 +78,9 @@ func TestGoogleAccount_Refresh(t *testing.T) {
 
 }
 
-func TestGoogleAccount_GetAllCalendars(t *testing.T) {
+func TestOutlookAccount_GetAllCalendars(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	account, _ := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
@@ -103,9 +102,9 @@ func TestGoogleAccount_GetAllCalendars(t *testing.T) {
 
 }
 
-func TestGoogleAccount_GetPrimaryCalendar(t *testing.T) {
+func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	account, _ := setup()
 	//Refresh previous petition in order to have tokens updated
 	err := account.Refresh()
 	if err != nil {
@@ -114,6 +113,7 @@ func TestGoogleAccount_GetPrimaryCalendar(t *testing.T) {
 		return
 	}
 
+	log.Debugln("Started")
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
 		t.Fail()
@@ -121,10 +121,8 @@ func TestGoogleAccount_GetPrimaryCalendar(t *testing.T) {
 		return
 	}
 
-	logger.Debugln(calendar.(*google.GoogleCalendar).ID)
-	logger.Debugln(calendar.(*google.GoogleCalendar).Name)
-	os.Setenv("GOOGLE_CALENDAR_ID", calendar.(*google.GoogleCalendar).ID)
-	os.Setenv("GOOGLE_CALENDAR_NAME", calendar.(*google.GoogleCalendar).Name)
+	os.Setenv("OUTLOOK_CALENDAR_ID", calendar.GetID())
+	os.Setenv("OUTLOOK_CALENDAR_NAME", calendar.(*api.OutlookCalendar).Name)
 
 	os.Setenv("API_ROOT", "")
 	// Bad calling to GetPrimaryCalendar
@@ -137,17 +135,14 @@ func TestGoogleAccount_GetPrimaryCalendar(t *testing.T) {
 
 }
 
-func TestGoogleAccount_GetCalendar(t *testing.T) {
+func TestOutlookAccount_GetCalendar(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	account, _ := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	calendarID := os.Getenv("GOOGLE_CALENDAR_ID")
-	calendarName := os.Getenv("GOOGLE_CALENDAR_NAME")
-
-	logger.Debugln(calendarID)
-	logger.Debugln(calendarName)
+	calendarID := os.Getenv("OUTLOOK_CALENDAR_ID")
+	calendarName := os.Getenv("OUTLOOK_CALENDAR_NAME")
 
 	calendar, err := account.GetCalendar(calendarID)
 
@@ -157,26 +152,10 @@ func TestGoogleAccount_GetCalendar(t *testing.T) {
 		return
 	}
 
-	if calendarName != calendar.(*google.GoogleCalendar).Name {
+	if calendarName != calendar.(*api.OutlookCalendar).Name {
 		t.Fail()
-		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.(*google.GoogleCalendar).Name)
+		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.(*api.OutlookCalendar).Name)
 		return
 	}
 
-}
-
-func setup() (account *google.GoogleAccount) {
-	account = &google.GoogleAccount{
-		TokenType:    os.Getenv("GOOGLE_TOKEN_TYPE"),
-		ExpiresIn:    3600,
-		AccessToken:  os.Getenv("GOOGLE_ACCESS_TOKEN"),
-		RefreshToken: os.Getenv("GOOGLE_REFRESH_TOKEN"),
-		TokenID:      os.Getenv("GOOGLE_TOKEN_ID"),
-		Email:        os.Getenv("GOOGLE_EMAIL"),
-	}
-	return
-}
-
-func setupApiRoot() {
-	os.Setenv("API_ROOT", os.Getenv("API_ROOT_TEST"))
 }

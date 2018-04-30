@@ -7,13 +7,12 @@ import (
 
 	"encoding/json"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (event *GoogleEvent) Create(a api.AccountManager) (err error) {
+func (event *GoogleEvent) Create(a AccountManager) (err error) {
 	log.Debugln("createEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -40,7 +39,7 @@ func (event *GoogleEvent) Create(a api.AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating event in g calendar for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return err
 	}
@@ -52,7 +51,7 @@ func (event *GoogleEvent) Create(a api.AccountManager) (err error) {
 }
 
 // PUT https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (event *GoogleEvent) Update(a api.AccountManager) (err error) {
+func (event *GoogleEvent) Update(a AccountManager) (err error) {
 	log.Debugln("updateEvent google")
 	//TODO: Test if ids are two given
 
@@ -78,7 +77,7 @@ func (event *GoogleEvent) Update(a api.AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating event of g calendar for email %s. %s", a.Mail(), err.Error()))
 	}
-	err = createResponseError(contents)
+	err = createGoogleResponseError(contents)
 	if err != nil {
 		return err
 	}
@@ -90,7 +89,7 @@ func (event *GoogleEvent) Update(a api.AccountManager) (err error) {
 }
 
 // DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (event *GoogleEvent) Delete(a api.AccountManager) (err error) {
+func (event *GoogleEvent) Delete(a AccountManager) (err error) {
 	log.Debugln("deleteEvent google")
 	//TODO: Test if ids are two given
 
@@ -117,4 +116,11 @@ func (event *GoogleEvent) Delete(a api.AccountManager) (err error) {
 	}
 
 	return
+}
+func (event *GoogleEvent) GetID() string {
+	return event.ID
+}
+
+func (event *GoogleEvent) GetCalendar() CalendarManager {
+	return event.Calendar
 }

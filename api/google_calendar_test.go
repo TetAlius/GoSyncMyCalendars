@@ -7,12 +7,11 @@ import (
 	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
-	google "github.com/TetAlius/GoSyncMyCalendars/api/google"
 )
 
 func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	_, account := setup()
 	//Refresh previous petition in order to have tokens updated
 	err := account.Refresh()
 	if err != nil {
@@ -21,8 +20,8 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 		return
 	}
 
-	var calendar google.GoogleCalendar
-	var calendarWrong google.GoogleCalendar
+	var calendar api.GoogleCalendar
+	var calendarWrong api.GoogleCalendar
 	var calendarJSON = []byte(`{
   		"summary": "Travis"
 	}`)
@@ -100,11 +99,11 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 
 func TestGoogleCalendar_GetAllEvents(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	_, account := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var calendarWrong google.GoogleCalendar
+	var calendarWrong api.GoogleCalendar
 
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
@@ -133,7 +132,7 @@ func TestGoogleCalendar_GetAllEvents(t *testing.T) {
 
 func TestGoogleCalendar_GetEvent(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	_, account := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 	var allEvents []api.EventManager
@@ -150,14 +149,14 @@ func TestGoogleCalendar_GetEvent(t *testing.T) {
 		if err != nil {
 			t.Fail()
 			t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s",
-				calendar.(*google.GoogleCalendar).Name, err.Error())
+				calendar.(*api.GoogleCalendar).Name, err.Error())
 			return
 		}
 		allEvents = append(allEvents, events...)
 
 	}
 
-	event := allEvents[0].(*google.GoogleEvent)
+	event := allEvents[0].(*api.GoogleEvent)
 	calendar := event.Calendar
 
 	_, err = calendar.GetEvent(account, "asdasd")

@@ -3,20 +3,20 @@ package api_test
 import (
 	"testing"
 
-	"time"
+	"github.com/TetAlius/GoSyncMyCalendars/api"
 
-	google "github.com/TetAlius/GoSyncMyCalendars/api/google"
+	"time"
 )
 
-func TestEventCalendar_EventLifeCycle(t *testing.T) {
+func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 	setupApiRoot()
-	account := setup()
+	_, account := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	var event google.GoogleEvent
+	var event api.GoogleEvent
 	event.Summary = "Discuss the GoogleCalendar REST API"
-	event.Start = new(google.GoogleTime)
+	event.Start = new(api.GoogleTime)
 	event.Start.Date = time.Now().Format("2006-01-02")
 	event.End = event.Start
 
@@ -26,7 +26,7 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 		return
 	}
-	event.Calendar = calendar.(*google.GoogleCalendar)
+	event.Calendar = calendar.(*api.GoogleCalendar)
 
 	// good call to create event
 	err = event.Create(account)
@@ -44,7 +44,7 @@ func TestEventCalendar_EventLifeCycle(t *testing.T) {
 		return
 	}
 
-	ev.(*google.GoogleEvent).Summary = "Update"
+	ev.(*api.GoogleEvent).Summary = "Update"
 
 	// good call to update event
 	err = ev.Update(account)

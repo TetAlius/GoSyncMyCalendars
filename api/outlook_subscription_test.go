@@ -12,7 +12,7 @@ import (
 
 	"fmt"
 
-	outlook "github.com/TetAlius/GoSyncMyCalendars/api/outlook"
+	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
 )
 
@@ -58,11 +58,11 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 	setupApiRoot()
 	setupNgrok(t)
 	ngrokURL := fmt.Sprintf("%s/outlook/watcher", os.Getenv("NGROK_URI"))
-	account := setup()
+	account, _ := setup()
 	//Refresh previous petition in order to have tokens updated
 	account.Refresh()
 
-	subscription := outlook.NewSubscription("", ngrokURL, "Created,Deleted,Updated")
+	subscription := api.NewOutlookSubscription("", ngrokURL, "Created,Deleted,Updated")
 
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
@@ -96,7 +96,7 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 	}
 
 	// Wrong calls to subscription
-	subs := outlook.NewSubscription("", "localhost:8081", "Created,Deleted,Updated")
+	subs := api.NewOutlookSubscription("", "localhost:8081", "Created,Deleted,Updated")
 	err = subs.Subscribe(account, calendar)
 	if err == nil {
 		t.Fail()
