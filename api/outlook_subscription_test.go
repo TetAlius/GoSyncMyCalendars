@@ -54,6 +54,29 @@ func setupNgrok(t *testing.T) {
 	t.Log(os.Getenv("NGROK_URI"))
 }
 
+func deleteNgrok(t *testing.T) {
+	client := http.Client{}
+	req, err := http.NewRequest(http.MethodDelete, "http://localhost:4040/api/tunnels/gosync", nil)
+	if err != nil {
+		t.Fail()
+		t.Fatal("new request incorrectly done")
+		return
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fail()
+		t.Fatal("client request incorrectly done")
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		t.Fail()
+		t.Fatal("NGROK was incorrectly deleted")
+		return
+	}
+
+}
+
 func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 	setupApiRoot()
 	setupNgrok(t)
@@ -116,4 +139,5 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 		return
 	}
 	b.Stop()
+	deleteNgrok(t)
 }
