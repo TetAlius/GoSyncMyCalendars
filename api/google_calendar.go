@@ -130,6 +130,7 @@ func (calendar *GoogleCalendar) GetAllEvents(a AccountManager) (events []EventMa
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
+	route = fmt.Sprintf("%s?timezone=UTC", route)
 
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
@@ -167,6 +168,7 @@ func (calendar *GoogleCalendar) GetEvent(a AccountManager, eventID string) (even
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
+	route = fmt.Sprintf("%s?timezone=UTC", route)
 
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
