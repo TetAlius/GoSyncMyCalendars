@@ -36,7 +36,7 @@ func (calendar *GoogleCalendar) Update(a AccountManager) (err error) {
 			http.MethodPut,
 			fmt.Sprintf(route, calendar.GetQueryID()),
 			bytes.NewBuffer(data),
-			headers)
+			headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -67,7 +67,7 @@ func (calendar *GoogleCalendar) Delete(a AccountManager) (err error) {
 		http.MethodDelete,
 		fmt.Sprintf(route, calendar.GetQueryID()),
 		nil,
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -107,7 +107,7 @@ func (calendar *GoogleCalendar) Create(a AccountManager) (err error) {
 			http.MethodPost,
 			route,
 			bytes.NewBuffer(data),
-			headers)
+			headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -130,15 +130,16 @@ func (calendar *GoogleCalendar) GetAllEvents(a AccountManager) (events []EventMa
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
-	route = fmt.Sprintf("%s?timezone=UTC", route)
 
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
 
+	queryParams := map[string]string{"timezone": "UTC"}
+
 	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, calendar.GetQueryID()),
 		nil,
-		headers)
+		headers, queryParams)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all events of g calendar for email %s. %s", a.Mail(), err.Error()))
@@ -168,16 +169,17 @@ func (calendar *GoogleCalendar) GetEvent(a AccountManager, eventID string) (even
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
-	route = fmt.Sprintf("%s?timezone=UTC", route)
 
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
+
+	queryParams := map[string]string{"timezone": "UTC"}
 
 	contents, err := util.DoRequest(
 		http.MethodGet,
 		fmt.Sprintf(route, calendar.GetQueryID(), eventID),
 		nil,
-		headers)
+		headers, queryParams)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting an event of g calendar for email %s. %s", a.Mail(), err.Error()))
@@ -221,7 +223,7 @@ func (calendar *GoogleCalendar) Subscribe(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodPost,
 		route,
 		bytes.NewBuffer(data),
-		headers)
+		headers, nil)
 
 	log.Debugf("%s\n", contents)
 	err = createGoogleResponseError(contents)

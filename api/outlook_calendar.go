@@ -31,7 +31,7 @@ func (calendar *OutlookCalendar) Create(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodPost,
 		route,
 		bytes.NewBuffer(data),
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -71,7 +71,7 @@ func (calendar *OutlookCalendar) Update(a AccountManager) error {
 	contents, err := util.DoRequest(http.MethodPatch,
 		fmt.Sprintf(route, calendar.GetID()),
 		bytes.NewBuffer(data),
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -108,7 +108,7 @@ func (calendar *OutlookCalendar) Delete(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodDelete,
 		fmt.Sprintf(route, calendar.GetID()),
 		nil,
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -138,7 +138,7 @@ func (calendar *OutlookCalendar) GetAllEvents(a AccountManager) (events []EventM
 	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, calendar.GetID()),
 		nil,
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all events of a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -181,7 +181,7 @@ func (calendar *OutlookCalendar) GetEvent(a AccountManager, ID string) (event Ev
 	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, ID),
 		nil,
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting an event of a calendar for email %s. %s", a.Mail(), err.Error()))

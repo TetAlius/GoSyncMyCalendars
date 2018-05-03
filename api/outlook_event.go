@@ -32,7 +32,7 @@ func (event *OutlookEvent) Create(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodPost,
 		fmt.Sprintf(route, event.Calendar.GetID()),
 		bytes.NewBuffer(data),
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating event in a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -70,7 +70,7 @@ func (event *OutlookEvent) Update(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodPatch,
 		fmt.Sprintf(route, event.ID),
 		bytes.NewBuffer(data),
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating event of a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -107,7 +107,7 @@ func (event *OutlookEvent) Delete(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodDelete,
 		fmt.Sprintf(route, event.ID),
 		nil,
-		headers)
+		headers, nil)
 
 	if err != nil {
 		log.Errorf("error deleting event of a calendar for email %s. %s", a.Mail(), err.Error())

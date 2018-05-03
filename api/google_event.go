@@ -37,7 +37,7 @@ func (event *GoogleEvent) Create(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodPost,
 		fmt.Sprintf(route, event.Calendar.GetQueryID()),
 		bytes.NewBuffer(data),
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating event in g calendar for email %s. %s", a.Mail(), err.Error()))
@@ -77,7 +77,7 @@ func (event *GoogleEvent) Update(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodPut,
 		fmt.Sprintf(route, event.Calendar.GetQueryID(), event.ID),
 		bytes.NewBuffer(data),
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating event of g calendar for email %s. %s", a.Mail(), err.Error()))
@@ -111,7 +111,7 @@ func (event *GoogleEvent) Delete(a AccountManager) (err error) {
 		http.MethodDelete,
 		fmt.Sprintf(route, event.Calendar.GetQueryID(), event.ID),
 		nil,
-		headers)
+		headers, nil)
 
 	if err != nil {
 		log.Errorf("error deleting event of g calendar for email %s. %s", a.Mail(), err.Error())

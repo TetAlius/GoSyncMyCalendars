@@ -56,7 +56,7 @@ func (subscription *OutlookSubscription) Subscribe(a AccountManager, calendar Ca
 	contents, err := util.DoRequest(http.MethodPost,
 		route,
 		bytes.NewBuffer(data),
-		headers)
+		headers, nil)
 
 	log.Debugf("%s\n", contents)
 	err = createOutlookResponseError(contents)
@@ -92,7 +92,7 @@ func (subscription *OutlookSubscription) Renew(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodPatch,
 		route,
 		bytes.NewBuffer(data),
-		headers)
+		headers, nil)
 	log.Debugf("%s\n", contents)
 	err = createOutlookResponseError(contents)
 
@@ -115,7 +115,7 @@ func (subscription *OutlookSubscription) Delete(a AccountManager) (err error) {
 	contents, err := util.DoRequest(http.MethodDelete,
 		route,
 		nil,
-		headers)
+		headers, nil)
 	log.Debugf("%s\n", contents)
 	err = createOutlookResponseError(contents)
 	if err != nil {

@@ -86,7 +86,7 @@ func CallAPIRoot(route string) (apiRoute string, err error) {
 //DoRequest TODO Creates and executes the request for all petitions
 //TODO return responseCode
 //and returns the JSON so that it can be parsed into the correct struct
-func DoRequest(method string, url string, body io.Reader, headers map[string]string) (contents []byte, err error) {
+func DoRequest(method string, url string, body io.Reader, headers map[string]string, params map[string]string) (contents []byte, err error) {
 	client := http.Client{}
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
@@ -101,6 +101,14 @@ func DoRequest(method string, url string, body io.Reader, headers map[string]str
 	// If body is given, has to put a content-Type json on the header
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+
+	if len(params) > 0 {
+		q := req.URL.Query()
+		for key, value := range params {
+			q.Add(key, value)
+		}
+		req.URL.RawQuery = q.Encode()
 	}
 
 	resp, err := client.Do(req)

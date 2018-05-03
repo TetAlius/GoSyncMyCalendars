@@ -111,7 +111,7 @@ func (a *OutlookAccount) GetAllCalendars() (calendars []CalendarManager, err err
 	contents, err := util.DoRequest(http.MethodGet,
 		route,
 		nil,
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.AnchorMailbox, err.Error()))
@@ -152,7 +152,7 @@ func (a *OutlookAccount) GetCalendar(calendarID string) (calendar CalendarManage
 	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, calendarID),
 		nil,
-		headers)
+		headers, nil)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting a calendar for email %s. %s", a.AnchorMailbox, err.Error()))
@@ -186,7 +186,7 @@ func (a *OutlookAccount) GetPrimaryCalendar() (calendar CalendarManager, err err
 	contents, err := util.DoRequest(http.MethodGet,
 		route,
 		nil,
-		headers)
+		headers, nil)
 
 	if err != nil {
 		log.Errorf("%s", err.Error())

@@ -102,7 +102,7 @@ func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err erro
 			http.MethodGet,
 			route,
 			nil,
-			headers)
+			headers, nil)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.Mail(), err.Error()))
@@ -140,7 +140,7 @@ func (a *GoogleAccount) GetCalendar(calendarID string) (calendar CalendarManager
 			http.MethodGet,
 			fmt.Sprintf(route, url.QueryEscape(calendarID)),
 			nil,
-			headers)
+			headers, nil)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting calendar for email %s. %s", a.Email, err.Error()))
@@ -174,7 +174,7 @@ func (a *GoogleAccount) GetPrimaryCalendar() (calendar CalendarManager, err erro
 			http.MethodGet,
 			route,
 			nil,
-			headers)
+			headers, nil)
 
 	if err != nil {
 		return calendar, errors.New(fmt.Sprintf("error getting primary calendar for email %s. %s", a.Email, err.Error()))
