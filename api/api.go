@@ -35,6 +35,8 @@ type EventManager interface {
 	Delete(AccountManager) error
 	GetID() string
 	GetCalendar() CalendarManager
+
+	PrepareTime() error
 }
 
 type SubscriptionManager interface {

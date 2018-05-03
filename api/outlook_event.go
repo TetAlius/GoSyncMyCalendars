@@ -118,3 +118,8 @@ func (event *OutlookEvent) GetID() string {
 func (event *OutlookEvent) GetCalendar() CalendarManager {
 	return event.Calendar
 }
+
+func (event *OutlookEvent) PrepareTime() (err error) {
+	panic("IMPLEMENT ME")
+	return
+}

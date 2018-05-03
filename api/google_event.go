@@ -124,3 +124,8 @@ func (event *GoogleEvent) GetID() string {
 func (event *GoogleEvent) GetCalendar() CalendarManager {
 	return event.Calendar
 }
+
+func (event *GoogleEvent) PrepareTime() (err error) {
+	panic("IMPLEMENT ME")
+	return
+}
