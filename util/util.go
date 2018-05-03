@@ -86,18 +86,17 @@ func CallAPIRoot(route string) (apiRoute string, err error) {
 //DoRequest TODO Creates and executes the request for all petitions
 //TODO return responseCode
 //and returns the JSON so that it can be parsed into the correct struct
-func DoRequest(method string, url string, body io.Reader, authorization string, anchorMailbox string) (contents []byte, err error) {
+func DoRequest(method string, url string, body io.Reader, headers map[string]string) (contents []byte, err error) {
 	client := http.Client{}
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return contents, errors.New(fmt.Sprintf("error creating new request: %s", err.Error()))
 	}
 
-	//Add the authorization to the header
-	req.Header.Set("Authorization", authorization)
-
-	//Add the anchorMailbox to the header
-	req.Header.Set("X-AnchorMailbox", anchorMailbox)
+	//Set all headers for request
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
 
 	// If body is given, has to put a content-Type json on the header
 	if body != nil {

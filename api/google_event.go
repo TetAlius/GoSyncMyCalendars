@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"encoding/json"
 
@@ -30,11 +31,13 @@ func (event *GoogleEvent) Create(a AccountManager) (err error) {
 	log.Debugln(data)
 	event.Calendar = calendar
 
-	contents, err := util.DoRequest("POST",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+
+	contents, err := util.DoRequest(http.MethodPost,
 		fmt.Sprintf(route, event.Calendar.GetQueryID()),
 		bytes.NewBuffer(data),
-		a.AuthorizationRequest(),
-		"")
+		headers)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating event in g calendar for email %s. %s", a.Mail(), err.Error()))
@@ -68,11 +71,13 @@ func (event *GoogleEvent) Update(a AccountManager) (err error) {
 	}
 	event.Calendar = calendar
 
-	contents, err := util.DoRequest("PUT",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+
+	contents, err := util.DoRequest(http.MethodPut,
 		fmt.Sprintf(route, event.Calendar.GetQueryID(), event.ID),
 		bytes.NewBuffer(data),
-		a.AuthorizationRequest(),
-		"")
+		headers)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating event of g calendar for email %s. %s", a.Mail(), err.Error()))
@@ -99,12 +104,14 @@ func (event *GoogleEvent) Delete(a AccountManager) (err error) {
 		return
 	}
 
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+
 	contents, err := util.DoRequest(
-		"DELETE",
+		http.MethodDelete,
 		fmt.Sprintf(route, event.Calendar.GetQueryID(), event.ID),
 		nil,
-		a.AuthorizationRequest(),
-		"")
+		headers)
 
 	if err != nil {
 		log.Errorf("error deleting event of g calendar for email %s. %s", a.Mail(), err.Error())

@@ -46,7 +46,7 @@ func (a *GoogleAccount) Refresh() (err error) {
 	}
 	log.Debugln(a.RefreshToken)
 	log.Debugln(fmt.Sprintf(params, a.RefreshToken))
-	req, err := http.NewRequest("POST",
+	req, err := http.NewRequest(http.MethodPost,
 		route,
 		strings.NewReader(
 			fmt.Sprintf(params, a.RefreshToken)))
@@ -95,13 +95,14 @@ func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err erro
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
 	contents, err :=
 		util.DoRequest(
-			"GET",
+			http.MethodGet,
 			route,
 			nil,
-			a.AuthorizationRequest(),
-			"")
+			headers)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.Mail(), err.Error()))
@@ -132,13 +133,14 @@ func (a *GoogleAccount) GetCalendar(calendarID string) (calendar CalendarManager
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
 	contents, err :=
 		util.DoRequest(
-			"GET",
+			http.MethodGet,
 			fmt.Sprintf(route, url.QueryEscape(calendarID)),
 			nil,
-			a.AuthorizationRequest(),
-			"")
+			headers)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting calendar for email %s. %s", a.Email, err.Error()))
@@ -165,13 +167,14 @@ func (a *GoogleAccount) GetPrimaryCalendar() (calendar CalendarManager, err erro
 		return calendar, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
 	contents, err :=
 		util.DoRequest(
-			"GET",
+			http.MethodGet,
 			route,
 			nil,
-			a.AuthorizationRequest(),
-			"")
+			headers)
 
 	if err != nil {
 		return calendar, errors.New(fmt.Sprintf("error getting primary calendar for email %s. %s", a.Email, err.Error()))

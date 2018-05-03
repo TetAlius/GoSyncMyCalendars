@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"net/http"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -23,11 +25,13 @@ func (calendar *OutlookCalendar) Create(a AccountManager) (err error) {
 		return errors.New(fmt.Sprintf("error marshalling calendar data: %s", err.Error()))
 	}
 
-	contents, err := util.DoRequest("POST",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+	contents, err := util.DoRequest(http.MethodPost,
 		route,
 		bytes.NewBuffer(data),
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -60,11 +64,14 @@ func (calendar *OutlookCalendar) Update(a AccountManager) error {
 		return errors.New(fmt.Sprintf("error marshalling calendar data: %s", err.Error()))
 	}
 
-	contents, err := util.DoRequest("PATCH",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodPatch,
 		fmt.Sprintf(route, calendar.GetID()),
 		bytes.NewBuffer(data),
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -94,11 +101,14 @@ func (calendar *OutlookCalendar) Delete(a AccountManager) (err error) {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
-	contents, err := util.DoRequest("DELETE",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodDelete,
 		fmt.Sprintf(route, calendar.GetID()),
 		nil,
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -120,11 +130,14 @@ func (calendar *OutlookCalendar) GetAllEvents(a AccountManager) (events []EventM
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
-	contents, err := util.DoRequest("GET",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, calendar.GetID()),
 		nil,
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all events of a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -159,11 +172,14 @@ func (calendar *OutlookCalendar) GetEvent(a AccountManager, ID string) (event Ev
 		return nil, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
-	contents, err := util.DoRequest("GET",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, ID),
 		nil,
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting an event of a calendar for email %s. %s", a.Mail(), err.Error()))

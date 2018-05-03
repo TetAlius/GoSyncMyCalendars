@@ -53,7 +53,7 @@ func (a *OutlookAccount) Refresh() (err error) {
 		return errors.New(fmt.Sprintf("error generating params: %s", err.Error()))
 	}
 
-	req, err := http.NewRequest("POST",
+	req, err := http.NewRequest(http.MethodPost,
 		route,
 		strings.NewReader(fmt.Sprintf(params, a.RefreshToken)))
 
@@ -104,11 +104,14 @@ func (a *OutlookAccount) GetAllCalendars() (calendars []CalendarManager, err err
 		return calendars, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
-	contents, err := util.DoRequest("GET",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodGet,
 		route,
 		nil,
-		a.AuthorizationRequest(),
-		a.AnchorMailbox)
+		headers)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.AnchorMailbox, err.Error()))
@@ -142,11 +145,14 @@ func (a *OutlookAccount) GetCalendar(calendarID string) (calendar CalendarManage
 		return
 	}
 
-	contents, err := util.DoRequest("GET",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, calendarID),
 		nil,
-		a.AuthorizationRequest(),
-		a.AnchorMailbox)
+		headers)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting a calendar for email %s. %s", a.AnchorMailbox, err.Error()))
@@ -173,11 +179,14 @@ func (a *OutlookAccount) GetPrimaryCalendar() (calendar CalendarManager, err err
 		return calendar, errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
-	contents, err := util.DoRequest("GET",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodGet,
 		route,
 		nil,
-		a.AuthorizationRequest(),
-		a.AnchorMailbox)
+		headers)
 
 	if err != nil {
 		log.Errorf("%s", err.Error())

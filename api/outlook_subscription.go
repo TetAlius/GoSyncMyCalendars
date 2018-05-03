@@ -49,11 +49,14 @@ func (subscription *OutlookSubscription) Subscribe(a AccountManager, calendar Ca
 	}
 	log.Debugln(data)
 
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
 	contents, err := util.DoRequest(http.MethodPost,
 		route,
 		bytes.NewBuffer(data),
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 
 	log.Debugf("%s\n", contents)
 	err = createOutlookResponseError(contents)
@@ -82,11 +85,14 @@ func (subscription *OutlookSubscription) Renew(a AccountManager) (err error) {
 	}
 	log.Debugln(data)
 
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
 	contents, err := util.DoRequest(http.MethodPatch,
 		route,
 		bytes.NewBuffer(data),
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 	log.Debugf("%s\n", contents)
 	err = createOutlookResponseError(contents)
 
@@ -102,11 +108,14 @@ func (subscription *OutlookSubscription) Delete(a AccountManager) (err error) {
 	}
 	route = fmt.Sprintf("%s('%s')", route, subscription.GetID())
 
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
 	contents, err := util.DoRequest(http.MethodDelete,
 		route,
 		nil,
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 	log.Debugf("%s\n", contents)
 	err = createOutlookResponseError(contents)
 	if err != nil {

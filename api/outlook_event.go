@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"net/http"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"github.com/pkg/errors"
@@ -23,11 +25,14 @@ func (event *OutlookEvent) Create(a AccountManager) (err error) {
 	}
 	log.Debugln(data)
 
-	contents, err := util.DoRequest("POST",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodPost,
 		fmt.Sprintf(route, event.Calendar.GetID()),
 		bytes.NewBuffer(data),
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error creating event in a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -58,11 +63,14 @@ func (event *OutlookEvent) Update(a AccountManager) (err error) {
 	}
 	log.Debugln(data)
 
-	contents, err := util.DoRequest("PATCH",
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodPatch,
 		fmt.Sprintf(route, event.ID),
 		bytes.NewBuffer(data),
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating event of a calendar for email %s. %s", a.Mail(), err.Error()))
@@ -91,11 +99,15 @@ func (event *OutlookEvent) Delete(a AccountManager) (err error) {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 	log.Debugln(route)
-	contents, err := util.DoRequest("DELETE",
+
+	headers := make(map[string]string)
+	headers["Authorization"] = a.AuthorizationRequest()
+	headers["X-AnchorMailbox"] = a.Mail()
+
+	contents, err := util.DoRequest(http.MethodDelete,
 		fmt.Sprintf(route, event.ID),
 		nil,
-		a.AuthorizationRequest(),
-		a.Mail())
+		headers)
 
 	if err != nil {
 		log.Errorf("error deleting event of a calendar for email %s. %s", a.Mail(), err.Error())
