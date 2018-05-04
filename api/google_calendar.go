@@ -156,6 +156,10 @@ func (calendar *GoogleCalendar) GetAllEvents(a AccountManager) (events []EventMa
 	events = make([]EventManager, len(eventList.Events))
 	for i, s := range eventList.Events {
 		s.Calendar = calendar
+		err := s.extractTime()
+		if err != nil {
+			return nil, err
+		}
 		events[i] = s
 	}
 	return
@@ -194,6 +198,13 @@ func (calendar *GoogleCalendar) GetEvent(a AccountManager, eventID string) (even
 	log.Debugf("%s\n", contents)
 	eventResponse := new(GoogleEvent)
 	err = json.Unmarshal(contents, &eventResponse)
+	if err != nil {
+		return
+	}
+	err = eventResponse.extractTime()
+	if err != nil {
+		return
+	}
 
 	eventResponse.Calendar = calendar
 	event = eventResponse

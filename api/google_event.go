@@ -52,6 +52,7 @@ func (event *GoogleEvent) Create(a AccountManager) (err error) {
 	err = json.Unmarshal(contents, &event)
 
 	log.Debugf("Response: %s", contents)
+	err = event.extractTime()
 	return
 }
 
@@ -92,6 +93,7 @@ func (event *GoogleEvent) Update(a AccountManager) (err error) {
 	err = json.Unmarshal(contents, &event)
 
 	log.Debugf("Response: %s", contents)
+	err = event.extractTime()
 	return
 }
 
@@ -143,5 +145,31 @@ func (event *GoogleEvent) PrepareFields() {
 
 	event.Start = &GoogleTime{startDate, event.StartsAt.Format(time.RFC3339), "UTC"}
 	event.End = &GoogleTime{endDate, event.EndsAt.Format(time.RFC3339), "UTC"}
+	return
+}
+
+func (event *GoogleEvent) extractTime() (err error) {
+	var start, end, format string
+	if len(event.Start.Date) != 0 && len(event.End.Date) != 0 {
+		event.IsAllDay = true
+		start = event.Start.Date
+		end = event.End.Date
+		format = "2006-01-02"
+
+	} else {
+		event.IsAllDay = false
+		start = event.Start.DateTime
+		end = event.End.DateTime
+		format = time.RFC3339
+	}
+
+	event.StartsAt, err = time.Parse(format, start)
+	if err != nil {
+		return errors.New(fmt.Sprintf("error parsing start time: %s %s", start, err.Error()))
+	}
+	event.EndsAt, err = time.Parse(format, end)
+	if err != nil {
+		return errors.New(fmt.Sprintf("error parsing end time: %s %s", end, err.Error()))
+	}
 	return
 }

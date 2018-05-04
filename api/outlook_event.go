@@ -48,6 +48,7 @@ func (event *OutlookEvent) Create(a AccountManager) (err error) {
 	err = json.Unmarshal(contents, &eventResponse)
 
 	log.Debugf("Response: %s", contents)
+	err = event.extractTime()
 	return
 }
 
@@ -87,6 +88,7 @@ func (event *OutlookEvent) Update(a AccountManager) (err error) {
 	err = json.Unmarshal(contents, &eventResponse)
 
 	log.Debugf("Response: %s", contents)
+	err = event.extractTime()
 	return
 }
 
@@ -137,5 +139,33 @@ func (event *OutlookEvent) PrepareFields() {
 	event.Start = &OutlookDateTimeTimeZone{event.StartsAt.Format(time.RFC3339Nano), "UTC"}
 	event.End = &OutlookDateTimeTimeZone{event.EndsAt.Format(time.RFC3339Nano), "UTC"}
 	event.Body = &OutlookItemBody{"Text", event.Description}
+	return
+}
+
+func (event *OutlookEvent) extractTime() (err error) {
+	format := "2006-01-02T15:04:05.999999999"
+	location, err := time.LoadLocation(event.Start.TimeZone)
+	if err != nil {
+		log.Errorf("error getting start location: %s", event.Start.TimeZone)
+		return err
+	}
+	date, err := time.ParseInLocation(format, event.Start.DateTime, location)
+	if err != nil {
+		log.Errorf("error parsing start time: %s %s", event.Start.DateTime, err.Error())
+		return
+	}
+	event.StartsAt = date.UTC()
+
+	location, err = time.LoadLocation(event.End.TimeZone)
+	if err != nil {
+		log.Errorf("error getting end location: %s", event.End.TimeZone)
+		return err
+	}
+	event.EndsAt, err = time.ParseInLocation(format, event.Start.DateTime, location)
+	if err != nil {
+		log.Errorf("error parsing end time: %s %s", event.Start.DateTime, err.Error())
+		return
+	}
+	event.EndsAt = date.UTC()
 	return
 }

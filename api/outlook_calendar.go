@@ -156,6 +156,10 @@ func (calendar *OutlookCalendar) GetAllEvents(a AccountManager) (events []EventM
 	events = make([]EventManager, len(eventListResponse.Events))
 	for i, s := range eventListResponse.Events {
 		s.Calendar = calendar
+		err = s.extractTime()
+		if err != nil {
+			return
+		}
 		events[i] = s
 	}
 	return
@@ -188,18 +192,26 @@ func (calendar *OutlookCalendar) GetEvent(a AccountManager, ID string) (event Ev
 	}
 	err = createOutlookResponseError(contents)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	log.Debugf("%s\n", contents)
 	eventResponse := new(OutlookEventResponse)
 	err = json.Unmarshal(contents, &eventResponse)
+	if err != nil {
+		return
+	}
 
 	eventResponse.Calendar = calendar
+	err = eventResponse.OutlookEvent.extractTime()
+	if err != nil {
+		return
+	}
 	event = eventResponse.OutlookEvent
 
 	return
 }
+
 func (calendar *OutlookCalendar) GetID() string {
 	return calendar.ID
 }
