@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"html/template"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"strconv"
@@ -68,7 +69,7 @@ func (s *Server) Start() error {
 func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// 404 page
 	if r.URL.Path != "/" {
-		s.errorHandler(w, r, http.StatusNotFound)
+		notFound(w)
 		return
 	}
 	t, err := template.ParseFiles("./frontend/resources/html/welcome.html")
@@ -82,9 +83,26 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//errorHandler if something can not be loaded, call the 404 web page
-func (s *Server) errorHandler(w http.ResponseWriter, r *http.Request, status int) {
-	http.ServeFile(w, r, "./frontend/resources/html/404.html")
+func notFound(w http.ResponseWriter) {
+	contents, err := ioutil.ReadFile("./frontend/resources/html/404.html")
+	if err != nil {
+		serverError(w)
+		return
+	}
+	w.WriteHeader(http.StatusNotFound)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(contents)
+}
+
+func serverError(w http.ResponseWriter) {
+	contents, err := ioutil.ReadFile("./frontend/resources/html/500.html")
+	if err != nil {
+		panic(err) // or do something useful
+	}
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(contents)
+
 }
 
 //Stop the frontend
