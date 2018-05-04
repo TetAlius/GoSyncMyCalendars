@@ -134,7 +134,7 @@ func (calendar *GoogleCalendar) GetAllEvents(a AccountManager) (events []EventMa
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
 
-	queryParams := map[string]string{"timezone": "UTC"}
+	queryParams := map[string]string{"timeZone": "UTC"}
 
 	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, calendar.GetQueryID()),
@@ -177,7 +177,7 @@ func (calendar *GoogleCalendar) GetEvent(a AccountManager, eventID string) (even
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
 
-	queryParams := map[string]string{"timezone": "UTC"}
+	queryParams := map[string]string{"timeZone": "UTC"}
 
 	contents, err := util.DoRequest(
 		http.MethodGet,
