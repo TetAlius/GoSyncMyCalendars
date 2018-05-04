@@ -36,7 +36,7 @@ type EventManager interface {
 	GetID() string
 	GetCalendar() CalendarManager
 
-	PrepareTime() error
+	PrepareFields()
 }
 
 type SubscriptionManager interface {

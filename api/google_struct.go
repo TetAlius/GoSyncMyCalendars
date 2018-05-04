@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type GoogleError struct {
@@ -84,6 +85,9 @@ type GoogleEventList struct {
 	Events []*GoogleEvent `json:"items"`
 }
 type GoogleEvent struct {
+	StartsAt                time.Time             `json:"-"`
+	EndsAt                  time.Time             `json:"-"`
+	IsAllDay                bool                  `json:"-"`
 	Calendar                *GoogleCalendar       `json:"calendar,omitempty"`
 	Kind                    string                `json:"kind,omitempty"`
 	Etag                    string                `json:"etag,omitempty"`

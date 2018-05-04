@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type OutlookError struct {
@@ -79,14 +80,17 @@ type OutlookEventListResponse struct {
 type OutlookEvent struct {
 	OdataID string `json:"@odata.id,omitempty"`
 	//OdataEtag string `json:"@odata.etag,omitempty"`
-	Relations []string `json:"-"`
+	Relations   []string  `json:"-"`
+	StartsAt    time.Time `json:"-"`
+	EndsAt      time.Time `json:"-"`
+	Description string    `json:"BodyPreview,omitempty"`
 
 	Calendar *OutlookCalendar `json:"-"`
 
-	Attachments     []OutlookAttachment      `json:"Attachments,omitempty"`
-	Attendees       []OutlookAttendee        `json:"Attendees,omitempty"`
-	Body            *OutlookItemBody         `json:"Body,omitempty"`
-	BodyPreview     string                   `json:"BodyPreview,omitempty"`
+	Attachments []OutlookAttachment `json:"Attachments,omitempty"`
+	Attendees   []OutlookAttendee   `json:"Attendees,omitempty"`
+	Body        *OutlookItemBody    `json:"Body,omitempty"`
+
 	Categories      []string                 `json:"Categories,omitempty"`
 	ChangeKey       string                   `json:"ChangeKey,omitempty"`
 	CreatedDateTime string                   `json:"CreatedDateTime,omitempty"` //"2014-10-19T23:13:47.3959685Z"

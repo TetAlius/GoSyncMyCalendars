@@ -7,6 +7,8 @@ import (
 
 	"net/http"
 
+	"time"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"github.com/pkg/errors"
@@ -131,7 +133,9 @@ func (event *OutlookEvent) GetCalendar() CalendarManager {
 	return event.Calendar
 }
 
-func (event *OutlookEvent) PrepareTime() (err error) {
-	panic("IMPLEMENT ME")
+func (event *OutlookEvent) PrepareFields() {
+	event.Start = &OutlookDateTimeTimeZone{event.StartsAt.Format(time.RFC3339Nano), "UTC"}
+	event.End = &OutlookDateTimeTimeZone{event.EndsAt.Format(time.RFC3339Nano), "UTC"}
+	event.Body = &OutlookItemBody{"Text", event.Description}
 	return
 }

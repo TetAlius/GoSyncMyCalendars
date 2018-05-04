@@ -8,6 +8,8 @@ import (
 
 	"encoding/json"
 
+	"time"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -132,7 +134,14 @@ func (event *GoogleEvent) GetCalendar() CalendarManager {
 	return event.Calendar
 }
 
-func (event *GoogleEvent) PrepareTime() (err error) {
-	panic("IMPLEMENT ME")
+func (event *GoogleEvent) PrepareFields() {
+	var startDate, endDate string
+	if event.IsAllDay {
+		startDate = event.StartsAt.Format("2006-01-02")
+		endDate = event.EndsAt.Format("2006-01-02")
+	}
+
+	event.Start = &GoogleTime{startDate, event.StartsAt.Format(time.RFC3339), "UTC"}
+	event.End = &GoogleTime{endDate, event.EndsAt.Format(time.RFC3339), "UTC"}
 	return
 }
