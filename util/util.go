@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"strings"
 
+	"time"
+
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
@@ -87,7 +89,9 @@ func CallAPIRoot(route string) (apiRoute string, err error) {
 //TODO return responseCode
 //and returns the JSON so that it can be parsed into the correct struct
 func DoRequest(method string, url string, body io.Reader, headers map[string]string, params map[string]string) (contents []byte, err error) {
-	client := http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 30,
+	}
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return contents, errors.New(fmt.Sprintf("error creating new request: %s", err.Error()))
