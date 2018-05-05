@@ -53,9 +53,9 @@ func (s *Server) Start() (err error) {
 }
 
 //Stop the backend
-func (s *Server) Stop() error {
+func (s *Server) Stop() (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	log.Debugf("Stopping backend with ctx: %s", ctx)
-	err := s.server.Shutdown(ctx)
-	return err
+	err = s.server.Shutdown(ctx)
+	return
 }

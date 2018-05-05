@@ -60,7 +60,7 @@ func (s *Server) Start() (err error) {
 		log.Infof("Web server listening at %s", laddr)
 
 		if err := s.server.ListenAndServe(); err != nil {
-			log.Fatalf("%e", err)
+			log.Fatalf("%s", err.Error())
 
 		}
 	}()
@@ -110,9 +110,9 @@ func serverError(w http.ResponseWriter) {
 }
 
 //Stop the frontend
-func (s *Server) Stop() error {
+func (s *Server) Stop() (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	log.Debugf("Stopping frontend with ctx: %s", ctx)
-	err := s.server.Shutdown(ctx)
-	return err
+	err = s.server.Shutdown(nil)
+	return
 }

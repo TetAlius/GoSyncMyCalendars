@@ -4,20 +4,12 @@ import (
 	"net/http"
 	"os"
 	"testing"
-
-	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 )
-
-func init() {
-	os.Setenv("API_ROOT", os.Getenv("API_ROOT_TEST"))
-}
 
 //TestGoogle_SignInHandlerSignInHandler test the SignInHandler method
 func TestOutlookSignInHandler(t *testing.T) {
 	setupApiRoot()
-	f := frontend.NewServer("127.0.0.1", 8080)
-	f.Start()
-	defer f.Stop()
+
 	//defer server.Close()
 	// Correct request
 	resp := requestOutlookSignIn(t)
@@ -36,7 +28,7 @@ func TestOutlookSignInHandler(t *testing.T) {
 	t.Log(resp.Header.Get("Location"))
 	// Check if you received the status codes you expect. There may
 	// status codes other than 200 which are acceptable.
-	if resp.StatusCode != 500 && resp.Header.Get("Location") != "htpp://localhost:8080/" {
+	if resp.StatusCode != 500 && resp.Header.Get("Location") != "http://localhost:8080/" {
 		t.Fail()
 		t.Fatalf("Failed with status %d %s", resp.StatusCode, resp.Status)
 		return

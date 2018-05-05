@@ -5,16 +5,12 @@ import (
 	"testing"
 
 	"os"
-
-	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 )
 
 //TestGoogleSignInHandler test the SignInHandler method
 func TestGoogleSignInHandler(t *testing.T) {
 	setupApiRoot()
-	f := frontend.NewServer("127.0.0.1", 8080)
-	f.Start()
-	defer f.Stop()
+
 	// Correct request
 	resp := requestGoogleSignIn(t)
 	// Check if you received the status codes you expect. There may
@@ -30,7 +26,7 @@ func TestGoogleSignInHandler(t *testing.T) {
 	resp = requestGoogleSignIn(t)
 	// Check if you received the status codes you expect. There may
 	// status codes other than 200 which are acceptable.
-	if resp.StatusCode != 500 && resp.Header.Get("Location") != "htpp://localhost:8080/" {
+	if resp.StatusCode != 500 && resp.Header.Get("Location") != "http://localhost:8080/" {
 		t.Fail()
 		t.Fatalf("Failed with status %d %s", resp.StatusCode, resp.Status)
 		return
@@ -58,7 +54,4 @@ func requestGoogleSignIn(t *testing.T) (resp *http.Response) {
 	}
 
 	return resp
-}
-func setupApiRoot() {
-	os.Setenv("API_ROOT", os.Getenv("API_ROOT_TEST"))
 }
