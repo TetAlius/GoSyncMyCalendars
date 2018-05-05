@@ -80,8 +80,8 @@ type OutlookEventListResponse struct {
 }
 
 type OutlookEvent struct {
-	calendar  *OutlookCalendar `json:"-"`
-	relations []EventManager   `json:"-"`
+	calendar  *OutlookCalendar
+	relations []EventManager
 
 	ID string `json:"Id"`
 
