@@ -45,6 +45,8 @@ type EventManager interface {
 
 	GetCalendar() CalendarManager
 
+	GetRelations() []EventManager
+
 	PrepareFields()
 }
 

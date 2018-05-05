@@ -138,6 +138,10 @@ func (event *OutlookEvent) GetCalendar() CalendarManager {
 	return event.calendar
 }
 
+func (event *OutlookEvent) GetRelations() []EventManager {
+	return event.relations
+}
+
 func (event *OutlookEvent) PrepareFields() {
 	event.Start = &OutlookDateTimeTimeZone{event.StartsAt.Format(time.RFC3339Nano), "UTC"}
 	event.End = &OutlookDateTimeTimeZone{event.EndsAt.Format(time.RFC3339Nano), "UTC"}

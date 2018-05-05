@@ -133,6 +133,10 @@ func (event *GoogleEvent) GetCalendar() CalendarManager {
 	return event.calendar
 }
 
+func (event *GoogleEvent) GetRelations() []EventManager {
+	return event.relations
+}
+
 func (event *GoogleEvent) PrepareFields() {
 	var startDate, endDate string
 	if event.IsAllDay {
