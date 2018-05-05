@@ -133,7 +133,7 @@ func (calendar *OutlookCalendar) GetAllEvents(a AccountManager) (events []EventM
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
 	headers["X-AnchorMailbox"] = a.Mail()
-	headers["Prefer"] = "outlook.timezone=UTC"
+	headers["Prefer"] = "outlook.timezone=UTC, outlook.body-content-type=text"
 
 	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, calendar.GetID()),
@@ -180,7 +180,7 @@ func (calendar *OutlookCalendar) GetEvent(a AccountManager, ID string) (event Ev
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
 	headers["X-AnchorMailbox"] = a.Mail()
-	headers["Prefer"] = "outlook.timezone=UTC"
+	headers["Prefer"] = "outlook.timezone=UTC,outlook.body-content-type=text"
 
 	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, ID),

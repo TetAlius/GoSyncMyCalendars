@@ -10,6 +10,7 @@ import (
 type OutlookError struct {
 	OutlookConcreteError `json:"error,omitempty"`
 }
+
 type OutlookConcreteError struct {
 	Code    string `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
@@ -45,7 +46,7 @@ type OutlookCalendar struct {
 	CanViewPrivateItems bool                 `json:"CanViewPrivateItems,omitempty"`
 	ChangeKey           string               `json:"ChangeKey,omitempty"`
 	Color               OutlookCalendarColor `json:"Color,omitempty"`
-	Events              []OutlookEvent       `json:"Events,omitempty"`
+	Events              []OutlookEvent       `json:"-"`
 	ID                  string               `json:"Id"`
 	Name                string               `json:"Name,omitempty"`
 	Owner               OutlookEmailAddress  `json:"Owner,omitempty"`
@@ -63,8 +64,8 @@ type OutlookCalendar struct {
 type OutlookCalendarColor string
 
 type OutlookEmailAddress struct {
-	Address string `json:"Address,omitempty"`
-	Name    string `json:"Name,omitempty"`
+	Address string `json:"Address,omitempty" sync:"Email"`
+	Name    string `json:"Name,omitempty" sync:"Name"`
 }
 
 type OutlookEventResponse struct {
@@ -78,51 +79,55 @@ type OutlookEventListResponse struct {
 }
 
 type OutlookEvent struct {
-	OdataID string `json:"@odata.id,omitempty"`
-	//OdataEtag string `json:"@odata.etag,omitempty"`
-	Relations   []string  `json:"-"`
-	StartsAt    time.Time `json:"-"`
-	EndsAt      time.Time `json:"-"`
-	Description string    `json:"BodyPreview,omitempty"`
+	Relations []string         `json:"-"`
+	Calendar  *OutlookCalendar `json:"-"`
 
-	Calendar *OutlookCalendar `json:"-"`
+	ID string `json:"Id"`
 
+	Subject     string    `json:"Subject,omitempty" sync:"Subject"`
+	Description string    `json:"BodyPreview,omitempty" sync:"Description"`
+	StartsAt    time.Time `json:"-" sync:"StartsAt"`
+	EndsAt      time.Time `json:"-" sync:"EndsAt"`
+	IsAllDay    bool      `json:"IsAllDay,omitempty"`
+
+	Start                      *OutlookDateTimeTimeZone `json:"Start,omitempty"`
+	End                        *OutlookDateTimeTimeZone `json:"End,omitempty"`
+	Categories                 []string                 `json:"Categories,omitempty"`
+	ChangeKey                  string                   `json:"ChangeKey,omitempty"`
+	OnlineMeetingUrl           string                   `json:"OnlineMeetingUrl,omitempty"`
+	OriginalStartTimeZone      string                   `json:"OriginalStartTimeZone,omitempty"`
+	OriginalEndTimeZone        string                   `json:"OriginalEndTimeZone,omitempty"`
+	ReminderMinutesBeforeStart int32                    `json:"ReminderMinutesBeforeStart,omitempty"`
+	ResponseRequested          bool                     `json:"ResponseRequested,omitempty"`
+	SeriesMasterID             string                   `json:"SeriesMasterId,omitempty"`
+
+	Organizer   *OutlookRecipient   `json:"Organizer,omitempty"`
 	Attachments []OutlookAttachment `json:"Attachments,omitempty"`
-	Attendees   []OutlookAttendee   `json:"Attendees,omitempty"`
-	Body        *OutlookItemBody    `json:"Body,omitempty"`
+	//Don't update
+	//This will go to Body to have a list
+	Attendees []OutlookAttendee `json:"Attendees,omitempty"`
+	Body      *OutlookItemBody  `json:"Body,omitempty"`
+	Instances []OutlookEvent    `json:"Instances,omitempty"`
 
-	Categories      []string                 `json:"Categories,omitempty"`
-	ChangeKey       string                   `json:"ChangeKey,omitempty"`
-	CreatedDateTime string                   `json:"CreatedDateTime,omitempty"` //"2014-10-19T23:13:47.3959685Z"
-	End             *OutlookDateTimeTimeZone `json:"End,omitempty"`
-	HasAttachments  bool                     `json:"HasAttachments,omitempty"`
-	//ICalUID                    string               `json:"iCalUID,omitempty"`
-	ID                         string                      `json:"Id"`
-	Importance                 OutlookImportance           `json:"Importance,omitempty"`
-	Instances                  []OutlookEvent              `json:"Instances,omitempty"`
-	IsAllDay                   bool                        `json:"IsAllday,omitempty"`
-	IsCancelled                bool                        `json:"IsCancelled,omitempty"`
-	IsOrganizer                bool                        `json:"IsOrganizer,omitempty"`
-	IsReminderOn               bool                        `json:"IsReminderOn,omitempty"`
-	LastModifiedDateTime       string                      `json:"LastModifiedDateTime,omitempty"` //"2014-10-19T23:13:47.6772234Z"
-	Location                   *OutlookLocation            `json:"Location,omitempty"`
-	OnlineMeetingUrl           string                      `json:"OnlineMeetingUrl,omitempty"`
-	Organizer                  *OutlookRecipient           `json:"Organizer,omitempty"`
-	OriginalStartTimeZone      string                      `json:"OriginalStartTimeZone,omitempty"`
-	OriginalEndTimeZone        string                      `json:"OriginalEndTimeZone,omitempty"`
-	Recurrence                 *OutlookPatternedRecurrence `json:"Recurrence,omitempty"`
-	ReminderMinutesBeforeStart int32                       `json:"ReminderMinutesBeforeStart,omitempty"`
-	ResponseRequested          bool                        `json:"ResponseRequested,omitempty"`
-	ResponseStatus             *OutlookResponseStatus      `json:"ResponseStatus,omitempty"`
-	Sensitivity                OutlookSensitivity          `json:"Sensitivity,omitempty"`
-	SeriesMasterID             string                      `json:"SeriesMasterId,omitempty"`
-	ShowAs                     OutlookFreeBusyStatus       `json:"ShowAs,omitempty"`
-	Start                      *OutlookDateTimeTimeZone    `json:"Start,omitempty"`
-	Subject                    string                      `json:"Subject,omitempty"`
-	Type                       OutlookEventType            `json:"Type,omitempty"`
-	WebLink                    string                      `json:"WebLink,omitempty"`
+	Importance OutlookImportance `json:"Importance,omitempty"`
 
-	//Extensions                 []Extension         `json:"Extensions"`
+	Recurrence     *OutlookPatternedRecurrence `json:"Recurrence,omitempty"`
+	ResponseStatus *OutlookResponseStatus      `json:"ResponseStatus,omitempty"`
+	Sensitivity    OutlookSensitivity          `json:"Sensitivity,omitempty"`
+	ShowAs         OutlookFreeBusyStatus       `json:"ShowAs,omitempty"`
+
+	Type OutlookEventType `json:"Type,omitempty"`
+
+	//Not to sync
+	Link string `json:"WebLink,omitempty"`
+
+	//Not to sync and use
+	Location             *OutlookLocation `json:"Location,omitempty"`
+	IsCancelled          bool             `json:"IsCancelled,omitempty"`
+	IsOrganizer          bool             `json:"IsOrganizer,omitempty"`
+	IsReminderOn         bool             `json:"IsReminderOn,omitempty"`
+	CreatedDateTime      string           `json:"CreatedDateTime,omitempty"`      //"2014-10-19T23:13:47.3959685Z"
+	LastModifiedDateTime string           `json:"LastModifiedDateTime,omitempty"` //"2014-10-19T23:13:47.6772234Z"
 }
 
 type OutlookAttachment struct {
@@ -150,7 +155,7 @@ type OutlookStatus struct {
 
 type OutlookItemBody struct {
 	ContentType string `json:"ContentType,omitempty"`
-	Content     string `json:"Content,omitempty"`
+	Description string `json:"Content,omitempty" sync:"Description"`
 }
 
 type OutlookDateTimeTimeZone struct {
