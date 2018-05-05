@@ -64,7 +64,7 @@ func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {
 	}
 
 	//	good call to update calendar
-	calendar.Name = fmt.Sprintf("TravisRenamed%s", calendar.ID)
+	calendar.Name = fmt.Sprintf("TravisRenamed%s", calendar.GetID())
 	err = calendar.Update()
 	if err != nil {
 		t.Fail()
@@ -142,7 +142,7 @@ func TestOutlookCalendar_GetEvent(t *testing.T) {
 		if err != nil {
 			t.Fail()
 			t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s",
-				calendar.(*api.OutlookCalendar).Name, err.Error())
+				calendar.GetName(), err.Error())
 			return
 		}
 		allEvents = append(allEvents, events...)
@@ -150,7 +150,7 @@ func TestOutlookCalendar_GetEvent(t *testing.T) {
 	}
 
 	event := allEvents[0].(*api.OutlookEvent)
-	calendar := event.Calendar
+	calendar := event.GetCalendar()
 
 	_, err = calendar.GetEvent("")
 	if err == nil {
@@ -163,7 +163,7 @@ func TestOutlookCalendar_GetEvent(t *testing.T) {
 	_, err = calendar.GetEvent(event.ID)
 	if err != nil {
 		t.Fail()
-		t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s", calendar.Name, err.Error())
+		t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s", calendar.GetName(), err.Error())
 		return
 	}
 

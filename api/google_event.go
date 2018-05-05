@@ -15,7 +15,8 @@ import (
 )
 
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (event *GoogleEvent) Create(a AccountManager) (err error) {
+func (event *GoogleEvent) Create() (err error) {
+	a := event.GetCalendar().GetAccount()
 	log.Debugln("createEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -23,21 +24,17 @@ func (event *GoogleEvent) Create(a AccountManager) (err error) {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
 
-	calendar := event.Calendar
-	event.Calendar = nil
-
 	data, err := json.Marshal(event)
 	if err != nil {
 		return errors.New(fmt.Sprintf("error marshalling event data: %s", err.Error()))
 	}
 	log.Debugln(data)
-	event.Calendar = calendar
 
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
 
 	contents, err := util.DoRequest(http.MethodPost,
-		fmt.Sprintf(route, event.Calendar.GetQueryID()),
+		fmt.Sprintf(route, event.GetCalendar().GetQueryID()),
 		bytes.NewBuffer(data),
 		headers, nil)
 
@@ -57,7 +54,8 @@ func (event *GoogleEvent) Create(a AccountManager) (err error) {
 }
 
 // PUT https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (event *GoogleEvent) Update(a AccountManager) (err error) {
+func (event *GoogleEvent) Update() (err error) {
+	a := event.GetCalendar().GetAccount()
 	log.Debugln("updateEvent google")
 	//TODO: Test if ids are two given
 
@@ -66,19 +64,16 @@ func (event *GoogleEvent) Update(a AccountManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
-	calendar := event.Calendar
-	event.Calendar = nil
 	data, err := json.Marshal(event)
 	if err != nil {
 		return errors.New(fmt.Sprintf("error marshalling event data: %s", err.Error()))
 	}
-	event.Calendar = calendar
 
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
 
 	contents, err := util.DoRequest(http.MethodPut,
-		fmt.Sprintf(route, event.Calendar.GetQueryID(), event.ID),
+		fmt.Sprintf(route, event.GetCalendar().GetQueryID(), event.ID),
 		bytes.NewBuffer(data),
 		headers, nil)
 
@@ -98,7 +93,8 @@ func (event *GoogleEvent) Update(a AccountManager) (err error) {
 }
 
 // DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (event *GoogleEvent) Delete(a AccountManager) (err error) {
+func (event *GoogleEvent) Delete() (err error) {
+	a := event.GetCalendar().GetAccount()
 	log.Debugln("deleteEvent google")
 	//TODO: Test if ids are two given
 
@@ -113,7 +109,7 @@ func (event *GoogleEvent) Delete(a AccountManager) (err error) {
 
 	contents, err := util.DoRequest(
 		http.MethodDelete,
-		fmt.Sprintf(route, event.Calendar.GetQueryID(), event.ID),
+		fmt.Sprintf(route, event.GetCalendar().GetQueryID(), event.ID),
 		nil,
 		headers, nil)
 
@@ -128,12 +124,13 @@ func (event *GoogleEvent) Delete(a AccountManager) (err error) {
 
 	return
 }
+
 func (event *GoogleEvent) GetID() string {
 	return event.ID
 }
 
 func (event *GoogleEvent) GetCalendar() CalendarManager {
-	return event.Calendar
+	return event.calendar
 }
 
 func (event *GoogleEvent) PrepareFields() {
@@ -146,6 +143,20 @@ func (event *GoogleEvent) PrepareFields() {
 	event.Start = &GoogleTime{startDate, event.StartsAt.Format(time.RFC3339), "UTC"}
 	event.End = &GoogleTime{endDate, event.EndsAt.Format(time.RFC3339), "UTC"}
 	return
+}
+
+func (event *GoogleEvent) SetCalendar(calendar CalendarManager) (err error) {
+	switch x := calendar.(type) {
+	case *GoogleCalendar:
+		event.calendar = x
+	default:
+		return errors.New(fmt.Sprintf("type of calendar not valid for google: %T", x))
+	}
+	return
+}
+
+func (event *GoogleEvent) SetRelations(relations []EventManager) {
+	event.relations = relations
 }
 
 func (event *GoogleEvent) extractTime() (err error) {

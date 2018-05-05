@@ -26,15 +26,15 @@ func (calendar *OutlookCalendar) Create() (err error) {
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
-	headers["X-AnchorMailbox"] = calendar.account.Mail()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
+	headers["X-AnchorMailbox"] = calendar.GetAccount().Mail()
 	contents, err := util.DoRequest(http.MethodPost,
 		route,
 		bytes.NewBuffer(data),
 		headers, nil)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 	err = createOutlookResponseError(contents)
 	if err != nil {
@@ -65,8 +65,8 @@ func (calendar *OutlookCalendar) Update() error {
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
-	headers["X-AnchorMailbox"] = calendar.account.Mail()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
+	headers["X-AnchorMailbox"] = calendar.GetAccount().Mail()
 
 	contents, err := util.DoRequest(http.MethodPatch,
 		fmt.Sprintf(route, calendar.GetID()),
@@ -74,7 +74,7 @@ func (calendar *OutlookCalendar) Update() error {
 		headers, nil)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 	err = createOutlookResponseError(contents)
 	if err != nil {
@@ -102,8 +102,8 @@ func (calendar *OutlookCalendar) Delete() (err error) {
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
-	headers["X-AnchorMailbox"] = calendar.account.Mail()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
+	headers["X-AnchorMailbox"] = calendar.GetAccount().Mail()
 
 	contents, err := util.DoRequest(http.MethodDelete,
 		fmt.Sprintf(route, calendar.GetID()),
@@ -111,7 +111,7 @@ func (calendar *OutlookCalendar) Delete() (err error) {
 		headers, nil)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 	err = createOutlookResponseError(contents)
 	if err != nil {
@@ -131,8 +131,8 @@ func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err erro
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
-	headers["X-AnchorMailbox"] = calendar.account.Mail()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
+	headers["X-AnchorMailbox"] = calendar.GetAccount().Mail()
 	headers["Prefer"] = "outlook.timezone=UTC, outlook.body-content-type=text"
 
 	contents, err := util.DoRequest(http.MethodGet,
@@ -141,7 +141,7 @@ func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err erro
 		headers, nil)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error getting all events of a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return nil, errors.New(fmt.Sprintf("error getting all events of a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 
 	err = createOutlookResponseError(contents)
@@ -155,7 +155,7 @@ func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err erro
 
 	events = make([]EventManager, len(eventListResponse.Events))
 	for i, s := range eventListResponse.Events {
-		s.Calendar = calendar
+		s.SetCalendar(calendar)
 		err = s.extractTime()
 		if err != nil {
 			return
@@ -178,8 +178,8 @@ func (calendar *OutlookCalendar) GetEvent(ID string) (event EventManager, err er
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
-	headers["X-AnchorMailbox"] = calendar.account.Mail()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
+	headers["X-AnchorMailbox"] = calendar.GetAccount().Mail()
 	headers["Prefer"] = "outlook.timezone=UTC,outlook.body-content-type=text"
 
 	contents, err := util.DoRequest(http.MethodGet,
@@ -188,7 +188,7 @@ func (calendar *OutlookCalendar) GetEvent(ID string) (event EventManager, err er
 		headers, nil)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error getting an event of a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return nil, errors.New(fmt.Sprintf("error getting an event of a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 	err = createOutlookResponseError(contents)
 	if err != nil {
@@ -202,7 +202,7 @@ func (calendar *OutlookCalendar) GetEvent(ID string) (event EventManager, err er
 		return
 	}
 
-	eventResponse.Calendar = calendar
+	eventResponse.SetCalendar(calendar)
 	err = eventResponse.OutlookEvent.extractTime()
 	if err != nil {
 		return
@@ -224,4 +224,15 @@ func (calendar *OutlookCalendar) SetAccount(a AccountManager) (err error) {
 
 func (calendar *OutlookCalendar) GetID() string {
 	return calendar.ID
+}
+
+func (calendar *OutlookCalendar) GetQueryID() string {
+	return calendar.ID
+}
+
+func (calendar *OutlookCalendar) GetAccount() AccountManager {
+	return calendar.account
+}
+func (calendar *OutlookCalendar) GetName() string {
+	return calendar.Name
 }

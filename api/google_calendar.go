@@ -30,7 +30,7 @@ func (calendar *GoogleCalendar) Update() (err error) {
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
 	contents, err :=
 		util.DoRequest(
 			http.MethodPut,
@@ -39,7 +39,7 @@ func (calendar *GoogleCalendar) Update() (err error) {
 			headers, nil)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 
 	err = createGoogleResponseError(contents)
@@ -62,7 +62,7 @@ func (calendar *GoogleCalendar) Delete() (err error) {
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
 	contents, err := util.DoRequest(
 		http.MethodDelete,
 		fmt.Sprintf(route, calendar.GetQueryID()),
@@ -70,7 +70,7 @@ func (calendar *GoogleCalendar) Delete() (err error) {
 		headers, nil)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 	err = createGoogleResponseError(contents)
 	if err != nil {
@@ -100,7 +100,7 @@ func (calendar *GoogleCalendar) Create() (err error) {
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
 
 	contents, err :=
 		util.DoRequest(
@@ -110,7 +110,7 @@ func (calendar *GoogleCalendar) Create() (err error) {
 			headers, nil)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 	err = createGoogleResponseError(contents)
 	if err != nil {
@@ -132,7 +132,7 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
 
 	queryParams := map[string]string{"timeZone": "UTC"}
 
@@ -142,7 +142,7 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 		headers, queryParams)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error getting all events of g calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return nil, errors.New(fmt.Sprintf("error getting all events of g calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 	err = createGoogleResponseError(contents)
 	if err != nil {
@@ -155,7 +155,7 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 
 	events = make([]EventManager, len(eventList.Events))
 	for i, s := range eventList.Events {
-		s.Calendar = calendar
+		s.SetCalendar(calendar)
 		err := s.extractTime()
 		if err != nil {
 			return nil, err
@@ -175,7 +175,7 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = calendar.account.AuthorizationRequest()
+	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
 
 	queryParams := map[string]string{"timeZone": "UTC"}
 
@@ -186,7 +186,7 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 		headers, queryParams)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error getting an event of g calendar for email %s. %s", calendar.account.Mail(), err.Error()))
+		return nil, errors.New(fmt.Sprintf("error getting an event of g calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -206,7 +206,7 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 		return
 	}
 
-	eventResponse.Calendar = calendar
+	eventResponse.SetCalendar(calendar)
 	event = eventResponse
 
 	return
@@ -267,10 +267,14 @@ func (calendar *GoogleCalendar) DeleteSubscription(a AccountManager, subscriptio
 	return
 }
 
-func (calendar GoogleCalendar) GetQueryID() string {
+func (calendar *GoogleCalendar) GetQueryID() string {
 	return url.QueryEscape(calendar.GetID())
 }
 
-func (calendar GoogleCalendar) GetID() string {
+func (calendar *GoogleCalendar) GetID() string {
 	return calendar.ID
+}
+
+func (calendar *GoogleCalendar) GetName() string {
+	return calendar.Name
 }

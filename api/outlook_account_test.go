@@ -122,7 +122,7 @@ func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 	}
 
 	os.Setenv("OUTLOOK_CALENDAR_ID", calendar.GetID())
-	os.Setenv("OUTLOOK_CALENDAR_NAME", calendar.(*api.OutlookCalendar).Name)
+	os.Setenv("OUTLOOK_CALENDAR_NAME", calendar.GetName())
 
 	os.Setenv("API_ROOT", "")
 	// Bad calling to GetPrimaryCalendar
@@ -152,9 +152,9 @@ func TestOutlookAccount_GetCalendar(t *testing.T) {
 		return
 	}
 
-	if calendarName != calendar.(*api.OutlookCalendar).Name {
+	if calendarName != calendar.GetName() {
 		t.Fail()
-		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.(*api.OutlookCalendar).Name)
+		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.GetName())
 		return
 	}
 

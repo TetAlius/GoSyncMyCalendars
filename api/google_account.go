@@ -201,3 +201,7 @@ func (a *GoogleAccount) AuthorizationRequest() string {
 func (a *GoogleAccount) Mail() string {
 	return a.Email
 }
+
+func (calendar *GoogleCalendar) GetAccount() AccountManager {
+	return calendar.account
+}

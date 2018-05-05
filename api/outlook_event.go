@@ -14,7 +14,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (event *OutlookEvent) Create(a AccountManager) (err error) {
+func (event *OutlookEvent) Create() (err error) {
+	a := event.GetCalendar().GetAccount()
 	log.Debugln("createEvent outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
 	if err != nil {
@@ -32,7 +33,7 @@ func (event *OutlookEvent) Create(a AccountManager) (err error) {
 	headers["X-AnchorMailbox"] = a.Mail()
 
 	contents, err := util.DoRequest(http.MethodPost,
-		fmt.Sprintf(route, event.Calendar.GetID()),
+		fmt.Sprintf(route, event.GetCalendar().GetID()),
 		bytes.NewBuffer(data),
 		headers, nil)
 
@@ -52,7 +53,8 @@ func (event *OutlookEvent) Create(a AccountManager) (err error) {
 	return
 }
 
-func (event *OutlookEvent) Update(a AccountManager) (err error) {
+func (event *OutlookEvent) Update() (err error) {
+	a := event.GetCalendar().GetAccount()
 	log.Debugln("updateEvent outlook")
 
 	route, err := util.CallAPIRoot("outlook/events/id")
@@ -93,7 +95,8 @@ func (event *OutlookEvent) Update(a AccountManager) (err error) {
 }
 
 // DELETE https://outlook.office.com/api/v2.0/me/events/{eventID}
-func (event *OutlookEvent) Delete(a AccountManager) (err error) {
+func (event *OutlookEvent) Delete() (err error) {
+	a := event.GetCalendar().GetAccount()
 	log.Debugln("deleteEvent outlook")
 
 	route, err := util.CallAPIRoot("outlook/events/id")
@@ -132,7 +135,7 @@ func (event *OutlookEvent) GetID() string {
 }
 
 func (event *OutlookEvent) GetCalendar() CalendarManager {
-	return event.Calendar
+	return event.calendar
 }
 
 func (event *OutlookEvent) PrepareFields() {
@@ -140,6 +143,20 @@ func (event *OutlookEvent) PrepareFields() {
 	event.End = &OutlookDateTimeTimeZone{event.EndsAt.Format(time.RFC3339Nano), "UTC"}
 	event.Body = &OutlookItemBody{"Text", event.Description}
 	return
+}
+
+func (event *OutlookEvent) SetCalendar(calendar CalendarManager) (err error) {
+	switch x := calendar.(type) {
+	case *OutlookCalendar:
+		event.calendar = x
+	default:
+		return errors.New(fmt.Sprintf("type of calendar not valid for google: %T", x))
+	}
+	return
+}
+
+func (event *OutlookEvent) SetRelations(relations []EventManager) {
+	event.relations = relations
 }
 
 func (event *OutlookEvent) extractTime() (err error) {

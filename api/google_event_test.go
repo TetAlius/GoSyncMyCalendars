@@ -27,10 +27,10 @@ func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 		return
 	}
-	event.Calendar = calendar.(*api.GoogleCalendar)
+	event.SetCalendar(calendar)
 
 	// good call to create event
-	err = event.Create(account)
+	err = event.Create()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -47,7 +47,7 @@ func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 	ev.(*api.GoogleEvent).Subject = "Update"
 
 	// good call to update event
-	err = ev.Update(account)
+	err = ev.Update()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -55,7 +55,7 @@ func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 	}
 
 	// good call to delete event
-	err = event.Delete(account)
+	err = event.Delete()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())

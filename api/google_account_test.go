@@ -122,9 +122,9 @@ func TestGoogleAccount_GetPrimaryCalendar(t *testing.T) {
 	}
 
 	logger.Debugln(calendar.GetID())
-	logger.Debugln(calendar.(*api.GoogleCalendar).Name)
+	logger.Debugln(calendar.GetName())
 	os.Setenv("GOOGLE_CALENDAR_ID", calendar.GetID())
-	os.Setenv("GOOGLE_CALENDAR_NAME", calendar.(*api.GoogleCalendar).Name)
+	os.Setenv("GOOGLE_CALENDAR_NAME", calendar.GetName())
 
 	os.Setenv("API_ROOT", "")
 	// Bad calling to GetPrimaryCalendar
@@ -157,9 +157,9 @@ func TestGoogleAccount_GetCalendar(t *testing.T) {
 		return
 	}
 
-	if calendarName != calendar.(*api.GoogleCalendar).Name {
+	if calendarName != calendar.GetName() {
 		t.Fail()
-		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.(*api.GoogleCalendar).Name)
+		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.GetName())
 		return
 	}
 

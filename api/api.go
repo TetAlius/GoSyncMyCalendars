@@ -20,6 +20,7 @@ type AccountManager interface {
 
 type CalendarManager interface {
 	SetAccount(AccountManager) error
+
 	Update() error
 	Delete() error
 	Create() error
@@ -28,13 +29,20 @@ type CalendarManager interface {
 	GetEvent(string) (EventManager, error)
 
 	GetID() string
+	GetQueryID() string
+	GetName() string
+	GetAccount() AccountManager
 }
 
 type EventManager interface {
-	Create(AccountManager) error
-	Update(AccountManager) error
-	Delete(AccountManager) error
+	SetCalendar(CalendarManager) error
+	SetRelations([]EventManager)
+
+	Create() error
+	Update() error
+	Delete() error
 	GetID() string
+
 	GetCalendar() CalendarManager
 
 	PrepareFields()

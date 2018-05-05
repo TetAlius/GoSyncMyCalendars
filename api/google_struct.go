@@ -79,8 +79,8 @@ type GoogleEventList struct {
 }
 
 type GoogleEvent struct {
-	Calendar  *GoogleCalendar `json:"-"`
-	Relations []string        `json:"-"`
+	calendar  *GoogleCalendar
+	relations []EventManager
 
 	ID string `json:"id"`
 

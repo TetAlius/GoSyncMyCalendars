@@ -75,7 +75,7 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 	}
 
 	//	good call to update calendar
-	calendar.Name = fmt.Sprintf("TravisRenamed%s", calendar.ID)
+	calendar.Name = fmt.Sprintf("TravisRenamed%s", calendar.GetID())
 	err = calendar.Update()
 	if err != nil {
 		t.Fail()
@@ -152,7 +152,7 @@ func TestGoogleCalendar_GetEvent(t *testing.T) {
 		if err != nil {
 			t.Fail()
 			t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s",
-				calendar.(*api.GoogleCalendar).Name, err.Error())
+				calendar.GetName(), err.Error())
 			return
 		}
 		allEvents = append(allEvents, events...)
@@ -160,7 +160,7 @@ func TestGoogleCalendar_GetEvent(t *testing.T) {
 	}
 
 	event := allEvents[0].(*api.GoogleEvent)
-	calendar := event.Calendar
+	calendar := event.GetCalendar()
 
 	_, err = calendar.GetEvent("asdasd")
 	if err == nil {
@@ -173,7 +173,7 @@ func TestGoogleCalendar_GetEvent(t *testing.T) {
 	_, err = calendar.GetEvent(event.ID)
 	if err != nil {
 		t.Fail()
-		t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s", calendar.Name, err.Error())
+		t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s", calendar.GetName(), err.Error())
 		return
 	}
 
