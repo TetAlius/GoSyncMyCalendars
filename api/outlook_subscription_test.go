@@ -115,5 +115,4 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 		t.Fatalf("something went wrong. Expected error found nil")
 		return
 	}
-	b.Stop()
 }
