@@ -3,7 +3,11 @@ package backend
 import (
 	"net"
 	"net/http"
-	"strconv"
+
+	"fmt"
+
+	"context"
+	"time"
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
@@ -13,38 +17,45 @@ type Server struct {
 	IP      net.IP
 	Port    int
 	workers *[]Worker
+	server  *http.Server
+	mux     *http.ServeMux
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.mux.ServeHTTP(w, r)
 }
 
 //NewBackend creates a backend
 func NewServer(ip string, port int) *Server {
 	workers := new([]Worker)
-	server := Server{net.ParseIP(ip), port, workers}
+	server := Server{IP: net.ParseIP(ip), Port: port, workers: workers, mux: http.NewServeMux()}
+	server.mux.HandleFunc("/google", server.GoogleTokenHandler)
+	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
+	server.mux.HandleFunc("/outlook", server.OutlookTokenHandler)
+	server.mux.HandleFunc("/outlook/watcher", server.OutlookWatcherHandler)
 	return &server
 }
 
 //Start the backend
-func (s *Server) Start() {
+func (s *Server) Start() (err error) {
 	log.Debugln("Start backend")
-	webServerMux := http.NewServeMux()
 
-	webServerMux.HandleFunc("/google", s.GoogleTokenHandler)
-	webServerMux.HandleFunc("/google/watcher", s.GoogleWatcherHandler)
-	webServerMux.HandleFunc("/outlook", s.OutlookTokenHandler)
-	webServerMux.HandleFunc("/outlook/watcher", s.OutlookWatcherHandler)
-
-	laddr := s.IP.String() + ":" + strconv.Itoa(s.Port)
+	laddr := fmt.Sprintf("%s:%d", s.IP.String(), s.Port)
+	h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
+	s.server = h
 	log.Infof("Backend server listening at %s", laddr)
 
-	err := http.ListenAndServe(laddr, webServerMux)
+	err = s.server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("ListenAndServe: " + err.Error())
 	}
-
+	return
 }
 
 //Stop the backend
 func (s *Server) Stop() error {
-	//TODO Complete
-	log.Debugln("TODO: Stop backend")
-	return nil
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	log.Debugf("Stopping backend with ctx: %s", ctx)
+	err := s.server.Shutdown(ctx)
+	return err
 }
