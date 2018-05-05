@@ -119,6 +119,7 @@ func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err erro
 
 	calendars = make([]CalendarManager, len(calendarResponse.Calendars))
 	for i, s := range calendarResponse.Calendars {
+		s.SetAccount(a)
 		calendars[i] = s
 	}
 	return
@@ -153,6 +154,7 @@ func (a *GoogleAccount) GetCalendar(calendarID string) (calendar CalendarManager
 	calendarResponse := new(GoogleCalendar)
 	err = json.Unmarshal(contents, &calendarResponse)
 	log.Debugln(contents)
+	calendarResponse.SetAccount(a)
 
 	return calendarResponse, err
 
@@ -187,8 +189,9 @@ func (a *GoogleAccount) GetPrimaryCalendar() (calendar CalendarManager, err erro
 	calendarResponse := new(GoogleCalendar)
 	err = json.Unmarshal(contents, &calendarResponse)
 	log.Debugln(contents)
-
-	return calendarResponse, err
+	calendar = calendarResponse
+	calendar.SetAccount(a)
+	return
 }
 
 func (a *GoogleAccount) AuthorizationRequest() string {

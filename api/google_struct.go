@@ -34,6 +34,7 @@ type GoogleCalendarListResponse struct {
 }
 
 type GoogleCalendar struct {
+	account *GoogleAccount
 	//From CalendarLIST resource
 	ID              string `json:"id"`
 	Name            string `json:"summary"`

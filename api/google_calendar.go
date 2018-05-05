@@ -17,7 +17,7 @@ import (
 )
 
 // PUT https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
-func (calendar *GoogleCalendar) Update(a AccountManager) (err error) {
+func (calendar *GoogleCalendar) Update() (err error) {
 	log.Debugln("updateCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -30,7 +30,7 @@ func (calendar *GoogleCalendar) Update(a AccountManager) (err error) {
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = a.AuthorizationRequest()
+	headers["Authorization"] = calendar.account.AuthorizationRequest()
 	contents, err :=
 		util.DoRequest(
 			http.MethodPut,
@@ -39,7 +39,7 @@ func (calendar *GoogleCalendar) Update(a AccountManager) (err error) {
 			headers, nil)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", a.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
 	}
 
 	err = createGoogleResponseError(contents)
@@ -54,7 +54,7 @@ func (calendar *GoogleCalendar) Update(a AccountManager) (err error) {
 }
 
 // DELETE https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
-func (calendar *GoogleCalendar) Delete(a AccountManager) (err error) {
+func (calendar *GoogleCalendar) Delete() (err error) {
 	log.Debugln("Delete calendar")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -62,7 +62,7 @@ func (calendar *GoogleCalendar) Delete(a AccountManager) (err error) {
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = a.AuthorizationRequest()
+	headers["Authorization"] = calendar.account.AuthorizationRequest()
 	contents, err := util.DoRequest(
 		http.MethodDelete,
 		fmt.Sprintf(route, calendar.GetQueryID()),
@@ -70,7 +70,7 @@ func (calendar *GoogleCalendar) Delete(a AccountManager) (err error) {
 		headers, nil)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", a.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
 	}
 	err = createGoogleResponseError(contents)
 	if err != nil {
@@ -87,7 +87,7 @@ func (calendar *GoogleCalendar) Delete(a AccountManager) (err error) {
 }
 
 // POST https://www.googleapis.com/calendar/v3/calendars
-func (calendar *GoogleCalendar) Create(a AccountManager) (err error) {
+func (calendar *GoogleCalendar) Create() (err error) {
 	log.Debugln("createCalendar google")
 	route, err := util.CallAPIRoot("google/calendars")
 	if err != nil {
@@ -100,7 +100,7 @@ func (calendar *GoogleCalendar) Create(a AccountManager) (err error) {
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = a.AuthorizationRequest()
+	headers["Authorization"] = calendar.account.AuthorizationRequest()
 
 	contents, err :=
 		util.DoRequest(
@@ -110,7 +110,7 @@ func (calendar *GoogleCalendar) Create(a AccountManager) (err error) {
 			headers, nil)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", a.Mail(), err.Error()))
+		return errors.New(fmt.Sprintf("error creating a calendar for email %s. %s", calendar.account.Mail(), err.Error()))
 	}
 	err = createGoogleResponseError(contents)
 	if err != nil {
@@ -123,7 +123,7 @@ func (calendar *GoogleCalendar) Create(a AccountManager) (err error) {
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
-func (calendar *GoogleCalendar) GetAllEvents(a AccountManager) (events []EventManager, err error) {
+func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error) {
 	log.Debugln("getAllEvents google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events")
@@ -132,7 +132,7 @@ func (calendar *GoogleCalendar) GetAllEvents(a AccountManager) (events []EventMa
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = a.AuthorizationRequest()
+	headers["Authorization"] = calendar.account.AuthorizationRequest()
 
 	queryParams := map[string]string{"timeZone": "UTC"}
 
@@ -142,7 +142,7 @@ func (calendar *GoogleCalendar) GetAllEvents(a AccountManager) (events []EventMa
 		headers, queryParams)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error getting all events of g calendar for email %s. %s", a.Mail(), err.Error()))
+		return nil, errors.New(fmt.Sprintf("error getting all events of g calendar for email %s. %s", calendar.account.Mail(), err.Error()))
 	}
 	err = createGoogleResponseError(contents)
 	if err != nil {
@@ -166,7 +166,7 @@ func (calendar *GoogleCalendar) GetAllEvents(a AccountManager) (events []EventMa
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
-func (calendar *GoogleCalendar) GetEvent(a AccountManager, eventID string) (event EventManager, err error) {
+func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, err error) {
 	log.Debugln("getEvent google")
 
 	route, err := util.CallAPIRoot("google/calendars/id/events/id")
@@ -175,7 +175,7 @@ func (calendar *GoogleCalendar) GetEvent(a AccountManager, eventID string) (even
 	}
 
 	headers := make(map[string]string)
-	headers["Authorization"] = a.AuthorizationRequest()
+	headers["Authorization"] = calendar.account.AuthorizationRequest()
 
 	queryParams := map[string]string{"timeZone": "UTC"}
 
@@ -186,7 +186,7 @@ func (calendar *GoogleCalendar) GetEvent(a AccountManager, eventID string) (even
 		headers, queryParams)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error getting an event of g calendar for email %s. %s", a.Mail(), err.Error()))
+		return nil, errors.New(fmt.Sprintf("error getting an event of g calendar for email %s. %s", calendar.account.Mail(), err.Error()))
 	}
 
 	log.Debugf("Contents: %s", contents)
@@ -242,6 +242,16 @@ func (calendar *GoogleCalendar) Subscribe(a AccountManager) (err error) {
 		return err
 	}
 
+	return
+}
+
+func (calendar *GoogleCalendar) SetAccount(a AccountManager) (err error) {
+	switch x := a.(type) {
+	case *GoogleAccount:
+		calendar.account = x
+	default:
+		return errors.New(fmt.Sprintf("type of account not valid for google: %T", x))
+	}
 	return
 }
 

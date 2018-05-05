@@ -19,12 +19,13 @@ type AccountManager interface {
 }
 
 type CalendarManager interface {
-	Update(AccountManager) error
-	Delete(AccountManager) error
-	Create(AccountManager) error
+	SetAccount(AccountManager) error
+	Update() error
+	Delete() error
+	Create() error
 
-	GetAllEvents(AccountManager) ([]EventManager, error)
-	GetEvent(AccountManager, string) (EventManager, error)
+	GetAllEvents() ([]EventManager, error)
+	GetEvent(string) (EventManager, error)
 
 	GetID() string
 }

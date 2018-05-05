@@ -21,7 +21,9 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 	}
 
 	var calendar api.GoogleCalendar
+	calendar.SetAccount(account)
 	var calendarWrong api.GoogleCalendar
+	calendarWrong.SetAccount(account)
 	var calendarJSON = []byte(`{
   		"summary": "Travis"
 	}`)
@@ -32,7 +34,7 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 		return
 	}
 	// wrong call to create calendar
-	err = calendarWrong.Create(account)
+	err = calendarWrong.Create()
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
@@ -40,7 +42,7 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 	}
 
 	// good call to create calendar
-	err = calendar.Create(account)
+	err = calendar.Create()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -65,7 +67,7 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 
 	//	wrong call to update calendar
 	calendarWrong.Name = fmt.Sprintf("TravisRenamed%s", calendarWrong.ID)
-	err = calendarWrong.Update(account)
+	err = calendarWrong.Update()
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
@@ -74,7 +76,7 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 
 	//	good call to update calendar
 	calendar.Name = fmt.Sprintf("TravisRenamed%s", calendar.ID)
-	err = calendar.Update(account)
+	err = calendar.Update()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -82,14 +84,14 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 	}
 
 	// wrong call to delete calendar
-	err = calendarWrong.Delete(account)
+	err = calendarWrong.Delete()
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
 		return
 	}
 	//	good call to delete calendar
-	err = calendar.Delete(account)
+	err = calendar.Delete()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -104,6 +106,7 @@ func TestGoogleCalendar_GetAllEvents(t *testing.T) {
 	account.Refresh()
 
 	var calendarWrong api.GoogleCalendar
+	calendarWrong.SetAccount(account)
 
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
@@ -113,7 +116,7 @@ func TestGoogleCalendar_GetAllEvents(t *testing.T) {
 	}
 
 	// wrong call to get all events from a calendar
-	_, err = calendarWrong.GetAllEvents(account)
+	_, err = calendarWrong.GetAllEvents()
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
@@ -121,7 +124,7 @@ func TestGoogleCalendar_GetAllEvents(t *testing.T) {
 	}
 
 	// good call to get all events from a calendar
-	_, err = calendar.GetAllEvents(account)
+	_, err = calendar.GetAllEvents()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -145,7 +148,7 @@ func TestGoogleCalendar_GetEvent(t *testing.T) {
 	}
 
 	for _, calendar := range calendars {
-		events, err := calendar.GetAllEvents(account)
+		events, err := calendar.GetAllEvents()
 		if err != nil {
 			t.Fail()
 			t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s",
@@ -159,7 +162,7 @@ func TestGoogleCalendar_GetEvent(t *testing.T) {
 	event := allEvents[0].(*api.GoogleEvent)
 	calendar := event.Calendar
 
-	_, err = calendar.GetEvent(account, "asdasd")
+	_, err = calendar.GetEvent("asdasd")
 	if err == nil {
 		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
@@ -167,7 +170,7 @@ func TestGoogleCalendar_GetEvent(t *testing.T) {
 	}
 
 	//good call to get event
-	_, err = calendar.GetEvent(account, event.ID)
+	_, err = calendar.GetEvent(event.ID)
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s", calendar.Name, err.Error())

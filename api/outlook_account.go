@@ -128,6 +128,7 @@ func (a *OutlookAccount) GetAllCalendars() (calendars []CalendarManager, err err
 
 	calendars = make([]CalendarManager, len(calendarResponse.Calendars))
 	for i, s := range calendarResponse.Calendars {
+		s.SetAccount(a)
 		calendars[i] = s
 	}
 	return
@@ -166,8 +167,9 @@ func (a *OutlookAccount) GetCalendar(calendarID string) (calendar CalendarManage
 
 	calendarResponse := new(OutlookCalendarResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
-
-	return calendarResponse.OutlookCalendar, err
+	calendar = calendarResponse.OutlookCalendar
+	calendar.SetAccount(a)
+	return
 }
 
 func (a *OutlookAccount) GetPrimaryCalendar() (calendar CalendarManager, err error) {
@@ -201,8 +203,10 @@ func (a *OutlookAccount) GetPrimaryCalendar() (calendar CalendarManager, err err
 
 	calendarResponse := new(OutlookCalendarResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
+	calendar = calendarResponse.OutlookCalendar
+	calendar.SetAccount(a)
 
-	return calendarResponse.OutlookCalendar, err
+	return
 }
 
 func (a *OutlookAccount) AuthorizationRequest() (auth string) {

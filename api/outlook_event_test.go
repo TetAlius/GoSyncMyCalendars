@@ -32,7 +32,7 @@ func TestOutlookEventCalendar_EventLifeCycle(t *testing.T) {
 	}
 
 	// good call to get event
-	ev, err := calendar.GetEvent(account, event.ID)
+	ev, err := calendar.GetEvent(event.ID)
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
