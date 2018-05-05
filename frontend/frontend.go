@@ -111,7 +111,7 @@ func serverError(w http.ResponseWriter) {
 
 //Stop the frontend
 func (s *Server) Stop() error {
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	log.Debugf("Stopping frontend with ctx: %s", ctx)
 	err := s.server.Shutdown(ctx)
 	return err
