@@ -75,7 +75,19 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 		b.Start()
 	}()
 
-	err = subscription.Subscribe(account, calendar)
+	err = subscription.Subscribe(calendar)
+	if err != nil {
+		t.Fail()
+		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
+		return
+	}
+
+	var event api.OutlookEvent
+	event.Subject = "Discuss the OutlookCalendar REST API"
+	event.SetCalendar(calendar)
+
+	// good call to create event
+	err = event.Create()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -97,7 +109,7 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 
 	// Wrong calls to subscription
 	subs := api.NewOutlookSubscription("", "localhost:8081", "Created,Deleted,Updated")
-	err = subs.Subscribe(account, calendar)
+	err = subs.Subscribe(calendar)
 	if err == nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected error found nil")

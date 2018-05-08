@@ -75,7 +75,7 @@ type EventManager interface {
 }
 
 type SubscriptionManager interface {
-	Subscribe(AccountManager, CalendarManager) error
+	Subscribe(CalendarManager) error
 	Renew(AccountManager) error
 	Delete(AccountManager) error
 	GetID() string

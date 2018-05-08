@@ -30,7 +30,8 @@ func manageRenewalData(subscription *OutlookSubscription) (data []byte, err erro
 }
 
 // POST https://outlook.office.com/api/v2.0/me/subscriptions
-func (subscription *OutlookSubscription) Subscribe(a AccountManager, calendar CalendarManager) (err error) {
+func (subscription *OutlookSubscription) Subscribe(calendar CalendarManager) (err error) {
+	a := calendar.GetAccount()
 	log.Debugln("subscribe calendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/subscription")
