@@ -80,8 +80,10 @@ type OutlookEventListResponse struct {
 }
 
 type OutlookEvent struct {
-	calendar  *OutlookCalendar
-	relations []EventManager
+	calendar           *OutlookCalendar
+	relations          []EventManager
+	state              int
+	exponentialBackoff int
 
 	ID string `json:"Id"`
 
@@ -246,9 +248,10 @@ type OutlookFreeBusyStatus string
 type OutlookEventType string
 
 type OutlookSubscription struct {
-	Type               string `json:"@odata.type,omitempty"`
-	Resource           string `json:"Resource,omitempty"`
-	NotificationURL    string `json:"NotificationURL,omitempty"`
+	Type            string `json:"@odata.type,omitempty"`
+	Resource        string `json:"Resource,omitempty"`
+	NotificationURL string `json:"NotificationURL,omitempty"`
+	//Created,Deleted,Updated
 	ChangeType         string `json:"ChangeType,omitempty"`
 	ID                 string `json:"id,omitempty"`
 	ClientState        string `json:"ClientState,omitempty"`
@@ -263,7 +266,9 @@ type OutlookSubscriptionNotification struct {
 	SubscriptionID                 string              `json:"SubscriptionId"`
 	SubscriptionExpirationDateTime string              `json:"SubscriptionExpirationDateTime"`
 	SequenceNumber                 int32               `json:"SequenceNumber"`
-	Date                           OutlookResourceData `json:"ResourceData"`
+	Data                           OutlookResourceData `json:"ResourceData"`
+	//Created,Deleted,Updated
+	ChangeType string `json:"ChangeType,omitempty"`
 }
 
 type OutlookResourceData struct {

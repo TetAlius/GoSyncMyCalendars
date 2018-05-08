@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 )
@@ -14,6 +13,10 @@ type GoogleError struct {
 type GoogleConcreteError struct {
 	Code    int    `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
+}
+
+func (err GoogleError) Error() string {
+	return fmt.Sprintf("code: %d. message: %s", err.Code, err.Message)
 }
 
 type GoogleAccount struct {
@@ -79,8 +82,10 @@ type GoogleEventList struct {
 }
 
 type GoogleEvent struct {
-	calendar  *GoogleCalendar
-	relations []EventManager
+	calendar           *GoogleCalendar
+	relations          []EventManager
+	state              int
+	exponentialBackoff int
 
 	ID string `json:"id"`
 
@@ -210,11 +215,22 @@ type GoogleAttachment struct {
 	FileID   string `json:"fileId,omitempty"`
 }
 
+type GoogleSubscription struct {
+	calendar        *GoogleCalendar
+	ID              string `json:"id"`
+	Type            string `json:"type"`
+	NotificationURL string `json:"address"`
+	ResourceID      string `json:"resourceId,omitempty"`
+	ResourceURI     string `json:"resourceUri,omitempty"`
+	Token           string `json:"token,omitempty"`
+	Expiration      int64  `json:"expiration"`
+}
+
 func createGoogleResponseError(contents []byte) (err error) {
 	e := new(GoogleError)
 	err = json.Unmarshal(contents, &e)
 	if e.Code != 0 && len(e.Message) != 0 {
-		return errors.New(fmt.Sprintf("code: %d. message: %s", e.Code, e.Message))
+		return err
 	}
 	return nil
 }

@@ -159,8 +159,33 @@ func (event *OutlookEvent) SetCalendar(calendar CalendarManager) (err error) {
 	return
 }
 
+func (event *OutlookEvent) CanProcessAgain() bool {
+	return event.exponentialBackoff < maxBackoff
+}
+
 func (event *OutlookEvent) SetRelations(relations []EventManager) {
 	event.relations = relations
+}
+
+func (event *OutlookEvent) MarkWrong() {
+	//	TODO: Implement marking to db
+	log.Fatalf("not implemented yet. ID: %s", event.GetID())
+}
+
+func (event *OutlookEvent) IncrementBackoff() {
+	event.exponentialBackoff += 1
+}
+
+func (event *OutlookEvent) SetState(stateInformed string) (err error) {
+	state := states[stateInformed]
+	if state == 0 {
+		return errors.New(fmt.Sprintf("state %s not supported", stateInformed))
+	}
+	return
+}
+
+func (event *OutlookEvent) GetState() int {
+	return event.state
 }
 
 func (event *OutlookEvent) extractTime() (err error) {

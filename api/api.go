@@ -8,6 +8,25 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
+const (
+	// iota+1 is used to distinguish from one of this to a just initialized int
+	Created = iota + 1
+	Updated
+	Deleted
+)
+const (
+	UpdatedText = "Updated"
+	CreatedText = "Created"
+	DeletedText = "Deleted"
+)
+
+const maxBackoff = 5
+
+var states = map[string]int{
+	"Created": Created,
+	"Updated": Updated,
+	"Deleted": Deleted}
+
 type AccountManager interface {
 	Refresh() error
 
@@ -47,7 +66,12 @@ type EventManager interface {
 
 	GetRelations() []EventManager
 
+	MarkWrong()
+	GetState() int
+	SetState(string) error
 	PrepareFields()
+	CanProcessAgain() bool
+	IncrementBackoff()
 }
 
 type SubscriptionManager interface {

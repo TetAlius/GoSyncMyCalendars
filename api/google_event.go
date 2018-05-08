@@ -14,6 +14,8 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+var recoverableGoogleErrors = map[string]bool{}
+
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
 func (event *GoogleEvent) Create() (err error) {
 	a := event.GetCalendar().GetAccount()
@@ -149,6 +151,10 @@ func (event *GoogleEvent) PrepareFields() {
 	return
 }
 
+func (event *GoogleEvent) CanProcessAgain() bool {
+	return event.exponentialBackoff < maxBackoff
+}
+
 func (event *GoogleEvent) SetCalendar(calendar CalendarManager) (err error) {
 	switch x := calendar.(type) {
 	case *GoogleCalendar:
@@ -161,6 +167,27 @@ func (event *GoogleEvent) SetCalendar(calendar CalendarManager) (err error) {
 
 func (event *GoogleEvent) SetRelations(relations []EventManager) {
 	event.relations = relations
+}
+
+func (event *GoogleEvent) MarkWrong() {
+	//	TODO: Implement marking to db
+	log.Fatalf("not implemented yet. ID: %s", event.GetID())
+}
+
+func (event *GoogleEvent) IncrementBackoff() {
+	event.exponentialBackoff += 1
+}
+
+func (event *GoogleEvent) SetState(stateInformed string) (err error) {
+	state := states[stateInformed]
+	if state == 0 {
+		return errors.New(fmt.Sprintf("state %s not supported", stateInformed))
+	}
+	return
+}
+
+func (event *GoogleEvent) GetState() int {
+	return event.state
 }
 
 func (event *GoogleEvent) extractTime() (err error) {
