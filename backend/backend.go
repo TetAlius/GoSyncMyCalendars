@@ -10,15 +10,16 @@ import (
 	"time"
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/worker"
 )
 
 //Backend object
 type Server struct {
-	IP      net.IP
-	Port    int
-	workers *[]Worker
-	server  *http.Server
-	mux     *http.ServeMux
+	IP     net.IP
+	Port   int
+	server *http.Server
+	mux    *http.ServeMux
+	worker *worker.Worker
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -27,8 +28,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 //NewBackend creates a backend
 func NewServer(ip string, port int) *Server {
-	workers := new([]Worker)
-	server := Server{IP: net.ParseIP(ip), Port: port, workers: workers, mux: http.NewServeMux()}
+	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux()}
 	server.mux.HandleFunc("/google", server.GoogleTokenHandler)
 	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
 	server.mux.HandleFunc("/outlook", server.OutlookTokenHandler)
