@@ -79,6 +79,41 @@ func (s *Server) GoogleTokenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
+	if s.worker.IsClosed() {
+		serverError(w)
+		return
+	}
+	switch r.Method {
+	case http.MethodPost:
+		header := r.Header
+		resourceState := header.Get("X-Goog-Resource-State")
+		if resourceState == "sync" {
+			w.WriteHeader(http.StatusOK)
+		}
+		//TODO: look here what was the change of the resource
+		//Google does not give the change of resource
+		//Possible changes include the creation of a new resource, or the modification or deletion of an existing resource.
+		//channelID := header.Get("X-Goog-Channel-ID")
+		//token := header.Get("X-Goog-Channel-Token")
+		//expiration := header.Get("X-Goog-Channel-Expiration")
+		resourceID := header.Get("X-Goog-Resource-ID")
+		//resourceURI := header.Get("X-Goog-Resource-URI")
+		//messageNumber := header.Get("X-Goog-Message-Number")
+		//TODO: manage to get event with this id
+		event := &api.GoogleEvent{ID: resourceID}
+		log.Debugf("id of event to synchronize: %s", resourceID)
+		err := event.SetState(api.UpdatedText)
+		if err != nil {
+			s.worker.Events <- event
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+	default:
+		notFound(w)
+		return
+	}
 }
 
 func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -145,6 +180,10 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) OutlookWatcherHandler(w http.ResponseWriter, r *http.Request) {
+	if s.worker.IsClosed() {
+		serverError(w)
+		return
+	}
 	switch r.Method {
 	case http.MethodPost:
 		validationToken := r.FormValue("validationtoken")
@@ -165,10 +204,29 @@ func (s *Server) OutlookWatcherHandler(w http.ResponseWriter, r *http.Request) {
 				serverError(w)
 				return
 			}
-
-			w.WriteHeader(http.StatusOK)
+			done := make(chan bool)
+			go func() {
+				for _, subs := range notification.Subscriptions {
+					eventID := subs.Data.ID
+					//TODO: manage to get event with this id
+					event := &api.OutlookEvent{ID: eventID}
+					log.Debugf("id of event to synchronize: %s", eventID)
+					err := event.SetState(subs.ChangeType)
+					if err != nil {
+						s.worker.Events <- event
+					} else {
+						done <- false
+					}
+				}
+				done <- true
+			}()
+			processed := <-done
+			if processed {
+				w.WriteHeader(http.StatusOK)
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
 		}
-
 		return
 	default:
 		notFound(w)
@@ -176,6 +234,7 @@ func (s *Server) OutlookWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
 func notFound(w http.ResponseWriter) {
 	contents, err := ioutil.ReadFile("./frontend/resources/html/404.html")
 	if err != nil {
