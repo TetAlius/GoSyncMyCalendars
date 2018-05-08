@@ -113,12 +113,12 @@ func (calendar *OutlookCalendar) Delete() (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
-	err = createOutlookResponseError(contents)
-	if err != nil {
+
+	if len(contents) != 0 {
+		log.Debugf("%s\n", contents)
+		err = createOutlookResponseError(contents)
 		return err
 	}
-
-	log.Debugf("%s\n", contents)
 	return
 
 }

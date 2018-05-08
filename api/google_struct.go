@@ -229,8 +229,11 @@ type GoogleSubscription struct {
 func createGoogleResponseError(contents []byte) (err error) {
 	e := new(GoogleError)
 	err = json.Unmarshal(contents, &e)
-	if e.Code != 0 && len(e.Message) != 0 {
+	if err != nil {
 		return err
+	}
+	if e.Code != 0 && len(e.Message) != 0 {
+		return e
 	}
 	return nil
 }

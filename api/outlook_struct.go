@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 )
@@ -14,6 +13,10 @@ type OutlookError struct {
 type OutlookConcreteError struct {
 	Code    string `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
+}
+
+func (err OutlookError) Error() string {
+	return fmt.Sprintf("code: %s. message: %s", err.Code, err.Message)
 }
 
 type OutlookAccount struct {
@@ -278,8 +281,11 @@ type OutlookResourceData struct {
 func createOutlookResponseError(contents []byte) (err error) {
 	e := new(OutlookError)
 	err = json.Unmarshal(contents, &e)
+	if err != nil {
+		return err
+	}
 	if len(e.Code) != 0 && len(e.Message) != 0 {
-		return errors.New(fmt.Sprintf("code: %s. message: %s", e.Code, e.Message))
+		return e
 	}
 	return nil
 }

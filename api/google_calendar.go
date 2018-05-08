@@ -72,13 +72,10 @@ func (calendar *GoogleCalendar) Delete() (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error deleting a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
-	err = createGoogleResponseError(contents)
-	if err != nil {
-		return err
-	}
 
 	if len(contents) != 0 {
-		return errors.New(fmt.Sprintf("error deleting google calendar %s: %s", calendar.GetID(), contents))
+		err = createGoogleResponseError(contents)
+		return err
 	}
 
 	log.Debugf("Contents: %s", contents)

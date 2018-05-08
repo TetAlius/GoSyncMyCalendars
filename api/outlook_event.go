@@ -121,12 +121,12 @@ func (event *OutlookEvent) Delete() (err error) {
 		return errors.New(fmt.Sprintf("error deleting event of a calendar for email %s. %s", a.Mail(), err.Error()))
 	}
 
-	err = createOutlookResponseError(contents)
-	if err != nil {
+	if len(contents) != 0 {
+		log.Debugf("%s\n", contents)
+		err = createOutlookResponseError(contents)
 		return err
 	}
 
-	log.Debugf("%s\n", contents)
 	return
 }
 

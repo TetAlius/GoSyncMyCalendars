@@ -118,8 +118,9 @@ func (subscription *OutlookSubscription) Delete(a AccountManager) (err error) {
 		nil,
 		headers, nil)
 	log.Debugf("%s\n", contents)
-	err = createOutlookResponseError(contents)
-	if err != nil {
+	if len(contents) != 0 {
+		log.Debugf("%s\n", contents)
+		err = createOutlookResponseError(contents)
 		return err
 	}
 	return
