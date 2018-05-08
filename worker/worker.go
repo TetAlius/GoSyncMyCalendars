@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 const (
@@ -34,19 +35,23 @@ func (worker *Worker) IsClosed() bool {
 	return worker.state == stateQuit
 }
 func (worker *Worker) Start() {
-	go worker.Process()
+	worker.Process()
 }
 
 func (worker *Worker) Stop() (err error) {
 	worker.state = stateQuit
+	log.Debugln("closing workers")
 	close(worker.Events)
+	log.Debugln("close workers")
 	return
 }
 
 func (worker *Worker) Process() {
 	var event api.EventManager
 	for worker.state != stateQuit {
+		log.Debugln("state")
 		event = <-worker.Events
+		log.Debugln("state")
 		processSynchronization(event)
 
 	}

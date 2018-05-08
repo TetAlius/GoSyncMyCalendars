@@ -27,8 +27,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //NewBackend creates a backend
-func NewServer(ip string, port int) *Server {
-	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux()}
+func NewServer(ip string, port int, maxWorker int) *Server {
+	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker)}
 	server.mux.HandleFunc("/google", server.GoogleTokenHandler)
 	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
 	server.mux.HandleFunc("/outlook", server.OutlookTokenHandler)
@@ -38,6 +38,7 @@ func NewServer(ip string, port int) *Server {
 
 //Start the backend
 func (s *Server) Start() (err error) {
+	go s.worker.Start()
 	log.Debugln("Start backend")
 
 	laddr := fmt.Sprintf("%s:%d", s.IP.String(), s.Port)
@@ -57,5 +58,6 @@ func (s *Server) Stop() (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	log.Debugf("Stopping backend with ctx: %s", ctx)
 	err = s.server.Shutdown(ctx)
+	s.worker.Stop()
 	return
 }
