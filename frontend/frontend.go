@@ -2,9 +2,13 @@ package frontend
 
 import (
 	"html/template"
+	"io/ioutil"
 	"net"
 	"net/http"
-	"strconv"
+
+	"context"
+	"fmt"
+	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/frontend/handlers"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -16,51 +20,52 @@ type Server struct {
 	Port           int
 	googleHandler  *handlers.Google
 	outlookHandler *handlers.Outlook
+	server         *http.Server
+	mux            *http.ServeMux
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.mux.ServeHTTP(w, r)
 }
 
 //NewFrontend creates a frontend
 func NewServer(ip string, port int) *Server {
-
 	googleHandler := handlers.NewGoogleHandler()
-
 	outlookHandler := handlers.NewOutlookHandler()
-
-	server := Server{net.ParseIP(ip), port, googleHandler, outlookHandler}
-	return &server
-}
-
-//Start the frontend
-func (s *Server) Start() error {
-	log.Debugln("Start frontend")
-	webServerMux := http.NewServeMux()
-
+	server := Server{IP: net.ParseIP(ip), Port: port, googleHandler: googleHandler, outlookHandler: outlookHandler, mux: http.NewServeMux()}
 	cssFileServer := http.StripPrefix("/css/", http.FileServer(http.Dir("./frontend/resources/css/")))
 	jsFileServer := http.StripPrefix("/js/", http.FileServer(http.Dir("./frontend/resources/js/")))
 	imagesFileServer := http.StripPrefix("/images/", http.FileServer(http.Dir("./frontend/resources/images/")))
 
-	webServerMux.Handle("/css/", cssFileServer)
-	webServerMux.Handle("/js/", jsFileServer)
-	webServerMux.Handle("/images/", imagesFileServer)
-	webServerMux.HandleFunc("/", s.indexHandler)
+	server.mux.Handle("/css/", cssFileServer)
+	server.mux.Handle("/js/", jsFileServer)
+	server.mux.Handle("/images/", imagesFileServer)
+	server.mux.HandleFunc("/", server.indexHandler)
 
-	webServerMux.HandleFunc("/SignInWithGoogle", s.googleHandler.SignInHandler)
+	server.mux.HandleFunc("/SignInWithGoogle", server.googleHandler.SignInHandler)
 
-	webServerMux.HandleFunc("/SignInWithOutlook", s.outlookHandler.SignInHandler)
-	/*	http.HandleFunc("/calendars", listCalendarsHandler)
-		http.HandleFunc("/google", googleTokenHandler)
-		http.HandleFunc("/signUp", signUpHandler)
-		http.HandleFunc("/signIn", signInHandler)
-		http.HandleFunc("/cookies", cookiesHandlerTest)
-	*/
+	server.mux.HandleFunc("/SignInWithOutlook", server.outlookHandler.SignInHandler)
 
-	laddr := s.IP.String() + ":" + strconv.Itoa(s.Port)
-	log.Infof("Web server listening at %s", laddr)
+	return &server
+}
 
+//Start the frontend
+func (s *Server) Start() (err error) {
+	log.Debugln("Start frontend")
+
+	laddr := fmt.Sprintf("%s:%d", s.IP.String(), s.Port)
+	h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
+	s.server = h
 	go func() {
-		http.ListenAndServe(laddr, webServerMux)
+		log.Infof("Web server listening at %s", laddr)
+
+		if err := s.server.ListenAndServe(); err != nil {
+			log.Fatalf("%s", err.Error())
+
+		}
 	}()
 
-	return nil
+	return
 }
 
 //indexHandler load the index.html web page
@@ -68,7 +73,7 @@ func (s *Server) Start() error {
 func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// 404 page
 	if r.URL.Path != "/" {
-		s.errorHandler(w, r, http.StatusNotFound)
+		notFound(w)
 		return
 	}
 	t, err := template.ParseFiles("./frontend/resources/html/welcome.html")
@@ -82,14 +87,32 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//errorHandler if something can not be loaded, call the 404 web page
-func (s *Server) errorHandler(w http.ResponseWriter, r *http.Request, status int) {
-	http.ServeFile(w, r, "./frontend/resources/html/404.html")
+func notFound(w http.ResponseWriter) {
+	contents, err := ioutil.ReadFile("./frontend/resources/html/404.html")
+	if err != nil {
+		serverError(w)
+		return
+	}
+	w.WriteHeader(http.StatusNotFound)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(contents)
+}
+
+func serverError(w http.ResponseWriter) {
+	contents, err := ioutil.ReadFile("./frontend/resources/html/500.html")
+	if err != nil {
+		panic(err) // or do something useful
+	}
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(contents)
+
 }
 
 //Stop the frontend
-func (s *Server) Stop() error {
-	//TODO Complete
-	log.Debugln("Stop frontend")
-	return nil
+func (s *Server) Stop() (err error) {
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	log.Debugf("Stopping frontend with ctx: %s", ctx)
+	err = s.server.Shutdown(nil)
+	return
 }

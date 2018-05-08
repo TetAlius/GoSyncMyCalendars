@@ -3,67 +3,61 @@ package backend
 import (
 	"net"
 	"net/http"
-	"strconv"
 
-	"github.com/TetAlius/GoSyncMyCalendars/backend/handlers"
+	"fmt"
+
+	"context"
+	"time"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/worker"
 )
 
 //Backend object
 type Server struct {
-	IP             net.IP
-	Port           int
-	googleHandler  *handlers.Google
-	outlookHandler *handlers.Outlook
+	IP     net.IP
+	Port   int
+	server *http.Server
+	mux    *http.ServeMux
+	worker *worker.Worker
 }
 
-type Accounter interface {
-	Refresh()
-
-	GetAllCalendars()
-	GetPrimaryCalendar() error
-	GetCalendar(string)
-	CreateCalendar([]byte)
-	UpdateCalendar(string, []byte)
-	DeleteCalendar(string)
-
-	GetAllEventsFromCalendar(string)
-	CreateEvent(string, []byte)
-
-	UpdateEvent([]byte, ...string)
-	DeleteEvent(...string)
-	GetEvent(...string)
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.mux.ServeHTTP(w, r)
 }
 
 //NewBackend creates a backend
-func NewServer(ip string, port int) *Server {
-	googleHandler := handlers.NewGoogleHandler()
-	outlookHandler := handlers.NewOutlookHandler()
-	server := Server{net.ParseIP(ip), port, googleHandler, outlookHandler}
+func NewServer(ip string, port int, maxWorker int) *Server {
+	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker)}
+	server.mux.HandleFunc("/google", server.GoogleTokenHandler)
+	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
+	server.mux.HandleFunc("/outlook", server.OutlookTokenHandler)
+	server.mux.HandleFunc("/outlook/watcher", server.OutlookWatcherHandler)
 	return &server
 }
 
 //Start the backend
-func (s *Server) Start() {
+func (s *Server) Start() (err error) {
+	go s.worker.Start()
 	log.Debugln("Start backend")
-	webServerMux := http.NewServeMux()
 
-	webServerMux.HandleFunc("/google", s.googleHandler.TokenHandler)
-	webServerMux.HandleFunc("/outlook", s.outlookHandler.TokenHandler)
-
-	laddr := s.IP.String() + ":" + strconv.Itoa(s.Port)
+	laddr := fmt.Sprintf("%s:%d", s.IP.String(), s.Port)
+	h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
+	s.server = h
 	log.Infof("Backend server listening at %s", laddr)
 
-	err := http.ListenAndServe(laddr, webServerMux)
+	err = s.server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("ListenAndServe: " + err.Error())
 	}
-
+	return
 }
 
 //Stop the backend
-func (s *Server) Stop() error {
-	//TODO Complete
-	log.Debugln("TODO: Stop backend")
-	return nil
+func (s *Server) Stop() (err error) {
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	log.Debugf("Stopping backend with ctx: %s", ctx)
+	err = s.server.Shutdown(ctx)
+	s.worker.Stop()
+	return
 }

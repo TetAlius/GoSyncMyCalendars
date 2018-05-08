@@ -1,13 +1,24 @@
 language: go
 
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+
 go:
-  - 1.9
+  - 1.x
 
 before_install:
+  # Download ngrok
+  - curl -sO https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+  - unzip ./ngrok-stable-linux-amd64.zip
+  - chmod +x ./ngrok
+  # Open ngrok tunnel
+  - ./ngrok authtoken $NGROK_AUTH
+  - ./ngrok start -config ./.ngrok.yml gosync > /dev/null &
   - go get -t -v ./...
   - chmod +x ./scripts/cibuild.sh
   - chmod +x ./scripts/test.sh
-
 script:
   - ./scripts/cibuild.sh
 

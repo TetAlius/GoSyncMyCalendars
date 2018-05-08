@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"strings"
 
+	"time"
+
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
@@ -83,57 +85,48 @@ func CallAPIRoot(route string) (apiRoute string, err error) {
 	return strings.Replace(string(contents[:]), "\"", "", -1), nil
 }
 
-type Error struct {
-	ConcreteError `json:"error,omitempty"`
-}
-type ConcreteError struct {
-	Code    string `json:"code,omitempty"`
-	Message string `json:"message,omitempty"`
-}
-
 //DoRequest TODO Creates and executes the request for all petitions
+//TODO return responseCode
 //and returns the JSON so that it can be parsed into the correct struct
-func DoRequest(method string, url string, body io.Reader, authorization string, anchorMailbox string) (contents []byte, err error) {
-	client := http.Client{}
-
+func DoRequest(method string, url string, body io.Reader, headers map[string]string, params map[string]string) (contents []byte, err error) {
+	client := &http.Client{
+		Timeout: time.Second * 30,
+	}
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		log.Errorf("Error creating new request: %s", err.Error())
+		return contents, errors.New(fmt.Sprintf("error creating new request: %s", err.Error()))
 	}
 
-	//Add the authorization to the header
-	req.Header.Set("Authorization", authorization)
-
-	//Add the anchorMailbox to the header
-	req.Header.Set("X-AnchorMailbox", anchorMailbox)
+	//Set all headers for request
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
 
 	// If body is given, has to put a content-Type json on the header
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
+	if len(params) > 0 {
+		q := req.URL.Query()
+		for key, value := range params {
+			q.Add(key, value)
+		}
+		req.URL.RawQuery = q.Encode()
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf("Error doing request: %s", err.Error())
+		return contents, errors.New(fmt.Sprintf("error doing request: %s", err.Error()))
 	}
 
 	defer resp.Body.Close()
 	//TODO parse errors and content
 	contents, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("Error reading response body: %s", err.Error())
+		return contents, errors.New(fmt.Sprintf("error reading response body: %s", err.Error()))
 	}
-
-	// TODO: Check if this is the same for google
-	if resp.StatusCode != 201 && resp.StatusCode != 204 {
-		e := new(Error)
-		err = json.Unmarshal(contents, &e)
-		if len(e.Code) != 0 && len(e.Message) != 0 {
-			log.Errorln(e.Code)
-			log.Errorln(e.Message)
-			return nil, errors.New(fmt.Sprintf("code: %s. message: %s", e.Code, e.Message))
-		}
-	}
+	log.Debugln(contents)
 
 	return
 }

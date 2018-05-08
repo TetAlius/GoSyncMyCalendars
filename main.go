@@ -12,7 +12,8 @@ import (
 func main() {
 
 	f := frontend.NewServer("127.0.0.1", 8080)
-	b := backend.NewServer("127.0.0.1", 8081)
+	maxWorker := 15
+	b := backend.NewServer("127.0.0.1", 8081, maxWorker)
 
 	// Control + C interrupt handler
 	c := make(chan os.Signal, 1)
@@ -20,64 +21,17 @@ func main() {
 	go func() {
 		for range c {
 			err := f.Stop()
+			exit := 0
 			if err != nil {
-				os.Exit(1)
+				exit = 1
 			}
 			err = b.Stop()
 			if err != nil {
-				os.Exit(1)
+				exit = 1
 			}
-			os.Exit(0)
+			os.Exit(exit)
 		}
 	}()
 	f.Start()
 	b.Start()
-
-	/*
-		//Parse configuration of outlook and google
-		file, err := ioutil.ReadFile("./config.json")
-		if err != nil {
-			log.Fatalf("Error reading config.json: %s", err.Error())
-		}
-		err = json.Unmarshal(file, &outlook.Config)
-		if err != nil {
-			log.Fatalf("Error unmarshalling outlook config: %s", err.Error())
-		}
-		err = json.Unmarshal(file, &google.Config)
-		if err != nil {
-			log.Fatalf("Error unmarshalling google config: %s", err.Error())
-		}
-
-		//Parse all requests for outlook
-		file, err = ioutil.ReadFile("./outlook.json")
-		if err != nil {
-			log.Fatalf("Error reading outlook.json: %s", err.Error())
-		}
-		err = json.Unmarshal(file, &outlook.Requests)
-		if err != nil {
-			log.Fatalf("Error unmarshalling outlook requests: %s", err.Error())
-		}
-
-		//Parse all requests for google
-		file, err = ioutil.ReadFile("./google.json")
-		if err != nil {
-			log.Fatalf("Error reading google.json: %s", err.Error())
-		}
-		err = json.Unmarshal(file, &google.Requests)
-		if err != nil {
-			log.Fatalf("Error unmarshalling google requests: %s", err.Error())
-		}
-
-		http.HandleFunc("/", welcomeHandler)
-		http.HandleFunc("/signInWithOutlook", outlookSignInHandler)
-		http.HandleFunc("/outlook", outlookTokenHandler)
-		http.HandleFunc("/calendars", listCalendarsHandler)
-		http.HandleFunc("/SignInWithGoogle", googleSignInHandler)
-		http.HandleFunc("/google", googleTokenHandler)
-		http.HandleFunc("/signUp", signUpHandler)
-		http.HandleFunc("/signIn", signInHandler)
-		http.HandleFunc("/cookies", cookiesHandlerTest)
-
-		log.Fatalln(http.ListenAndServe(":8080", nil))
-	*/
 }
