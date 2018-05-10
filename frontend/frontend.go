@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"html/template"
-	"io/ioutil"
 	"net"
 	"net/http"
 
@@ -22,6 +21,10 @@ type Server struct {
 	outlookHandler *handlers.Outlook
 	server         *http.Server
 	mux            *http.ServeMux
+}
+
+type PageInfo struct {
+	PageTitle string
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +48,7 @@ func NewServer(ip string, port int) *Server {
 	server.mux.HandleFunc("/SignInWithGoogle", server.googleHandler.SignInHandler)
 
 	server.mux.HandleFunc("/SignInWithOutlook", server.outlookHandler.SignInHandler)
+	server.mux.HandleFunc("/calendars", server.calendarListHandler)
 
 	return &server
 }
@@ -76,36 +80,66 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 		notFound(w)
 		return
 	}
-	t, err := template.ParseFiles("./frontend/resources/html/welcome.html")
+	data := PageInfo{
+		PageTitle: "GoSyncMyCalendars",
+	}
+	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/index.html")
 	if err != nil {
 		log.Errorln("Error reading config.json: %s", err.Error())
 	}
 
-	err = t.Execute(w, nil) //No template at this moment
+	err = t.Execute(w, data) //No template at this moment
+	if err != nil {
+		log.Errorln(err)
+	}
+}
+
+func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
+	data := PageInfo{
+		PageTitle: "GoSyncMyCalendars",
+	}
+	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/calendar-list.html")
+	if err != nil {
+		log.Errorln("Error reading config.json: %s", err.Error())
+	}
+
+	err = t.Execute(w, data) //No template at this moment
 	if err != nil {
 		log.Errorln(err)
 	}
 }
 
 func notFound(w http.ResponseWriter) {
-	contents, err := ioutil.ReadFile("./frontend/resources/html/404.html")
+	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/404.html")
 	if err != nil {
 		serverError(w)
 		return
 	}
 	w.WriteHeader(http.StatusNotFound)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write(contents)
+	data := PageInfo{
+		PageTitle: "Not found :(",
+	}
+	err = t.Execute(w, data)
+	if err != nil {
+		log.Errorln(err)
+	}
 }
 
 func serverError(w http.ResponseWriter) {
-	contents, err := ioutil.ReadFile("./frontend/resources/html/500.html")
+	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/500.html")
 	if err != nil {
 		panic(err) // or do something useful
 	}
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write(contents)
+	data := PageInfo{
+		PageTitle: "Something went wrong :(",
+	}
+	err = t.Execute(w, data)
+	if err != nil {
+		log.Errorln(err)
+	}
 
 }
 
