@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        /* Sticky footer styles
+        -------------------------------------------------- */
+        html {
+            position: relative;
+            min-height: 100%;
+        }
+
+        body {
+            /* Margin bottom by footer height */
+            margin-bottom: 60px;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            /* Set the fixed height of the footer here */
+            height: 60px;
+            line-height: 60px; /* Vertically center the text there */
+            background-color: #f5f5f5;
+        }
+
+        /* Custom page CSS
+        -------------------------------------------------- */
+        /* Not required for template or sticky footer method. */
+
+        body > .container {
+            padding: 60px 15px 0;
+        }
+
+        .footer > .container {
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        code {
+            font-size: 80%;
+        }
+
+        .hidden {
+            display: none;
+        }
+        #username > img{
+            border-radius: 50%;
+        }
+
+
+    </style>
+    <title>{{.PageTitle}}</title>
+</head>
+<body>
+<header>
+    <nav class="navbar navbar-expand-sm fixed-top navbar-light bg-light">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbar1">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="/">GoSyncMyCalendars</a>
+        <div class="collapse navbar-collapse" id="navbar1">
+            <ul class="navbar-nav">
+                <li class="nav-item auth hidden">
+                    <a class="nav-link" href="/calendars">Calendars</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li id="google-button" class="nav-item public hidden">
+                    <div id="my-signin2"></div>
+                </li>
+                <li id="dropdown-account" class="dropdown nav-item auth hidden">
+                    <a id="username" href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
+                    </a>
+                    <ul class="dropdown-menu float-right">
+                        <li class="dropdown-item"><a href="/account">Account</a></li>
+                        <li class="dropdown-divider"></li>
+                        <li class="dropdown-item"><a href="#" onclick="signOut();">Log Out</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+<main role="main" class="container">
+{{template "content"}}
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <span class="text-muted">This is an educational project. Keep in mind some errors might occur.</span>
+        <span class="text-muted float-right">Source Code on <a href="https://github.com/TetAlius/GoSyncMyCalendars">GitHub</a></span>
+    </div>
+</footer>
+<script>
+    var auth2; // The Sign-In object.
+    var googleUser; // The current user.
+    function onSignIn(googleUser) {
+        //TODO: send request to register new user
+        // var xhr = new XMLHttpRequest();
+        // xhr.open('POST', 'http://localhost:8080/tokensignin');
+        // xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        // xhr.onload = function() {
+        //     console.log('Signed in as: ' + xhr.responseText);
+        // };
+        // xhr.send('idtoken=' + id_token);
+        // var id_token = googleUser.getAuthResponse().id_token;
+        // console.log("ID Token: " + id_token)
+        // var profile = googleUser.getBasicProfile();
+        // console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+        // console.log('Name: ' + profile.getName());
+        // console.log('Image URL: ' + profile.getImageUrl());
+        // console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+    }
+
+    function onFailure(error) {
+        console.log(error);
+    }
+
+    function signOut() {
+        var auth2 = gapi.auth2.getAuthInstance();
+        auth2.signOut().then(function () {
+            //TODO: Remove scopes...
+            // auth2.disconnect();
+        });
+    }
+
+    var appStart = function () {
+        gapi.load('auth2', initSigninV2);
+        gapi.signin2.render('my-signin2', {
+            'scope': 'profile email',
+            'longtitle': true,
+            'theme': 'light',
+            'onsuccess': onSignIn,
+            'onfailure': onFailure
+        });
+    };
+
+    var initSigninV2 = function () {
+        gapi.auth2.init({
+            client_id: '760248995468-jtpc1e212a02h47b6ml9vmejqrkeh3vf.apps.googleusercontent.com',
+            scope: 'profile email'
+        }).then(function () {
+            // Listen for sign-in state changes.
+            gapi.auth2.getAuthInstance().isSignedIn.listen(signinChanged);
+            // Handle the initial sign-in state.
+            signinChanged(gapi.auth2.getAuthInstance().isSignedIn.get());
+        });
+        // Listen for changes to current user.
+        auth2 = gapi.auth2.getAuthInstance()
+        gapi.auth2.getAuthInstance().currentUser.listen(userChanged);
+        // Start with the current live values.
+        refreshValues();
+    };
+
+    /**
+     * Listener method for sign-out live value.
+     *
+     * @param {boolean} val the updated signed out state.
+     */
+    var signinChanged = function (val) {
+        // Sign in the user if they are currently signed in.
+        if (val) {
+            $('.auth').removeClass("hidden");
+            $('.public').addClass("hidden");
+        } else {
+            $('.auth').addClass("hidden");
+            $('.public').removeClass("hidden");
+            if (window.location.pathname !== '/') {
+                window.location.pathname = '/';
+            }
+        }
+    };
+
+    /**
+     * Listener method for when the user changes.
+     *
+     * @param {GoogleUser} user the updated user.
+     */
+    var userChanged = function (user) {
+        googleUser = user;
+        updateGoogleUser();
+    };
+
+    /**
+     * Updates the properties in the Google User table using the current user.
+     */
+    var updateGoogleUser = function () {
+        $username = $('#username');
+        if (googleUser) {
+            console.log($username.find('#name'));
+            console.log($username.find('#avatar'));
+            $username.html(googleUser.getBasicProfile().getName());
+        } else {
+            $username.html('');
+        }
+    };
+
+    /**
+     * Retrieves the current user and signed in states from the GoogleAuth
+     * object.
+     */
+    var refreshValues = function () {
+        if (auth2) {
+            googleUser = auth2.currentUser.get();
+            updateGoogleUser();
+        }
+    }
+</script>
+<script src="https://apis.google.com/js/platform.js?onload=appStart" async defer></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
+</body>
+</html>
