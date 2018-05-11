@@ -46,7 +46,8 @@
         .hidden {
             display: none;
         }
-        #username > img{
+
+        #username > img {
             border-radius: 50%;
         }
 
@@ -100,15 +101,14 @@
     var googleUser; // The current user.
     function onSignIn(googleUser) {
         //TODO: send request to register new user
-        // var xhr = new XMLHttpRequest();
-        // xhr.open('POST', 'http://localhost:8080/tokensignin');
-        // xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        // xhr.onload = function() {
-        //     console.log('Signed in as: ' + xhr.responseText);
-        // };
-        // xhr.send('idtoken=' + id_token);
-        // var id_token = googleUser.getAuthResponse().id_token;
-        // console.log("ID Token: " + id_token)
+        var xhr = new XMLHttpRequest();
+        var id_token = googleUser.getAuthResponse().id_token;
+        xhr.open('POST', 'http://localhost:8080/user?idtoken=' + id_token);
+        xhr.onload = function () {
+            console.log('Signed in as: ' + xhr.responseText);
+        };
+        xhr.send("idtoken=" + id_token);
+        console.log("ID Token: " + id_token);
         // var profile = googleUser.getBasicProfile();
         // console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
         // console.log('Name: ' + profile.getName());
@@ -117,15 +117,20 @@
     }
 
     function onFailure(error) {
+        //TODO:
         console.log(error);
     }
 
     function signOut() {
         var auth2 = gapi.auth2.getAuthInstance();
         auth2.signOut().then(function () {
+            //Remove cookie
+            //No longer needed as this is a session cookie
+            // document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
             //TODO: Remove scopes...
             // auth2.disconnect();
         });
+
     }
 
     var appStart = function () {
@@ -189,10 +194,8 @@
      * Updates the properties in the Google User table using the current user.
      */
     var updateGoogleUser = function () {
-        $username = $('#username');
-        if (googleUser) {
-            console.log($username.find('#name'));
-            console.log($username.find('#avatar'));
+        var $username = $('#username');
+        if (googleUser && googleUser.getBasicProfile()) {
             $username.html(googleUser.getBasicProfile().getName());
         } else {
             $username.html('');
