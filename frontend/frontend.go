@@ -20,7 +20,7 @@ type Server struct {
 	googleHandler  *handlers.Google
 	outlookHandler *handlers.Outlook
 	server         *http.Server
-	mux            *http.ServeMux
+	mux            http.Handler
 }
 
 type PageInfo struct {
@@ -35,22 +35,36 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewServer(ip string, port int) *Server {
 	googleHandler := handlers.NewGoogleHandler()
 	outlookHandler := handlers.NewOutlookHandler()
-	server := Server{IP: net.ParseIP(ip), Port: port, googleHandler: googleHandler, outlookHandler: outlookHandler, mux: http.NewServeMux()}
+	mux := http.NewServeMux()
+	server := Server{IP: net.ParseIP(ip), Port: port, googleHandler: googleHandler, outlookHandler: outlookHandler}
 	cssFileServer := http.StripPrefix("/css/", http.FileServer(http.Dir("./frontend/resources/css/")))
 	jsFileServer := http.StripPrefix("/js/", http.FileServer(http.Dir("./frontend/resources/js/")))
 	imagesFileServer := http.StripPrefix("/images/", http.FileServer(http.Dir("./frontend/resources/images/")))
 
-	server.mux.Handle("/css/", cssFileServer)
-	server.mux.Handle("/js/", jsFileServer)
-	server.mux.Handle("/images/", imagesFileServer)
-	server.mux.HandleFunc("/", server.indexHandler)
+	mux.Handle("/css/", cssFileServer)
+	mux.Handle("/js/", jsFileServer)
+	mux.Handle("/images/", imagesFileServer)
+	mux.HandleFunc("/", server.indexHandler)
 
-	server.mux.HandleFunc("/SignInWithGoogle", server.googleHandler.SignInHandler)
+	mux.HandleFunc("/SignInWithGoogle", server.googleHandler.SignInHandler)
 
-	server.mux.HandleFunc("/SignInWithOutlook", server.outlookHandler.SignInHandler)
-	server.mux.HandleFunc("/calendars", server.calendarListHandler)
+	mux.HandleFunc("/SignInWithOutlook", server.outlookHandler.SignInHandler)
+	mux.HandleFunc("/calendars", server.calendarListHandler)
+	mux.HandleFunc("/user", server.userHandler)
+	server.mux = AddContext(mux)
 
 	return &server
+}
+func AddContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, _ := r.Cookie("session")
+		if cookie != nil {
+			ctx := context.WithValue(r.Context(), "Session", cookie.Value)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
 }
 
 //Start the frontend
@@ -85,27 +99,60 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/index.html")
 	if err != nil {
-		log.Errorln("Error reading config.json: %s", err.Error())
+		log.Errorln("error parsing files %s", err.Error())
+		serverError(w)
+		return
 	}
 
-	err = t.Execute(w, data) //No template at this moment
+	err = t.Execute(w, data)
 	if err != nil {
 		log.Errorln(err)
+		serverError(w)
+		return
 	}
 }
 
 func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value("Session")
+	user, err := retrieveUser(session)
+	if err != nil {
+		serverError(w)
+		return
+	}
+	if len(user) == 0 {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
 	data := PageInfo{
-		PageTitle: "GoSyncMyCalendars",
+		PageTitle: "Calendars - GoSyncMyCalendars",
 	}
 	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/calendar-list.html")
 	if err != nil {
-		log.Errorln("Error reading config.json: %s", err.Error())
+		log.Errorln("error parsing files: %s", err.Error())
+		serverError(w)
+		return
 	}
 
 	err = t.Execute(w, data) //No template at this moment
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf("error executing templates: %s", err.Error())
+		serverError(w)
+		return
+	}
+}
+
+func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		token := r.FormValue("idtoken")
+		log.Debugln(token)
+		cookie := http.Cookie{Name: "session", Value: token}
+		http.SetCookie(w, &cookie)
+		//TODO: handle user
+		w.WriteHeader(http.StatusAccepted)
+	default:
+		notFound(w)
 	}
 }
 
@@ -140,6 +187,12 @@ func serverError(w http.ResponseWriter) {
 	if err != nil {
 		log.Errorln(err)
 	}
+
+}
+
+func retrieveUser(session interface{}) (string, error) {
+	//TODO:
+	return "asd", nil
 
 }
 
