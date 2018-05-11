@@ -13,7 +13,7 @@ import (
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
-	"github.com/pkg/errors"
+	"errors"
 )
 
 // PUT https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}

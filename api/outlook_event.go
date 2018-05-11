@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"net/http"
@@ -11,7 +12,6 @@ import (
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
-	"github.com/pkg/errors"
 )
 
 func (event *OutlookEvent) Create() (err error) {

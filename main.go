@@ -7,7 +7,6 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
 	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
-	_ "github.com/jackc/pgx/stdlib"
 )
 
 func main() {
