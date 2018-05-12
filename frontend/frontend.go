@@ -4,13 +4,16 @@ import (
 	"html/template"
 	"net"
 	"net/http"
+	"strings"
 
 	"context"
 	"fmt"
 	"time"
 
+	"github.com/TetAlius/GoSyncMyCalendars/db"
 	"github.com/TetAlius/GoSyncMyCalendars/frontend/handlers"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 //Frontend object
@@ -25,6 +28,8 @@ type Server struct {
 
 type PageInfo struct {
 	PageTitle string
+	User      db.User
+	Error     string
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +60,7 @@ func NewServer(ip string, port int) *Server {
 
 	return &server
 }
+
 func AddContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, _ := r.Cookie("session")
@@ -78,8 +84,7 @@ func (s *Server) Start() (err error) {
 		log.Infof("Web server listening at %s", laddr)
 
 		if err := s.server.ListenAndServe(); err != nil {
-			log.Fatalf("%s", err.Error())
-
+			log.Errorf("%s", err.Error())
 		}
 	}()
 
@@ -87,7 +92,6 @@ func (s *Server) Start() (err error) {
 }
 
 //indexHandler load the index.html web page
-//func (s *server) indexHandler(w http.ResponseWriter, r *http.Request, title string) {
 func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// 404 page
 	if r.URL.Path != "/" {
@@ -100,44 +104,39 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/index.html")
 	if err != nil {
 		log.Errorln("error parsing files %s", err.Error())
-		serverError(w)
+		serverError(w, err)
 		return
 	}
 
 	err = t.Execute(w, data)
 	if err != nil {
 		log.Errorln(err)
-		serverError(w)
+		serverError(w, err)
 		return
 	}
 }
 
 func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value("Session")
-	user, err := retrieveUser(session)
-	if err != nil {
-		serverError(w)
-		return
-	}
-	if len(user) == 0 {
-		http.Redirect(w, r, "/", http.StatusFound)
+	currentUser, ok := manageSession(w, r)
+	if !ok {
 		return
 	}
 
 	data := PageInfo{
 		PageTitle: "Calendars - GoSyncMyCalendars",
+		User:      *currentUser,
 	}
 	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/calendar-list.html")
 	if err != nil {
-		log.Errorln("error parsing files: %s", err.Error())
-		serverError(w)
+		log.Errorf("error parsing files: %s", err.Error())
+		serverError(w, err)
 		return
 	}
 
-	err = t.Execute(w, data) //No template at this moment
+	err = t.Execute(w, data)
 	if err != nil {
 		log.Errorf("error executing templates: %s", err.Error())
-		serverError(w)
+		serverError(w, err)
 		return
 	}
 }
@@ -146,8 +145,14 @@ func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		token := r.FormValue("idtoken")
-		log.Debugln(token)
-		cookie := http.Cookie{Name: "session", Value: token}
+		email, _, _ := util.MailFromToken(strings.Split(token, "."), "==")
+		user, err := db.GetUserFromToken(email) //strings.Split(token, ".")[1])
+		if err != nil {
+			log.Errorf("error retrieving user: %s", err.Error())
+			serverError(w, err)
+			return
+		}
+		cookie := http.Cookie{Name: "session", Value: user.ID.String()}
 		http.SetCookie(w, &cookie)
 		//TODO: handle user
 		w.WriteHeader(http.StatusAccepted)
@@ -159,7 +164,7 @@ func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 func notFound(w http.ResponseWriter) {
 	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/404.html")
 	if err != nil {
-		serverError(w)
+		serverError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNotFound)
@@ -173,15 +178,16 @@ func notFound(w http.ResponseWriter) {
 	}
 }
 
-func serverError(w http.ResponseWriter) {
+func serverError(w http.ResponseWriter, error error) {
 	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/500.html")
 	if err != nil {
-		panic(err) // or do something useful
+		panic(err)
 	}
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	data := PageInfo{
 		PageTitle: "Something went wrong :(",
+		Error:     error.Error(),
 	}
 	err = t.Execute(w, data)
 	if err != nil {
@@ -190,10 +196,22 @@ func serverError(w http.ResponseWriter) {
 
 }
 
-func retrieveUser(session interface{}) (string, error) {
-	//TODO:
-	return "asd", nil
-
+func manageSession(w http.ResponseWriter, r *http.Request) (*db.User, bool) {
+	session, ok := r.Context().Value("Session").(string)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return nil, false
+	}
+	user, err := db.RetrieveUser(session)
+	if err != nil {
+		serverError(w, err)
+		return nil, false
+	}
+	if user == nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return nil, false
+	}
+	return user, true
 }
 
 //Stop the frontend
