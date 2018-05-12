@@ -149,7 +149,7 @@ func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 		user, err := db.GetUserFromToken(email) //strings.Split(token, ".")[1])
 		if err != nil {
 			log.Errorf("error retrieving user: %s", err.Error())
-			serverError(w, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		cookie := http.Cookie{Name: "session", Value: user.ID.String()}

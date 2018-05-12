@@ -87,6 +87,9 @@
 </header>
 
 <main role="main" class="container">
+    <div id="account-error" class="alert alert-danger hidden" role="alert">
+        An error has occured retrieving your account info. SignIn again, please.
+    </div>
 {{template "content" . }}
 </main>
 
@@ -104,11 +107,16 @@
         var xhr = new XMLHttpRequest();
         var id_token = googleUser.getAuthResponse().id_token;
         xhr.open('POST', 'http://localhost:8080/user?idtoken=' + id_token);
-        xhr.onload = function () {
-            console.log('Signed in as: ' + xhr.responseText);
+        xhr.onreadystatechange = function() {//Call a function when the state changes.
+            if(xhr.readyState == XMLHttpRequest.DONE && xhr.status != 202){
+                $("#account-error").removeClass("hidden");
+                auth2.signOut();
+            }else if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 202){
+                $("#account-error").addClass("hidden");
+            }
         };
         xhr.send("idtoken=" + id_token);
-        console.log("ID Token: " + id_token);
+        // console.log("ID Token: " + id_token);
         // var profile = googleUser.getBasicProfile();
         // console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
         // console.log('Name: ' + profile.getName());
@@ -117,8 +125,9 @@
     }
 
     function onFailure(error) {
-        //TODO:
-        console.log(error);
+        console.log(error)
+        $("#account-error").removeClass("hidden");
+        auth2.signOut();
     }
 
     function signOut() {
@@ -128,7 +137,7 @@
             //No longer needed as this is a session cookie
             // document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
             //TODO: Remove scopes...
-            // auth2.disconnect();
+            auth2.disconnect();
         });
 
     }
