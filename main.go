@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	f := frontend.NewServer("127.0.0.1", 8080)
+	f := frontend.NewServer("127.0.0.1", 8080, "./frontend/resources")
 	maxWorker := 15
 	b := backend.NewServer("127.0.0.1", 8081, maxWorker)
 

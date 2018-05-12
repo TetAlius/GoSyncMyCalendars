@@ -11,19 +11,16 @@ import (
 	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/db"
-	"github.com/TetAlius/GoSyncMyCalendars/frontend/handlers"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 //Frontend object
 type Server struct {
-	IP             net.IP
-	Port           int
-	googleHandler  *handlers.Google
-	outlookHandler *handlers.Outlook
-	server         *http.Server
-	mux            http.Handler
+	IP     net.IP
+	Port   int
+	server *http.Server
+	mux    http.Handler
 }
 
 type PageInfo struct {
@@ -32,28 +29,28 @@ type PageInfo struct {
 	Error     string
 }
 
+var root string
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
 
 //NewFrontend creates a frontend
-func NewServer(ip string, port int) *Server {
-	googleHandler := handlers.NewGoogleHandler()
-	outlookHandler := handlers.NewOutlookHandler()
+func NewServer(ip string, port int, dir string) *Server {
 	mux := http.NewServeMux()
-	server := Server{IP: net.ParseIP(ip), Port: port, googleHandler: googleHandler, outlookHandler: outlookHandler}
-	cssFileServer := http.StripPrefix("/css/", http.FileServer(http.Dir("./frontend/resources/css/")))
-	jsFileServer := http.StripPrefix("/js/", http.FileServer(http.Dir("./frontend/resources/js/")))
-	imagesFileServer := http.StripPrefix("/images/", http.FileServer(http.Dir("./frontend/resources/images/")))
+	root = dir
+	server := Server{IP: net.ParseIP(ip), Port: port}
+	cssFileServer := http.StripPrefix("/css/", http.FileServer(http.Dir(root+"/css/")))
+	jsFileServer := http.StripPrefix("/js/", http.FileServer(http.Dir(root+"/js/")))
+	imagesFileServer := http.StripPrefix("/images/", http.FileServer(http.Dir(root+"/images/")))
 
 	mux.Handle("/css/", cssFileServer)
 	mux.Handle("/js/", jsFileServer)
 	mux.Handle("/images/", imagesFileServer)
 	mux.HandleFunc("/", server.indexHandler)
 
-	mux.HandleFunc("/SignInWithGoogle", server.googleHandler.SignInHandler)
-
-	mux.HandleFunc("/SignInWithOutlook", server.outlookHandler.SignInHandler)
+	mux.HandleFunc("/SignInWithGoogle", server.googleSignInHandler)
+	mux.HandleFunc("/SignInWithOutlook", server.outlookSignInHandler)
 	mux.HandleFunc("/calendars", server.calendarListHandler)
 	mux.HandleFunc("/user", server.userHandler)
 	server.mux = AddContext(mux)
@@ -101,7 +98,7 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	data := PageInfo{
 		PageTitle: "GoSyncMyCalendars",
 	}
-	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/index.html")
+	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/index.html")
 	if err != nil {
 		log.Errorln("error parsing files %s", err.Error())
 		serverError(w, err)
@@ -126,7 +123,7 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 		PageTitle: "Calendars - GoSyncMyCalendars",
 		User:      *currentUser,
 	}
-	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/calendar-list.html")
+	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/calendar-list.html")
 	if err != nil {
 		log.Errorf("error parsing files: %s", err.Error())
 		serverError(w, err)
@@ -161,8 +158,29 @@ func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) googleSignInHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debugln("Starting google petition")
+	route, err := util.CallAPIRoot("google/login")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		serverError(w, err)
+		return
+	}
+	http.Redirect(w, r, route, http.StatusFound)
+}
+
+func (s *Server) outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
+	route, err := util.CallAPIRoot("outlook/login")
+	if err != nil {
+		log.Errorf("Error generating URL: %s", err.Error())
+		serverError(w, err)
+		return
+	}
+	http.Redirect(w, r, route, http.StatusFound)
+}
+
 func notFound(w http.ResponseWriter) {
-	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/404.html")
+	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/404.html")
 	if err != nil {
 		serverError(w, err)
 		return
@@ -179,7 +197,7 @@ func notFound(w http.ResponseWriter) {
 }
 
 func serverError(w http.ResponseWriter, error error) {
-	t, err := template.ParseFiles("./frontend/resources/html/shared/layout.html", "./frontend/resources/html/500.html")
+	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/500.html")
 	if err != nil {
 		panic(err)
 	}
