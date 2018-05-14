@@ -20,12 +20,15 @@ func (err GoogleError) Error() string {
 }
 
 type GoogleAccount struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token"`
-	TokenID      string `json:"id_token"`
-	Email        string
+	AccessToken  string            `json:"access_token"`
+	TokenType    string            `json:"token_type"`
+	ExpiresIn    int               `json:"expires_in"`
+	RefreshToken string            `json:"refresh_token"`
+	TokenID      string            `json:"id_token"`
+	Email        string            `json:"-"`
+	Kind         int               `json:"-"`
+	InternID     int               `json:"-"`
+	calendars    []CalendarManager `json:"-"`
 }
 
 type GoogleCalendarListResponse struct {

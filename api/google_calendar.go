@@ -11,9 +11,10 @@ import (
 
 	"net/http"
 
+	"errors"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
-	"errors"
 )
 
 // PUT https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
@@ -274,4 +275,8 @@ func (calendar *GoogleCalendar) GetID() string {
 
 func (calendar *GoogleCalendar) GetName() string {
 	return calendar.Name
+}
+
+func (calendar *GoogleCalendar) GetAccount() AccountManager {
+	return calendar.account
 }

@@ -1,0 +1,16 @@
+{{define "content"}}
+    {{if not .User.Accounts }}
+        <p>You have no accounts right now. Try adding accounts:</p>
+    {{else}}
+        <h1>Added Accounts</h1>
+        {{range .User.Accounts}}
+                <a href="/accounts/{{.GetInternalID}}">{{.Mail}}</a><br/>
+        {{end}}
+    {{end}}
+    <br/>
+    <a href="/SignInWithGoogle">Add Google Account</a>
+    <br/>
+    <a href="/SignInWithOutlook">Add Outlook Account</a>
+{{end}}
+{{define "javascript"}}
+{{end}}

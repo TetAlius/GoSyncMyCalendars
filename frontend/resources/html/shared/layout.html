@@ -53,7 +53,7 @@
 
 
     </style>
-    <title>{{.PageTitle}}</title>
+    <title>{{.PageTitle}} - GoSyncMyCalendars</title>
 </head>
 <body>
 <header>
@@ -64,6 +64,9 @@
         <a class="navbar-brand" href="/">GoSyncMyCalendars</a>
         <div class="collapse navbar-collapse" id="navbar1">
             <ul class="navbar-nav">
+                <li class="nav-item auth hidden">
+                    <a class="nav-link" href="/accounts">Accounts</a>
+                </li>
                 <li class="nav-item auth hidden">
                     <a class="nav-link" href="/calendars">Calendars</a>
                 </li>
@@ -76,7 +79,7 @@
                     <a id="username" href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
                     </a>
                     <ul class="dropdown-menu float-right">
-                        <li class="dropdown-item"><a href="/account">Account</a></li>
+                        <li class="dropdown-item"><a href="/me">Account</a></li>
                         <li class="dropdown-divider"></li>
                         <li class="dropdown-item"><a href="#" onclick="signOut();">Log Out</a></li>
                     </ul>
@@ -107,11 +110,11 @@
         var xhr = new XMLHttpRequest();
         var id_token = googleUser.getAuthResponse().id_token;
         xhr.open('POST', 'http://localhost:8080/user?idtoken=' + id_token);
-        xhr.onreadystatechange = function() {//Call a function when the state changes.
-            if(xhr.readyState == XMLHttpRequest.DONE && xhr.status != 202){
+        xhr.onreadystatechange = function () {//Call a function when the state changes.
+            if (xhr.readyState == XMLHttpRequest.DONE && xhr.status != 202) {
                 $("#account-error").removeClass("hidden");
                 auth2.signOut();
-            }else if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 202){
+            } else if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 202) {
                 $("#account-error").addClass("hidden");
             }
         };
@@ -125,7 +128,7 @@
     }
 
     function onFailure(error) {
-        console.log(error)
+        console.log(error);
         $("#account-error").removeClass("hidden");
         auth2.signOut();
     }
@@ -178,9 +181,11 @@
     var signinChanged = function (val) {
         // Sign in the user if they are currently signed in.
         if (val) {
+            console.log('public hidden');
             $('.auth').removeClass("hidden");
             $('.public').addClass("hidden");
         } else {
+            console.log('auth hidden');
             $('.auth').addClass("hidden");
             $('.public').removeClass("hidden");
             if (window.location.pathname !== '/') {
@@ -226,5 +231,6 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
+{{template "javascript" . }}
 </body>
 </html>

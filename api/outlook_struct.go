@@ -20,13 +20,16 @@ func (err OutlookError) Error() string {
 }
 
 type OutlookAccount struct {
-	TokenType         string `json:"token_type"`
-	ExpiresIn         int    `json:"expires_in"`
-	AccessToken       string `json:"access_token"`
-	RefreshToken      string `json:"refresh_token"`
-	TokenID           string `json:"id_token"`
-	AnchorMailbox     string
-	PreferredUsername bool
+	TokenType         string            `json:"token_type"`
+	ExpiresIn         int               `json:"expires_in"`
+	AccessToken       string            `json:"access_token"`
+	RefreshToken      string            `json:"refresh_token"`
+	TokenID           string            `json:"id_token"`
+	AnchorMailbox     string            `json:"-"`
+	PreferredUsername bool              `json:"-"`
+	Kind              int               `json:"-"`
+	InternID          int               `json:"-"`
+	calendars         []CalendarManager `json:"-"`
 }
 
 type OutlookCalendarResponse struct {

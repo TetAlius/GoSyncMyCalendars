@@ -60,10 +60,12 @@ func MailFromToken(tokens []string, addFinal string) (email string, preferred bo
 }
 
 func CallAPIRoot(route string) (apiRoute string, err error) {
-	client := http.Client{}
 	root := os.Getenv("API_ROOT")
 	if len(root) == 0 {
 		return "", errors.New("API_ROOT not given on environment")
+	}
+	client := &http.Client{
+		Timeout: time.Second * 30,
 	}
 	req, err := http.NewRequest("GET", root+route, nil)
 

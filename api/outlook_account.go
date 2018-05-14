@@ -216,3 +216,35 @@ func (a *OutlookAccount) AuthorizationRequest() (auth string) {
 func (a *OutlookAccount) Mail() string {
 	return a.AnchorMailbox
 }
+
+func (a *OutlookAccount) SetKind(kind int) {
+	a.Kind = kind
+}
+
+func (a *OutlookAccount) GetTokenType() string {
+	return a.TokenType
+}
+
+func (a *OutlookAccount) GetRefreshToken() string {
+	return a.RefreshToken
+}
+
+func (a *OutlookAccount) GetKind() int {
+	return a.Kind
+}
+
+func (a *OutlookAccount) GetAccessToken() string {
+	return a.AccessToken
+}
+
+func (a *OutlookAccount) GetInternalID() int {
+	return a.InternID
+}
+
+func (a *OutlookAccount) SetCalendars(calendars []CalendarManager) {
+	a.calendars = calendars
+}
+
+func (a *OutlookAccount) GetSyncCalendars() []CalendarManager {
+	return a.calendars
+}

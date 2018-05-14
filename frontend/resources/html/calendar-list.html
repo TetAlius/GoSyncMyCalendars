@@ -1,13 +1,14 @@
 {{define "content"}}
-    {{if not .User.Calendars }}
-        <p>You have no calendars right now. Try adding accounts:</p>
+    {{if not .User.Accounts }}
+        <p>You have no calendars right now. Try adding some accounts to sync:</p>
         <br/>
-        <a href="/SignInWithGoogle">Add Google Account</a>
-        <br/>
-        <a href="/SignInWithOutlook">Add Outlook Account</a>
     {{else}}
-        {{range .Calendars}}
-        <h4> {{ .GetName }}</h4>
+        {{range .User.Accounts}}
+        <h4> {{ .Mail }}</h4>
         {{end}}
+
     {{end}}
+    <a href="/accounts">Add Accounts</a>
+{{end}}
+{{define "javascript"}}
 {{end}}

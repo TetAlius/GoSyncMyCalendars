@@ -13,14 +13,16 @@ const (
 	Created = iota + 1
 	Updated
 	Deleted
-)
-const (
+
 	UpdatedText = "Updated"
 	CreatedText = "Created"
 	DeletedText = "Deleted"
-)
 
-const maxBackoff = 5
+	GOOGLE  = 1
+	OUTLOOK = 2
+
+	maxBackoff = 5
+)
 
 var states = map[string]int{
 	"Created": Created,
@@ -35,6 +37,16 @@ type AccountManager interface {
 	GetPrimaryCalendar() (CalendarManager, error)
 	AuthorizationRequest() string
 	Mail() string
+
+	SetKind(int)
+	GetTokenType() string
+	GetRefreshToken() string
+	GetKind() int
+	GetAccessToken() string
+
+	GetInternalID() int
+	SetCalendars([]CalendarManager)
+	GetSyncCalendars() []CalendarManager
 }
 
 type CalendarManager interface {

@@ -89,6 +89,7 @@ func (a *GoogleAccount) Refresh() (err error) {
 
 //GET https://www.googleapis.com/calendar/v3/users/me/calendarList
 func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err error) {
+	a.Refresh()
 	log.Debugln("getAllCalendars google")
 	route, err := util.CallAPIRoot("google/calendar-list")
 	if err != nil {
@@ -97,12 +98,13 @@ func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err erro
 
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
+	queryParams := map[string]string{"minAccessRole": "writer"}
 	contents, err :=
 		util.DoRequest(
 			http.MethodGet,
 			route,
 			nil,
-			headers, nil)
+			headers, queryParams)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.Mail(), err.Error()))
@@ -202,6 +204,34 @@ func (a *GoogleAccount) Mail() string {
 	return a.Email
 }
 
-func (calendar *GoogleCalendar) GetAccount() AccountManager {
-	return calendar.account
+func (a *GoogleAccount) SetKind(kind int) {
+	a.Kind = kind
+}
+
+func (a *GoogleAccount) GetTokenType() string {
+	return a.TokenType
+}
+
+func (a *GoogleAccount) GetRefreshToken() string {
+	return a.RefreshToken
+}
+
+func (a *GoogleAccount) GetKind() int {
+	return a.Kind
+}
+
+func (a *GoogleAccount) GetAccessToken() string {
+	return a.AccessToken
+}
+
+func (a *GoogleAccount) GetInternalID() int {
+	return a.InternID
+}
+
+func (a *GoogleAccount) SetCalendars(calendars []CalendarManager) {
+	a.calendars = calendars
+}
+
+func (a *GoogleAccount) GetSyncCalendars() []CalendarManager {
+	return a.calendars
 }

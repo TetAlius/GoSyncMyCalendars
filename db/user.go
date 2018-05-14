@@ -13,21 +13,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	USER     = "postgres"
-	PASSWORD = "postgres"
-	NAME     = "postgres"
-)
-
 // User has the info for the user
 type User struct {
-	ID           uuid.UUID
-	Name         string
-	Surname      string
-	Email        string
-	LoginAccount api.AccountManager
-	Accounts     []api.AccountManager
-	Calendars    []api.CalendarManager
+	UUID     uuid.UUID
+	Name     string
+	Surname  string
+	Email    string
+	Accounts []api.AccountManager
 }
 
 type NotFoundError struct {
@@ -38,8 +30,32 @@ func (err *NotFoundError) Error() string {
 	return fmt.Sprintf("")
 }
 
+func (user *User) AddAccount(account api.AccountManager) (err error) {
+	err = saveAccount(account, *user)
+	if err != nil {
+		log.Errorf("could not save account: %s", err.Error())
+		return
+	}
+	user.Accounts = append(user.Accounts, account)
+	return
+}
+func (user *User) FindAccount(internalID int) (account api.AccountManager, err error) {
+	account, err = findAccountFromUser(user, internalID)
+	return
+}
+
 func RetrieveUser(uuid string) (user *User, err error) {
-	return findUserByID(uuid)
+	user, err = findUserByID(uuid)
+	if err != nil {
+		log.Errorf("error retrieving user %s", uuid)
+		return
+	}
+	err = user.setAccounts()
+	if err != nil {
+		log.Errorf("error retrieving accounts: %s", err.Error())
+	}
+
+	return
 }
 
 func GetUserFromToken(token string) (user *User, err error) {
@@ -47,7 +63,7 @@ func GetUserFromToken(token string) (user *User, err error) {
 	user, err = findUserByMail(email)
 	if _, ok := err.(*NotFoundError); ok {
 		log.Debugf("no user found with email %s", email)
-		user = &User{ID: uuid.New(), Name: "TESTING", Email: email, Surname: "asasd"}
+		user = &User{UUID: uuid.New(), Name: "TESTING", Email: email, Surname: "asasd"}
 		err = creteUser(user)
 	}
 	if err != nil {
@@ -56,15 +72,19 @@ func GetUserFromToken(token string) (user *User, err error) {
 
 	}
 	log.Infof("user with email %s successfully retrieve from DB", user.Email)
+	err = user.setAccounts()
+	if err != nil {
+		log.Errorf("error retrieving accounts: %s", err.Error())
+	}
 
 	return
 }
+
 func findUserByID(id string) (user *User, err error) {
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-		USER, PASSWORD, NAME)
-	db, err := sql.Open("postgres", dbinfo)
+	db, err := connect()
 	if err != nil {
-		log.Errorf("error on db: %s", err.Error())
+		log.Errorf("could not connect to db: %s", err.Error())
+		return
 	}
 	defer db.Close()
 	rows, err := db.Query("SELECT * from users where users.uuid = $1;", id)
@@ -81,7 +101,7 @@ func findUserByID(id string) (user *User, err error) {
 			log.Errorf("error on scan: %s", err.Error())
 			return
 		}
-		user = &User{ID: uid, Name: name, Surname: surname, Email: email}
+		user = &User{UUID: uid, Name: name, Surname: surname, Email: email}
 	} else {
 		return nil, &NotFoundError{Code: http.StatusNotFound}
 	}
@@ -99,7 +119,7 @@ func findUserByMail(email string) (user *User, err error) {
 		return
 	}
 	defer db.Close()
-	rows, err := db.Query("SELECT * from users where users.email = $1;", email)
+	rows, err := db.Query("SELECT users.uuid,users.name,users.surname,users.email from users where users.email = $1;", email)
 	if err != nil {
 		log.Errorf("error querying: %s", err.Error())
 		return
@@ -114,7 +134,7 @@ func findUserByMail(email string) (user *User, err error) {
 			log.Errorf("error on scan: %s", err.Error())
 			return
 		}
-		user = &User{ID: uid, Name: name, Surname: surname, Email: email}
+		user = &User{UUID: uid, Name: name, Surname: surname, Email: email}
 	} else {
 		return nil, &NotFoundError{Code: http.StatusNotFound}
 	}
@@ -123,11 +143,9 @@ func findUserByMail(email string) (user *User, err error) {
 }
 
 func creteUser(user *User) (err error) {
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-		USER, PASSWORD, NAME)
-	db, err := sql.Open("postgres", dbinfo)
+	db, err := connect()
 	if err != nil {
-		log.Errorf("error on db: %s", err.Error())
+		log.Errorf("could not connect to db: %s", err.Error())
 		return
 	}
 	defer db.Close()
@@ -137,7 +155,7 @@ func creteUser(user *User) (err error) {
 		return
 	}
 
-	res, err := stmt.Exec(user.ID, user.Email, user.Name, user.Surname)
+	res, err := stmt.Exec(user.UUID, user.Email, user.Name, user.Surname)
 	if err != nil {
 		log.Errorf("error executing query: %s", err.Error())
 		return
@@ -151,4 +169,12 @@ func creteUser(user *User) (err error) {
 		return errors.New(fmt.Sprintf("could not create new user with mail: %s", user.Email))
 	}
 	return
+}
+
+func (user *User) setAccounts() (err error) {
+	user.Accounts, err = getAccountsByUser(user.UUID)
+	return
+}
+func (user *User) RetrieveCalendarsFromAccount(manager api.AccountManager) (calendars []api.CalendarManager, err error) {
+	return manager.GetAllCalendars()
 }

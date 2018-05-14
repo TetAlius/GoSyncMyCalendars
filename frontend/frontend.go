@@ -10,6 +10,9 @@ import (
 	"fmt"
 	"time"
 
+	"strconv"
+
+	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
@@ -27,6 +30,9 @@ type PageInfo struct {
 	PageTitle string
 	User      db.User
 	Error     string
+	Account   api.AccountManager
+	Calendar  api.CalendarManager
+	Calendars []api.CalendarManager
 }
 
 var root string
@@ -50,8 +56,13 @@ func NewServer(ip string, port int, dir string) *Server {
 	mux.HandleFunc("/", server.indexHandler)
 
 	mux.HandleFunc("/SignInWithGoogle", server.googleSignInHandler)
+	mux.HandleFunc("/google", server.googleTokenHandler)
+
 	mux.HandleFunc("/SignInWithOutlook", server.outlookSignInHandler)
+
 	mux.HandleFunc("/calendars", server.calendarListHandler)
+	mux.HandleFunc("/accounts", server.accountListHandler)
+	mux.HandleFunc("/accounts/", server.accountHandler)
 	mux.HandleFunc("/user", server.userHandler)
 	server.mux = AddContext(mux)
 
@@ -95,9 +106,6 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 		notFound(w)
 		return
 	}
-	data := PageInfo{
-		PageTitle: "GoSyncMyCalendars",
-	}
 	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/index.html")
 	if err != nil {
 		log.Errorln("error parsing files %s", err.Error())
@@ -105,7 +113,7 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = t.Execute(w, data)
+	err = t.Execute(w, PageInfo{})
 	if err != nil {
 		log.Errorln(err)
 		serverError(w, err)
@@ -120,7 +128,7 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := PageInfo{
-		PageTitle: "Calendars - GoSyncMyCalendars",
+		PageTitle: "Calendars",
 		User:      *currentUser,
 	}
 	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/calendar-list.html")
@@ -138,6 +146,75 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) accountListHandler(w http.ResponseWriter, r *http.Request) {
+	currentUser, ok := manageSession(w, r)
+	if !ok {
+		return
+	}
+
+	data := PageInfo{
+		PageTitle: "Accounts",
+		User:      *currentUser,
+	}
+	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/accounts/list.html")
+	if err != nil {
+		log.Errorf("error parsing files: %s", err.Error())
+		serverError(w, err)
+		return
+	}
+
+	err = t.Execute(w, data)
+	if err != nil {
+		log.Errorf("error executing templates: %s", err.Error())
+		serverError(w, err)
+		return
+	}
+}
+
+func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
+	currentUser, ok := manageSession(w, r)
+	if !ok {
+		return
+	}
+	param := r.URL.Path[len("/accounts/"):]
+	id, err := strconv.Atoi(param)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+	account, err := currentUser.FindAccount(id)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	calendars, err := currentUser.RetrieveCalendarsFromAccount(account)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	data := PageInfo{
+		PageTitle: account.Mail(),
+		Account:   account,
+		Calendars: calendars,
+	}
+
+	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/accounts/show.html")
+	if err != nil {
+		log.Errorf("error parsing files: %s", err.Error())
+		serverError(w, err)
+		return
+	}
+
+	err = t.Execute(w, data)
+	if err != nil {
+		log.Errorf("error executing templates: %s", err.Error())
+		serverError(w, err)
+		return
+	}
+
+}
 func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -149,34 +226,13 @@ func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		cookie := http.Cookie{Name: "session", Value: user.ID.String()}
+		cookie := http.Cookie{Name: "session", Value: user.UUID.String()}
 		http.SetCookie(w, &cookie)
 		//TODO: handle user
 		w.WriteHeader(http.StatusAccepted)
 	default:
 		notFound(w)
 	}
-}
-
-func (s *Server) googleSignInHandler(w http.ResponseWriter, r *http.Request) {
-	log.Debugln("Starting google petition")
-	route, err := util.CallAPIRoot("google/login")
-	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
-		serverError(w, err)
-		return
-	}
-	http.Redirect(w, r, route, http.StatusFound)
-}
-
-func (s *Server) outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
-	route, err := util.CallAPIRoot("outlook/login")
-	if err != nil {
-		log.Errorf("Error generating URL: %s", err.Error())
-		serverError(w, err)
-		return
-	}
-	http.Redirect(w, r, route, http.StatusFound)
 }
 
 func notFound(w http.ResponseWriter) {
@@ -211,7 +267,6 @@ func serverError(w http.ResponseWriter, error error) {
 	if err != nil {
 		log.Errorln(err)
 	}
-
 }
 
 func manageSession(w http.ResponseWriter, r *http.Request) (*db.User, bool) {
@@ -220,7 +275,9 @@ func manageSession(w http.ResponseWriter, r *http.Request) (*db.User, bool) {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return nil, false
 	}
+	//done := make(chan bool)
 	user, err := db.RetrieveUser(session)
+	//<-done
 	if err != nil {
 		serverError(w, err)
 		return nil, false
