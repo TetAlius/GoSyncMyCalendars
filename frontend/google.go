@@ -83,6 +83,7 @@ func (s *Server) googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO: DB to implement
 	account, err := api.NewGoogleAccount(contents)
 	account.SetKind(api.GOOGLE)
+	currentUser.SetAccounts()
 	err = currentUser.AddAccount(account)
 	if err != nil {
 		serverError(w, err)
@@ -90,5 +91,5 @@ func (s *Server) googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//This is so that users cannot read the response
-	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+	http.Redirect(w, r, "/accounts", http.StatusPermanentRedirect)
 }

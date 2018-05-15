@@ -107,6 +107,19 @@ func (user *User) DeleteCalendar(uuid string) (err error) {
 	return deleteCalendarFromUser(db, user, uuid)
 }
 
+func (user *User) SetAccounts() (err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	err = user.setAccounts(db)
+	if err != nil {
+		log.Errorf("error retrieving accounts: %s", err.Error())
+	}
+	return
+}
+
 func RetrieveUser(uuid string) (user *User, err error) {
 	db, err := connect()
 	if err != nil {
@@ -117,10 +130,6 @@ func RetrieveUser(uuid string) (user *User, err error) {
 	if err != nil {
 		log.Errorf("error retrieving user %s", uuid)
 		return
-	}
-	err = user.setAccounts(db)
-	if err != nil {
-		log.Errorf("error retrieving accounts: %s", err.Error())
 	}
 
 	return
@@ -151,6 +160,38 @@ func GetUserFromToken(token string) (user *User, err error) {
 	}
 
 	return
+}
+
+func (user *User) AddCalendarsRelation(parentCalendarUUID string, IDs []string) (err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	for _, childID := range IDs {
+		stmt, err := db.Prepare("update calendars set (parent_calendar_uuid) = ($1) from accounts as a where calendars.uuid = $2 and calendars.account_email = a.email and a.user_uuid = $3")
+		if err != nil {
+			log.Errorf("error preparing query: %s", err.Error())
+			return err
+		}
+		defer stmt.Close()
+		res, err := stmt.Exec(parentCalendarUUID, childID, user.UUID)
+		if err != nil {
+			log.Errorf("error executing query: %s", err.Error())
+			return err
+		}
+
+		affect, err := res.RowsAffected()
+		if err != nil {
+			log.Errorf("error retrieving rows affected: %s", err.Error())
+			return err
+		}
+		if affect != 1 {
+			return errors.New(fmt.Sprintf("could not create relations with parent: %s and child: %s", parentCalendarUUID, childID))
+		}
+	}
+	return
+
 }
 
 func findUserByID(db *sql.DB, id string) (user *User, err error) {
@@ -228,5 +269,6 @@ func creteUser(db *sql.DB, user *User) (err error) {
 
 func (user *User) setAccounts(db *sql.DB) (err error) {
 	user.Accounts, err = getAccountsByUser(db, user.UUID)
+
 	return
 }

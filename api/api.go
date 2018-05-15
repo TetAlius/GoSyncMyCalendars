@@ -47,10 +47,13 @@ type AccountManager interface {
 	GetInternalID() int
 	SetCalendars([]CalendarManager)
 	GetSyncCalendars() []CalendarManager
+	Principal() bool
 }
 
 type CalendarManager interface {
 	SetAccount(AccountManager) error
+	SetCalendars([]CalendarManager)
+	GetCalendars() []CalendarManager
 
 	Update() error
 	Delete() error

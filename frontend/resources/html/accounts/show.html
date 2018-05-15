@@ -5,7 +5,7 @@
     {{else}}
         {{range .Account.GetSyncCalendars}}
                 <div id="div-{{.GetUUID}}">
-                <input type="submit" value="Delete" onclick="deleteCalendar({{.GetUUID}});"/>
+                <input type="submit" value="Remove from sync" onclick="deleteCalendar({{.GetUUID}});"/>
                 <p style="display: inline-block" id={{.GetUUID}} >{{.GetName}}</p>
                 </div>
         {{end}}
@@ -15,7 +15,7 @@
                 <p>These are all the calendars that are available to sync.</p>
                 <p>Select all that you want to start syncing</p>
                 <p>Calendars that are already syncing will be ignored</p>
-                <p>If you want to remove them, click on the delete button, please</p>
+                <p>If you want to remove them, click on the "Remove from sync" button, please</p>
                 <label for="calendars">Calendars</label>
                 <select multiple class="form-control" name="calendars" id="calendars">
 

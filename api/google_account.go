@@ -32,7 +32,7 @@ func NewGoogleAccount(contents []byte) (a *GoogleAccount, err error) {
 	return
 }
 
-func RetrieveGoogleAccount(tokenType string, refreshToken string, email string, kind int, accessToken string, id int) (a *GoogleAccount) {
+func RetrieveGoogleAccount(tokenType string, refreshToken string, email string, kind int, accessToken string, id int, principal bool) (a *GoogleAccount) {
 	a = new(GoogleAccount)
 	a.TokenType = tokenType
 	a.RefreshToken = refreshToken
@@ -40,6 +40,7 @@ func RetrieveGoogleAccount(tokenType string, refreshToken string, email string, 
 	a.Kind = kind
 	a.AccessToken = accessToken
 	a.InternID = id
+	a.principal = principal
 	return
 }
 
@@ -242,4 +243,7 @@ func (a *GoogleAccount) SetCalendars(calendars []CalendarManager) {
 
 func (a *GoogleAccount) GetSyncCalendars() []CalendarManager {
 	return a.calendars
+}
+func (a *GoogleAccount) Principal() bool {
+	return a.principal
 }

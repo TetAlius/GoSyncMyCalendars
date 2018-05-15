@@ -128,12 +128,17 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	err := currentUser.SetAccounts()
+	if err != nil {
+		serverError(w, err)
+		return
+	}
 
 	data := PageInfo{
 		PageTitle: "Calendars",
 		User:      *currentUser,
 	}
-	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/calendar-list.html")
+	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/calendars/list.html")
 	if err != nil {
 		log.Errorf("error parsing files: %s", err.Error())
 		serverError(w, err)
@@ -151,6 +156,11 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) accountListHandler(w http.ResponseWriter, r *http.Request) {
 	currentUser, ok := manageSession(w, r)
 	if !ok {
+		return
+	}
+	err := currentUser.SetAccounts()
+	if err != nil {
+		serverError(w, err)
 		return
 	}
 
@@ -249,6 +259,20 @@ func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
 			serverError(w, err)
 			return
 		}
+	case http.MethodPost:
+		id := r.URL.Path[len("/calendars/"):]
+		log.Debugf("id: %s", id)
+		r.ParseForm() // Required if you don't call r.FormValue()
+		calendarIDs := r.Form["calendars"]
+		log.Debugf("calendar ids: %s", calendarIDs)
+
+		err := currentUser.AddCalendarsRelation(id, calendarIDs)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+		http.Redirect(w, r, "/calendars", http.StatusFound)
+
 	default:
 		notFound(w)
 		return

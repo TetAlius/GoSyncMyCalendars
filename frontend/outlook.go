@@ -74,6 +74,7 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO: DB to implement
 	account, err := api.NewGoogleAccount(contents)
 	account.SetKind(api.OUTLOOK)
+	currentUser.SetAccounts()
 	err = currentUser.AddAccount(account)
 	if err != nil {
 		serverError(w, err)

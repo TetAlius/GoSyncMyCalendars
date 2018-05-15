@@ -1,0 +1,79 @@
+{{define "content"}}
+    <h1 style="display: inline-block">List of all calendars</h1> <a href="/accounts">Add Accounts</a>
+    {{if not .User.Accounts }}
+       <p>You have no calendars right now. Try adding some accounts to sync:</p>
+       <br/>
+    {{else}}
+        {{range .User.Accounts}}
+            {{if .Principal}}
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th> {{ .Mail }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .GetSyncCalendars}}
+                        <tr>
+                            <td>
+                                {{.GetName}} ({{.GetAccount.Mail}})
+                                    Synced:
+                                    {{range .GetCalendars}}
+                                        {{.GetName}}
+                                    {{end}}
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#{{.GetUUID}}">
+                                    Add Calendars
+                                </button>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{range .GetSyncCalendars}}
+                    <!-- Modal -->
+                    <div class="modal fade" id="{{.GetUUID}}" tabindex="-1" role="dialog" aria-labelledby="modal-{{.GetUUID}}-label" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modal-{{.GetUUID}}-label">Add calendars to sync</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <form action="/calendars/{{.GetUUID}}" method="post">
+                                    {{range $.User.Accounts}}
+                                        {{if not .Principal}}
+                                            <div class="form-group">
+                                                <label for="{{.GetInternalID}}">{{.Mail}}</label>
+                                                <select class="form-control" name="calendars" id="calendars">
+                                                    <option>Select</option>
+                                                    {{range .GetSyncCalendars}}
+                                                        <option value={{.GetUUID}}>{{.GetName}}</option>
+                                                    {{end}}
+                                                </select>
+                                            </div>
+                                        {{end}}
+                                    {{end}}
+
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Save changes</button>
+                                </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {{end}}
+            {{end}}
+        {{end}}
+    {{end}}
+{{end}}
+{{define "javascript"}}
+<script>
+    function something(){
+        {{range .User.Accounts}}
+        console.log({{.Mail}});
+            {{end}}
+    }
+    something();
+</script>
+{{end}}

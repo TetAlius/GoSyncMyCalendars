@@ -237,3 +237,11 @@ func (calendar *OutlookCalendar) GetUUID() string {
 func (calendar *OutlookCalendar) SetUUID(id string) {
 	calendar.uuid = id
 }
+
+func (calendar *OutlookCalendar) SetCalendars(calendars []CalendarManager) {
+	calendar.calendars = calendars
+
+}
+func (calendar *OutlookCalendar) GetCalendars() []CalendarManager {
+	return calendar.calendars
+}

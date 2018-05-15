@@ -27,7 +27,7 @@ func NewOutlookAccount(contents []byte) (a *OutlookAccount, err error) {
 	return
 }
 
-func RetrieveOutlookAccount(tokenType string, refreshToken string, email string, kind int, accessToken string, id int) (a *OutlookAccount) {
+func RetrieveOutlookAccount(tokenType string, refreshToken string, email string, kind int, accessToken string, id int, principal bool) (a *OutlookAccount) {
 	a = new(OutlookAccount)
 	a.TokenType = tokenType
 	a.RefreshToken = refreshToken
@@ -35,6 +35,7 @@ func RetrieveOutlookAccount(tokenType string, refreshToken string, email string,
 	a.Kind = kind
 	a.AccessToken = accessToken
 	a.InternID = id
+	a.principal = principal
 	return
 }
 
@@ -243,4 +244,8 @@ func (a *OutlookAccount) SetCalendars(calendars []CalendarManager) {
 
 func (a *OutlookAccount) GetSyncCalendars() []CalendarManager {
 	return a.calendars
+}
+
+func (a *OutlookAccount) Principal() bool {
+	return a.principal
 }

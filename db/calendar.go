@@ -9,6 +9,10 @@ import (
 
 func findCalendarsFromAccount(db *sql.DB, account api.AccountManager) (calendars []api.CalendarManager, err error) {
 	rows, err := db.Query("select calendars.id, calendars.name, calendars.uuid from calendars join accounts a on calendars.account_email = a.email where a.id=$1 order by calendars.name ASC", account.GetInternalID())
+	if err != nil {
+		log.Errorln("error selecting findCalendarsFromAccount")
+		return
+	}
 
 	defer rows.Close()
 	for rows.Next() {
@@ -27,7 +31,48 @@ func findCalendarsFromAccount(db *sql.DB, account api.AccountManager) (calendars
 		}
 		calendar.SetUUID(uuid)
 		calendar.SetAccount(account)
+		synced, err := getSynchronizedCalendars(db, calendar, account.Principal())
+		if err != nil {
+			log.Errorf("error getting relation: %s", err.Error())
+			return nil, err
+		}
+		calendar.SetCalendars(synced)
 		calendars = append(calendars, calendar)
+	}
+	return
+}
+
+func getSynchronizedCalendars(db *sql.DB, calendar api.CalendarManager, principal bool) (calendars []api.CalendarManager, err error) {
+	var query string
+	if principal {
+		query = "select calendars.id, calendars.name, calendars.uuid, a.kind from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = $1"
+	} else {
+		query = "select calendars.id, calendars.name, calendars.uuid, a.kind from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1)"
+	}
+	rows, err := db.Query(query, calendar.GetUUID())
+	if err != nil {
+		log.Errorln("error selecting setSynchronizedCalendars")
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		var name string
+		var uuid string
+		var calendar api.CalendarManager
+		var kind int
+		err = rows.Scan(&id, &name, &uuid, &kind)
+		switch kind {
+		case api.GOOGLE:
+			calendar = &api.GoogleCalendar{ID: id, Name: name}
+		case api.OUTLOOK:
+			calendar = &api.OutlookCalendar{ID: id, Name: name}
+		default:
+			return nil, &WrongKindError{name}
+		}
+		calendar.SetUUID(uuid)
+		calendars = append(calendars, calendar)
+
 	}
 	return
 }

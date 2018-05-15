@@ -1,10 +1,16 @@
 {{define "content"}}
-    {{if not .User.Accounts }}
+    {{if not .User.Accounts}}
         <p>You have no accounts right now. Try adding accounts:</p>
+        <p>Keep in mind that first account added will be consider the principal one</p>
+        <p>And will be the one used to make all calendar relations</p>
     {{else}}
         <h1>Added Accounts</h1>
         {{range .User.Accounts}}
-                <a href="/accounts/{{.GetInternalID}}">{{.Mail}}</a><br/>
+                <a href="/accounts/{{.GetInternalID}}">{{.Mail}}</a>
+                    {{if .Principal}}
+                    <span>(principal)</span>
+                     {{end}}
+                   <br/>
         {{end}}
     {{end}}
     <br/>

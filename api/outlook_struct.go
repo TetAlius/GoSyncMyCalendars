@@ -30,6 +30,7 @@ type OutlookAccount struct {
 	Kind              int               `json:"-"`
 	InternID          int               `json:"-"`
 	calendars         []CalendarManager `json:"-"`
+	principal         bool              `json:"-"`
 }
 
 type OutlookCalendarResponse struct {
@@ -44,9 +45,10 @@ type OutlookCalendarListResponse struct {
 
 // CalendarInfo TODO
 type OutlookCalendar struct {
-	uuid    string
-	account *OutlookAccount
-	OdataID string `json:"@odata.id,omitempty"`
+	uuid      string
+	account   *OutlookAccount
+	calendars []CalendarManager
+	OdataID   string `json:"@odata.id,omitempty"`
 
 	CalendarView        []OutlookEvent       `json:"CalendarView,omitempty"`
 	CanEdit             bool                 `json:"CanEdit,omitempty"`
