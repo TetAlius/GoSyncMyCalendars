@@ -86,7 +86,7 @@ func (calendar *OutlookCalendar) Update() error {
 }
 
 func (calendar *OutlookCalendar) Delete() (err error) {
-	return
+	//return
 	log.Debugln("deleteCalendar outlook")
 	if len(calendar.GetID()) == 0 {
 		return errors.New("no ID for calendar was given")

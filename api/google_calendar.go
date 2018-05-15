@@ -55,7 +55,7 @@ func (calendar *GoogleCalendar) Update() (err error) {
 
 // DELETE https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
 func (calendar *GoogleCalendar) Delete() (err error) {
-	return
+	//return
 	log.Debugln("Delete calendar")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
