@@ -42,12 +42,8 @@ func (calendar *OutlookCalendar) Create() (err error) {
 		return err
 	}
 
-	log.Debugf("%s\n", contents)
-
 	calendarResponse := OutlookCalendarResponse{OdataContext: "", OutlookCalendar: calendar}
 	err = json.Unmarshal(contents, &calendarResponse)
-
-	log.Debugf("Response: %s", contents)
 
 	return err
 }
@@ -82,8 +78,6 @@ func (calendar *OutlookCalendar) Update() error {
 		return err
 	}
 
-	log.Debugf("%s\n", contents)
-
 	calendarResponse := OutlookCalendarResponse{OdataContext: "", OutlookCalendar: calendar}
 	err = json.Unmarshal(contents, &calendarResponse)
 
@@ -117,7 +111,6 @@ func (calendar *OutlookCalendar) Delete() (err error) {
 	}
 
 	if len(contents) != 0 {
-		log.Debugf("%s\n", contents)
 		err = createOutlookResponseError(contents)
 		return err
 	}
@@ -150,8 +143,6 @@ func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err erro
 	if err != nil {
 		return nil, err
 	}
-
-	log.Debugf("%s\n", contents)
 	eventListResponse := new(OutlookEventListResponse)
 	err = json.Unmarshal(contents, &eventListResponse)
 
@@ -197,7 +188,6 @@ func (calendar *OutlookCalendar) GetEvent(ID string) (event EventManager, err er
 		return
 	}
 
-	log.Debugf("%s\n", contents)
 	eventResponse := new(OutlookEventResponse)
 	err = json.Unmarshal(contents, &eventResponse)
 	if err != nil {

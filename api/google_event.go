@@ -49,8 +49,6 @@ func (event *GoogleEvent) Create() (err error) {
 	}
 
 	err = json.Unmarshal(contents, &event)
-
-	log.Debugf("Response: %s", contents)
 	err = event.extractTime()
 	return
 }
@@ -88,8 +86,6 @@ func (event *GoogleEvent) Update() (err error) {
 	}
 
 	err = json.Unmarshal(contents, &event)
-
-	log.Debugf("Response: %s", contents)
 	err = event.extractTime()
 	return
 }
@@ -119,7 +115,6 @@ func (event *GoogleEvent) Delete() (err error) {
 		log.Errorf("error deleting event of g calendar for email %s. %s", a.Mail(), err.Error())
 	}
 
-	log.Debugf("Contents: %s", contents)
 	if len(contents) != 0 {
 		return errors.New(fmt.Sprintf("error deleting google event %s: %s", event.ID, contents))
 	}

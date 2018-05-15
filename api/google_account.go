@@ -89,7 +89,6 @@ func (a *GoogleAccount) Refresh() (err error) {
 			return e
 		}
 	}
-	log.Debugf("%s\n", contents)
 
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
@@ -125,8 +124,6 @@ func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err erro
 	if err != nil {
 		return nil, err
 	}
-
-	log.Debugf("%s\n", contents)
 
 	calendarResponse := new(GoogleCalendarListResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
@@ -167,7 +164,6 @@ func (a *GoogleAccount) GetCalendar(calendarID string) (calendar CalendarManager
 
 	calendarResponse := new(GoogleCalendar)
 	err = json.Unmarshal(contents, &calendarResponse)
-	log.Debugln(contents)
 	calendarResponse.SetAccount(a)
 
 	return calendarResponse, err
@@ -203,7 +199,6 @@ func (a *GoogleAccount) GetPrimaryCalendar() (calendar CalendarManager, err erro
 
 	calendarResponse := new(GoogleCalendar)
 	err = json.Unmarshal(contents, &calendarResponse)
-	log.Debugln(contents)
 	calendar = calendarResponse
 	calendar.SetAccount(a)
 	return

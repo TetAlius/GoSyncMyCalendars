@@ -28,7 +28,7 @@ type Worker struct {
 }
 
 func New(maxWorkers int) (worker *Worker) {
-	worker = &Worker{Events: make(chan api.EventManager, maxWorkers), state: stateInitial}
+	worker = &Worker{Events: make(chan api.EventManager), state: stateInitial}
 	return
 }
 func (worker *Worker) IsClosed() bool {
@@ -49,9 +49,7 @@ func (worker *Worker) Stop() (err error) {
 func (worker *Worker) Process() {
 	var event api.EventManager
 	for worker.state != stateQuit {
-		log.Debugln("state")
 		event = <-worker.Events
-		log.Debugln("state")
 		processSynchronization(event)
 
 	}

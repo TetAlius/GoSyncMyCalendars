@@ -59,7 +59,6 @@ func (subscription *OutlookSubscription) Subscribe(calendar CalendarManager) (er
 		bytes.NewBuffer(data),
 		headers, nil)
 
-	log.Debugf("%s\n", contents)
 	err = createOutlookResponseError(contents)
 	if err != nil {
 		return err
@@ -94,7 +93,6 @@ func (subscription *OutlookSubscription) Renew(a AccountManager) (err error) {
 		route,
 		bytes.NewBuffer(data),
 		headers, nil)
-	log.Debugf("%s\n", contents)
 	err = createOutlookResponseError(contents)
 
 	return
@@ -117,9 +115,7 @@ func (subscription *OutlookSubscription) Delete(a AccountManager) (err error) {
 		route,
 		nil,
 		headers, nil)
-	log.Debugf("%s\n", contents)
 	if len(contents) != 0 {
-		log.Debugf("%s\n", contents)
 		err = createOutlookResponseError(contents)
 		return err
 	}

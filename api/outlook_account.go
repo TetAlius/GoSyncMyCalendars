@@ -89,7 +89,6 @@ func (a *OutlookAccount) Refresh() (err error) {
 	log.Debugf("\nTokenType: %s\nExpiresIn: %d\nAccessToken: %s\nRefreshToken: %s\nTokenID: %s\nAnchorMailbox: %s\nPreferredUsername: %t",
 		a.TokenType, a.ExpiresIn, a.AccessToken, a.RefreshToken, a.TokenID, a.AnchorMailbox, a.PreferredUsername)
 
-	log.Debugf("%s\n", contents)
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
 		return errors.New(fmt.Sprintf("there was an error with the outlook request: %s", err.Error()))
@@ -123,8 +122,6 @@ func (a *OutlookAccount) GetAllCalendars() (calendars []CalendarManager, err err
 	if err != nil {
 		return nil, err
 	}
-
-	log.Debugf("%s\n", contents)
 
 	calendarResponse := new(OutlookCalendarListResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
@@ -166,8 +163,6 @@ func (a *OutlookAccount) GetCalendar(calendarID string) (calendar CalendarManage
 		return nil, err
 	}
 
-	log.Debugf("%s\n", contents)
-
 	calendarResponse := new(OutlookCalendarResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
 	calendar = calendarResponse.OutlookCalendar
@@ -201,8 +196,6 @@ func (a *OutlookAccount) GetPrimaryCalendar() (calendar CalendarManager, err err
 	if err != nil {
 		return nil, err
 	}
-
-	log.Debugf("%s\n", contents)
 
 	calendarResponse := new(OutlookCalendarResponse)
 	err = json.Unmarshal(contents, &calendarResponse)

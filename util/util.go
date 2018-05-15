@@ -128,7 +128,6 @@ func DoRequest(method string, url string, body io.Reader, headers map[string]str
 	if err != nil {
 		return contents, errors.New(fmt.Sprintf("error reading response body: %s", err.Error()))
 	}
-	log.Debugln(contents)
 
 	return
 }

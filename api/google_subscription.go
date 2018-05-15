@@ -58,7 +58,6 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 		bytes.NewBuffer(data),
 		headers, nil)
 
-	log.Debugf("%s\n", contents)
 	err = createGoogleResponseError(contents)
 	if err != nil {
 		return err
@@ -97,7 +96,6 @@ func (subscription *GoogleSubscription) Delete(a AccountManager) (err error) {
 		route,
 		bytes.NewBuffer(data),
 		headers, nil)
-	log.Debugf("%s\n", contents)
 	err = createGoogleResponseError(contents)
 	return
 }

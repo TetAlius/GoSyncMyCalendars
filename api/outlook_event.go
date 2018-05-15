@@ -48,7 +48,6 @@ func (event *OutlookEvent) Create() (err error) {
 	eventResponse := OutlookEventResponse{OdataContext: "", OutlookEvent: event}
 	err = json.Unmarshal(contents, &eventResponse)
 
-	log.Debugf("Response: %s", contents)
 	err = event.extractTime()
 	return
 }
@@ -89,7 +88,6 @@ func (event *OutlookEvent) Update() (err error) {
 	eventResponse := OutlookEventResponse{OdataContext: "", OutlookEvent: event}
 	err = json.Unmarshal(contents, &eventResponse)
 
-	log.Debugf("Response: %s", contents)
 	err = event.extractTime()
 	return
 }
@@ -122,7 +120,6 @@ func (event *OutlookEvent) Delete() (err error) {
 	}
 
 	if len(contents) != 0 {
-		log.Debugf("%s\n", contents)
 		err = createOutlookResponseError(contents)
 		return err
 	}

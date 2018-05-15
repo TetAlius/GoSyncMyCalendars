@@ -48,7 +48,6 @@ func (calendar *GoogleCalendar) Update() (err error) {
 		return err
 	}
 
-	log.Debugf("Contents: %s", contents)
 	err = json.Unmarshal(contents, &calendar)
 
 	return
@@ -79,8 +78,6 @@ func (calendar *GoogleCalendar) Delete() (err error) {
 		err = createGoogleResponseError(contents)
 		return err
 	}
-
-	log.Debugf("Contents: %s", contents)
 
 	return
 }
@@ -115,8 +112,6 @@ func (calendar *GoogleCalendar) Create() (err error) {
 	if err != nil {
 		return err
 	}
-
-	log.Debugf("Contents: %s", contents)
 	err = json.Unmarshal(contents, &calendar)
 	return
 }
@@ -147,8 +142,6 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 	if err != nil {
 		return nil, err
 	}
-
-	log.Debugf("%s\n", contents)
 	eventList := new(GoogleEventList)
 	err = json.Unmarshal(contents, &eventList)
 
@@ -188,13 +181,11 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 		return nil, errors.New(fmt.Sprintf("error getting an event of g calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 
-	log.Debugf("Contents: %s", contents)
 	err = createGoogleResponseError(contents)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Debugf("%s\n", contents)
 	eventResponse := new(GoogleEvent)
 	err = json.Unmarshal(contents, &eventResponse)
 	if err != nil {
@@ -235,7 +226,6 @@ func (calendar *GoogleCalendar) Subscribe(a AccountManager) (err error) {
 		bytes.NewBuffer(data),
 		headers, nil)
 
-	log.Debugf("%s\n", contents)
 	err = createGoogleResponseError(contents)
 	if err != nil {
 		return err
