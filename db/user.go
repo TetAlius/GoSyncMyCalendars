@@ -3,9 +3,10 @@ package db
 import (
 	"fmt"
 
-	"database/sql"
 	"errors"
 	"net/http"
+
+	"database/sql"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -31,7 +32,12 @@ func (err *NotFoundError) Error() string {
 }
 
 func (user *User) AddAccount(account api.AccountManager) (err error) {
-	err = saveAccount(account, *user)
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	err = saveAccount(db, account, *user)
 	if err != nil {
 		log.Errorf("could not save account: %s", err.Error())
 		return
@@ -39,18 +45,80 @@ func (user *User) AddAccount(account api.AccountManager) (err error) {
 	user.Accounts = append(user.Accounts, account)
 	return
 }
+
 func (user *User) FindAccount(internalID int) (account api.AccountManager, err error) {
-	account, err = findAccountFromUser(user, internalID)
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	account, err = findAccountFromUser(db, user, internalID)
+	err = account.Refresh()
+	if err != nil {
+		log.Errorf("error refreshing account: %s", account.Mail())
+	}
+	updateAccount(db, account)
 	return
 }
 
+func (user *User) RetrieveCalendarsFromAccount(account api.AccountManager) (calendars []api.CalendarManager, err error) {
+	//TODO: Change this
+	return account.GetAllCalendars()
+}
+
+func (user *User) AddCalendarsToAccount(account api.AccountManager, ids []string) (err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	for _, id := range ids {
+		calendar, err := account.GetCalendar(id)
+		if err != nil {
+			return err
+		}
+		err = addCalendarToAccount(db, account, calendar)
+		if err != nil {
+			log.Errorf("error adding calendar: %s", err.Error())
+		} else {
+			account.SetCalendars(append(account.GetSyncCalendars(), calendar))
+		}
+	}
+	return
+}
+
+func (user *User) DeleteCalendar(uuid string) (err error) {
+	//account, err := getAccountFromCalendarID(user, uuid)
+	//if err != nil {
+	//	log.Errorf("could not get account associated: %s", err.Error())
+	//	return
+	//}
+	//calendar, err := findSubscriptionFromCalendar(user, uuid)
+	//if err != nil {
+	//	log.Errorf("could not get calendar: %s", err.Error())
+	//	return
+	//}
+	//	TODO: subscrition delete
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	return deleteCalendarFromUser(db, user, uuid)
+}
+
 func RetrieveUser(uuid string) (user *User, err error) {
-	user, err = findUserByID(uuid)
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	user, err = findUserByID(db, uuid)
 	if err != nil {
 		log.Errorf("error retrieving user %s", uuid)
 		return
 	}
-	err = user.setAccounts()
+	err = user.setAccounts(db)
 	if err != nil {
 		log.Errorf("error retrieving accounts: %s", err.Error())
 	}
@@ -59,12 +127,17 @@ func RetrieveUser(uuid string) (user *User, err error) {
 }
 
 func GetUserFromToken(token string) (user *User, err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
 	email := token
-	user, err = findUserByMail(email)
+	user, err = findUserByMail(db, email)
 	if _, ok := err.(*NotFoundError); ok {
 		log.Debugf("no user found with email %s", email)
 		user = &User{UUID: uuid.New(), Name: "TESTING", Email: email, Surname: "asasd"}
-		err = creteUser(user)
+		err = creteUser(db, user)
 	}
 	if err != nil {
 		log.Errorf("error retrieving email: %s", email)
@@ -72,7 +145,7 @@ func GetUserFromToken(token string) (user *User, err error) {
 
 	}
 	log.Infof("user with email %s successfully retrieve from DB", user.Email)
-	err = user.setAccounts()
+	err = user.setAccounts(db)
 	if err != nil {
 		log.Errorf("error retrieving accounts: %s", err.Error())
 	}
@@ -80,17 +153,12 @@ func GetUserFromToken(token string) (user *User, err error) {
 	return
 }
 
-func findUserByID(id string) (user *User, err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("could not connect to db: %s", err.Error())
-		return
-	}
-	defer db.Close()
-	rows, err := db.Query("SELECT * from users where users.uuid = $1;", id)
+func findUserByID(db *sql.DB, id string) (user *User, err error) {
+	rows, err := db.Query("SELECT users.uuid, users.name,users.surname, users.email from users where users.uuid = $1;", id)
 	if err != nil {
 		log.Errorf("error querying: %s", err.Error())
 	}
+	defer rows.Close()
 	if rows.Next() {
 		var uid uuid.UUID
 		var name string
@@ -110,20 +178,13 @@ func findUserByID(id string) (user *User, err error) {
 
 }
 
-func findUserByMail(email string) (user *User, err error) {
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-		USER, PASSWORD, NAME)
-	db, err := sql.Open("postgres", dbinfo)
-	if err != nil {
-		log.Errorf("error on db: %s", err.Error())
-		return
-	}
-	defer db.Close()
+func findUserByMail(db *sql.DB, email string) (user *User, err error) {
 	rows, err := db.Query("SELECT users.uuid,users.name,users.surname,users.email from users where users.email = $1;", email)
 	if err != nil {
 		log.Errorf("error querying: %s", err.Error())
 		return
 	}
+	defer rows.Close()
 	if rows.Next() {
 		var uid uuid.UUID
 		var name string
@@ -142,19 +203,13 @@ func findUserByMail(email string) (user *User, err error) {
 	return
 }
 
-func creteUser(user *User) (err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("could not connect to db: %s", err.Error())
-		return
-	}
-	defer db.Close()
+func creteUser(db *sql.DB, user *User) (err error) {
 	stmt, err := db.Prepare("insert into users(uuid,email,name,surname) values ($1,$2,$3,$4);")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
-
+	defer stmt.Close()
 	res, err := stmt.Exec(user.UUID, user.Email, user.Name, user.Surname)
 	if err != nil {
 		log.Errorf("error executing query: %s", err.Error())
@@ -171,10 +226,7 @@ func creteUser(user *User) (err error) {
 	return
 }
 
-func (user *User) setAccounts() (err error) {
-	user.Accounts, err = getAccountsByUser(user.UUID)
+func (user *User) setAccounts(db *sql.DB) (err error) {
+	user.Accounts, err = getAccountsByUser(db, user.UUID)
 	return
-}
-func (user *User) RetrieveCalendarsFromAccount(manager api.AccountManager) (calendars []api.CalendarManager, err error) {
-	return manager.GetAllCalendars()
 }

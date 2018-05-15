@@ -59,8 +59,10 @@ func NewServer(ip string, port int, dir string) *Server {
 	mux.HandleFunc("/google", server.googleTokenHandler)
 
 	mux.HandleFunc("/SignInWithOutlook", server.outlookSignInHandler)
+	mux.HandleFunc("/outlook", server.OutlookTokenHandler)
 
 	mux.HandleFunc("/calendars", server.calendarListHandler)
+	mux.HandleFunc("/calendars/", server.calendarHandler)
 	mux.HandleFunc("/accounts", server.accountListHandler)
 	mux.HandleFunc("/accounts/", server.accountHandler)
 	mux.HandleFunc("/user", server.userHandler)
@@ -187,13 +189,29 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
+	if account == nil {
+		notFound(w)
+		return
+	}
 
+	switch r.Method {
+	case http.MethodGet:
+	case http.MethodPost:
+		// Form submitted
+		r.ParseForm() // Required if you don't call r.FormValue()
+		calendarIDs := r.Form["calendars"]
+		log.Debugf("IDs: %s", calendarIDs)
+		currentUser.AddCalendarsToAccount(account, calendarIDs)
+	default:
+		serverError(w, err)
+		return
+	}
+	account.Refresh()
 	calendars, err := currentUser.RetrieveCalendarsFromAccount(account)
 	if err != nil {
 		serverError(w, err)
 		return
 	}
-
 	data := PageInfo{
 		PageTitle: account.Mail(),
 		Account:   account,
@@ -215,6 +233,29 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
+	currentUser, ok := manageSession(w, r)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodDelete:
+		id := r.URL.Path[len("/calendars/"):]
+		err := currentUser.DeleteCalendar(id)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+	default:
+		notFound(w)
+		return
+	}
+
+}
+
 func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -275,9 +316,7 @@ func manageSession(w http.ResponseWriter, r *http.Request) (*db.User, bool) {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return nil, false
 	}
-	//done := make(chan bool)
 	user, err := db.RetrieveUser(session)
-	//<-done
 	if err != nil {
 		serverError(w, err)
 		return nil, false

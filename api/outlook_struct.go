@@ -44,6 +44,7 @@ type OutlookCalendarListResponse struct {
 
 // CalendarInfo TODO
 type OutlookCalendar struct {
+	uuid    string
 	account *OutlookAccount
 	OdataID string `json:"@odata.id,omitempty"`
 

@@ -2,16 +2,13 @@ package backend
 
 import (
 	"fmt"
-	"net/http"
-	"strings"
-
 	"io/ioutil"
+	"net/http"
 
 	"encoding/json"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
-	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
 func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
@@ -50,69 +47,6 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 		notFound(w)
 		return
 	}
-}
-
-func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
-	route, err := util.CallAPIRoot("outlook/token/uri")
-	log.Debugln(route)
-	if err != nil {
-		log.Errorf("error generating URL: %s", err.Error())
-		serverError(w)
-		return
-	}
-	params, err := util.CallAPIRoot("outlook/token/request-params")
-	log.Debugln(params)
-	if err != nil {
-		log.Errorf("error generating URL: %s", err.Error())
-		serverError(w)
-		return
-	}
-
-	client := http.Client{}
-	code := r.URL.Query().Get("code")
-
-	req, err := http.NewRequest("POST",
-		route,
-		strings.NewReader(
-			fmt.Sprintf(params, code)))
-	if err != nil {
-		log.Errorf("error creating new outlook request: %s", err.Error())
-		serverError(w)
-		return
-	}
-
-	req.Header.Set("Content-Type",
-		"application/x-www-form-urlencoded")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Errorf("error doing outlook request: %s", err.Error())
-		serverError(w)
-		return
-	}
-
-	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("error reading response body from outlook request: %s", err.Error())
-		serverError(w)
-		return
-	}
-	log.Debugln(contents)
-	//TODO: DB to implement
-	account, err := api.NewOutlookAccount(contents)
-	if err != nil {
-		log.Errorf("error creating new account request: %s", err.Error())
-		serverError(w)
-		return
-	}
-	go func(account *api.OutlookAccount) {
-		log.Debugln(account)
-		account.GetAllCalendars()
-		account.Refresh()
-	}(account)
-
-	http.Redirect(w, r, "http://localhost:8080", http.StatusPermanentRedirect)
 }
 
 func (s *Server) OutlookWatcherHandler(w http.ResponseWriter, r *http.Request) {

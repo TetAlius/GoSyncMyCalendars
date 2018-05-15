@@ -28,6 +28,7 @@ func (calendar *OutlookCalendar) Create() (err error) {
 	headers := make(map[string]string)
 	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
 	headers["X-AnchorMailbox"] = calendar.GetAccount().Mail()
+
 	contents, err := util.DoRequest(http.MethodPost,
 		route,
 		bytes.NewBuffer(data),
@@ -91,6 +92,7 @@ func (calendar *OutlookCalendar) Update() error {
 }
 
 func (calendar *OutlookCalendar) Delete() (err error) {
+	return
 	log.Debugln("deleteCalendar outlook")
 	if len(calendar.GetID()) == 0 {
 		return errors.New("no ID for calendar was given")
@@ -233,6 +235,15 @@ func (calendar *OutlookCalendar) GetQueryID() string {
 func (calendar *OutlookCalendar) GetAccount() AccountManager {
 	return calendar.account
 }
+
 func (calendar *OutlookCalendar) GetName() string {
 	return calendar.Name
+}
+
+func (calendar *OutlookCalendar) GetUUID() string {
+	return calendar.uuid
+}
+
+func (calendar *OutlookCalendar) SetUUID(id string) {
+	calendar.uuid = id
 }

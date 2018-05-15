@@ -89,12 +89,6 @@ func (s *Server) googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//go func(account *api.GoogleAccount) {
-	//	log.Debugln(account)
-	//	account.GetAllCalendars()
-	//	account.Refresh()
-	//}(account)
-
 	//This is so that users cannot read the response
 	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
 }

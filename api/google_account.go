@@ -32,6 +32,17 @@ func NewGoogleAccount(contents []byte) (a *GoogleAccount, err error) {
 	return
 }
 
+func RetrieveGoogleAccount(tokenType string, refreshToken string, email string, kind int, accessToken string, id int) (a *GoogleAccount) {
+	a = new(GoogleAccount)
+	a.TokenType = tokenType
+	a.RefreshToken = refreshToken
+	a.Email = email
+	a.Kind = kind
+	a.AccessToken = accessToken
+	a.InternID = id
+	return
+}
+
 func (a *GoogleAccount) Refresh() (err error) {
 	client := http.Client{}
 
@@ -39,6 +50,7 @@ func (a *GoogleAccount) Refresh() (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
+	log.Debugf(route)
 
 	params, err := util.CallAPIRoot("google/token/refresh-params")
 	if err != nil {
@@ -81,7 +93,7 @@ func (a *GoogleAccount) Refresh() (err error) {
 
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
-		return errors.New(fmt.Sprintf("there was an error with the outlook request: %s", err.Error()))
+		return errors.New(fmt.Sprintf("there was an error with the google request: %s", err.Error()))
 	}
 	return
 
@@ -89,7 +101,7 @@ func (a *GoogleAccount) Refresh() (err error) {
 
 //GET https://www.googleapis.com/calendar/v3/users/me/calendarList
 func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err error) {
-	a.Refresh()
+
 	log.Debugln("getAllCalendars google")
 	route, err := util.CallAPIRoot("google/calendar-list")
 	if err != nil {
@@ -173,6 +185,7 @@ func (a *GoogleAccount) GetPrimaryCalendar() (calendar CalendarManager, err erro
 
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
+
 	contents, err :=
 		util.DoRequest(
 			http.MethodGet,

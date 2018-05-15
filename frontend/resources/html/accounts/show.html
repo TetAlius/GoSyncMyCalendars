@@ -1,40 +1,44 @@
 {{define "content"}}
+    <h1>Synced Calendars</h1>
     {{if not .Account.GetSyncCalendars }}
         <p>You have no calendars right now. Try adding calendars:</p>
     {{else}}
-        <h1>Synced Calendars</h1>
         {{range .Account.GetSyncCalendars}}
-            <p>{{.GetName}}</p>
-
+                <div id="div-{{.GetUUID}}">
+                <input type="submit" value="Delete" onclick="deleteCalendar({{.GetUUID}});"/>
+                <p style="display: inline-block" id={{.GetUUID}} >{{.GetName}}</p>
+                </div>
         {{end}}
     {{end}}
-    <div class="">
+        <form action="/accounts/{{.Account.GetInternalID}}" method="post">
+            <div class="form-group">
+                <p>These are all the calendars that are available to sync.</p>
+                <p>Select all that you want to start syncing</p>
+                <p>Calendars that are already syncing will be ignored</p>
+                <p>If you want to remove them, click on the delete button, please</p>
+                <label for="calendars">Calendars</label>
+                <select multiple class="form-control" name="calendars" id="calendars">
+
         {{range .Calendars}}
-            <p>{{.GetName}}</p>
+                <option value={{.GetID}}>{{.GetName}}</option>
         {{end}}
-    </div>
+
+                </select>
+            </div>
+            <input type="submit" value="Send"/>
+        </form>
 {{end}}
 {{define "javascript"}}
-        {{/*<script>*/}}
-            {{/*function onClick() {*/}}
-                {{/*console.log('clicking');*/}}
-                {{/*var http = new XMLHttpRequest();*/}}
-                {{/*var url = "";*/}}
-                {{/*var params = "lorem=ipsum&name=binny";*/}}
-                {{/*http.open("POST", url, true);*/}}
-
-{{/*//Send the proper header information along with the request*/}}
-                {{/*http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");*/}}
-
-                {{/*http.onreadystatechange = function() {//Call a function when the state changes.*/}}
-                    {{/*if(http.readyState == 4 && http.status == 200) {*/}}
-                        {{/*alert(http.responseText);*/}}
-                    {{/*}*/}}
-                {{/*}*/}}
-                {{/*http.send(params);*/}}
-            {{/*}*/}}
-        {{/*</script>*/}}
-
-
-
+    <script>
+        function deleteCalendar(id){
+            console.log(id);
+            $.ajax({
+                type: "DELETE",
+                url: "/calendars/"+id,
+                success: function(msg){
+                    $("#div-"+id).remove();
+                }
+            });
+        }
+    </script>
 {{end}}

@@ -30,7 +30,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewServer(ip string, port int, maxWorker int) *Server {
 	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker)}
 	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
-	server.mux.HandleFunc("/outlook", server.OutlookTokenHandler)
 	server.mux.HandleFunc("/outlook/watcher", server.OutlookWatcherHandler)
 	return &server
 }

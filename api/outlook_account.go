@@ -27,12 +27,14 @@ func NewOutlookAccount(contents []byte) (a *OutlookAccount, err error) {
 	return
 }
 
-func RetrieveOutlookAccount(accessToken string, refreshToken string, tokenID string, anchorMailbox string) (a *OutlookAccount, err error) {
+func RetrieveOutlookAccount(tokenType string, refreshToken string, email string, kind int, accessToken string, id int) (a *OutlookAccount) {
 	a = new(OutlookAccount)
-	a.AccessToken = accessToken
+	a.TokenType = tokenType
 	a.RefreshToken = refreshToken
-	a.TokenID = tokenID
-	a.AnchorMailbox = anchorMailbox
+	a.AnchorMailbox = email
+	a.Kind = kind
+	a.AccessToken = accessToken
+	a.InternID = id
 	return
 }
 
@@ -107,11 +109,12 @@ func (a *OutlookAccount) GetAllCalendars() (calendars []CalendarManager, err err
 	headers := make(map[string]string)
 	headers["Authorization"] = a.AuthorizationRequest()
 	headers["X-AnchorMailbox"] = a.Mail()
+	queryParams := map[string]string{"$filter": "CanEdit eq false"}
 
 	contents, err := util.DoRequest(http.MethodGet,
 		route,
 		nil,
-		headers, nil)
+		headers, queryParams)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all calendars for email %s. %s", a.AnchorMailbox, err.Error()))

@@ -63,6 +63,8 @@ type CalendarManager interface {
 	GetQueryID() string
 	GetName() string
 	GetAccount() AccountManager
+	GetUUID() string
+	SetUUID(string)
 }
 
 type EventManager interface {
