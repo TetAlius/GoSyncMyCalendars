@@ -4,27 +4,33 @@
        <p>You have no calendars right now. Try adding some accounts to sync:</p>
        <br/>
     {{else}}
+            {{$lenAccounts:= len .User.Accounts}}
         {{range .User.Accounts}}
             {{if .Principal}}
                 <table class="table table-bordered">
                     <thead>
                         <tr>
-                            <th> {{ .Mail }}</th>
+                            <th colspan={{inc $lenAccounts}}> {{ .Mail }}</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {{range .GetSyncCalendars}}
                         <tr>
-                            <td>
-                                {{.GetName}} ({{.GetAccount.Mail}})
-                                    Synced:
-                                    {{range .GetCalendars}}
-                                        {{.GetName}}
-                                    {{end}}
+                            <td rowspan="2">
+                            {{.GetName}} ({{.GetAccount.Mail}})
+                            <th colspan={{$lenAccounts}}>Synced:</th>
+                            <td rowspan="2">
                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#{{.GetUUID}}">
                                     Add Calendars
                                 </button>
-                            </td>
+                            <tr>
+                                    {{range .GetCalendars}}
+                                    <td>
+                                        {{.GetName}}
+                                    </td>
+                                    {{end}}
+                            </tr>
                         </tr>
                         {{end}}
                     </tbody>
@@ -44,7 +50,7 @@
                                     {{range $.User.Accounts}}
                                         {{if not .Principal}}
                                             <div class="form-group">
-                                                <label for="{{.GetInternalID}}">{{.Mail}}</label>
+                                                <label for="calendars">{{.Mail}}</label>
                                                 <select class="form-control" name="calendars" id="calendars">
                                                     <option>Select</option>
                                                     {{range .GetSyncCalendars}}

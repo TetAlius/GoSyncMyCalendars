@@ -37,6 +37,13 @@ type PageInfo struct {
 
 var root string
 
+var funcMap = template.FuncMap{
+	// The name "inc" is what the function will be called in the template text.
+	"inc": func(i int) int {
+		return i + 1
+	},
+}
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
@@ -138,7 +145,7 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 		PageTitle: "Calendars",
 		User:      *currentUser,
 	}
-	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/calendars/list.html")
+	t, err := template.New("layout.html").Funcs(funcMap).ParseFiles(root+"/html/shared/layout.html", root+"/html/calendars/list.html")
 	if err != nil {
 		log.Errorf("error parsing files: %s", err.Error())
 		serverError(w, err)

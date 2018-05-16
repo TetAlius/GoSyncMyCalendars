@@ -27,6 +27,7 @@ func connect() (db *sql.DB, err error) {
 		USER, PASSWORD, NAME)
 	db, err = sql.Open("postgres", dbInfo)
 	if err != nil {
+		log.Errorln(err.Error())
 		return
 	}
 	log.Infof("DB: opening connection")

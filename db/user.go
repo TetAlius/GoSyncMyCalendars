@@ -162,19 +162,23 @@ func GetUserFromToken(token string) (user *User, err error) {
 	return
 }
 
-func (user *User) AddCalendarsRelation(parentCalendarUUID string, IDs []string) (err error) {
+func (user User) AddCalendarsRelation(parentCalendarUUID string, IDs []string) (err error) {
 	db, err := connect()
 	if err != nil {
 		log.Errorf("db could not load: %s", err.Error())
 	}
 	defer db.Close()
+	stmt, err := db.Prepare("update calendars set (parent_calendar_uuid) = ($1) from accounts as a where calendars.uuid = $2 and calendars.account_email = a.email and a.user_uuid = $3")
+	if err != nil {
+		log.Errorf("error preparing query: %s", err.Error())
+		return err
+	}
+	defer stmt.Close()
 	for _, childID := range IDs {
-		stmt, err := db.Prepare("update calendars set (parent_calendar_uuid) = ($1) from accounts as a where calendars.uuid = $2 and calendars.account_email = a.email and a.user_uuid = $3")
+		_, err := uuid.Parse(childID)
 		if err != nil {
-			log.Errorf("error preparing query: %s", err.Error())
-			return err
+			continue
 		}
-		defer stmt.Close()
 		res, err := stmt.Exec(parentCalendarUUID, childID, user.UUID)
 		if err != nil {
 			log.Errorf("error executing query: %s", err.Error())
@@ -189,6 +193,7 @@ func (user *User) AddCalendarsRelation(parentCalendarUUID string, IDs []string) 
 		if affect != 1 {
 			return errors.New(fmt.Sprintf("could not create relations with parent: %s and child: %s", parentCalendarUUID, childID))
 		}
+
 	}
 	return
 
