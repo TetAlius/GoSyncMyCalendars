@@ -36,6 +36,11 @@ type PageInfo struct {
 	Calendars []api.CalendarManager
 }
 
+type PageInfoAccounts struct {
+	PageTitle string
+	User      db2.User
+}
+
 var root string
 
 var funcMap = template.FuncMap{
@@ -170,7 +175,7 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) accountListHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageSession(w, r)
+	currentUser, ok := manageNewSession(w, r)
 	if !ok {
 		return
 	}
@@ -180,7 +185,7 @@ func (s *Server) accountListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := PageInfo{
+	data := PageInfoAccounts{
 		PageTitle: "Accounts",
 		User:      *currentUser,
 	}

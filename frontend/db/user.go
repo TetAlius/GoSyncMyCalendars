@@ -59,6 +59,28 @@ func (user *User) AddAccount(account Account) (err error) {
 
 	return
 }
+func (user *User) SetAccounts() (err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	err = user.setAccounts(db)
+	if err != nil {
+		log.Errorf("error retrieving accounts: %s", err.Error())
+	}
+	return
+}
+
+func (user *User) setAccounts(db *sql.DB) (err error) {
+	principal, accounts, err := getAccountsByUser(db, user.UUID)
+	if err != nil {
+		return err
+	}
+	user.PrincipalAccount = principal
+	user.Accounts = accounts
+	return
+}
 
 func findUserByID(db *sql.DB, id string) (user *User, err error) {
 	rows, err := db.Query("SELECT users.uuid, users.name,users.surname, users.email from users where users.uuid = $1;", id)

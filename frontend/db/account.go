@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/google/uuid"
 )
 
 type Account struct {
@@ -42,4 +43,44 @@ func (account Account) save(db *sql.DB) (err error) {
 	}
 	return
 
+}
+
+func getAccountsByUser(db *sql.DB, userUUID uuid.UUID) (principalAccount Account, accounts []Account, err error) {
+	rows, err := db.Query("SELECT accounts.token_type, accounts.refresh_token,accounts.email,accounts.kind,accounts.access_token,accounts.id, accounts.principal FROM accounts where user_uuid = $1 order by accounts.principal DESC, lower(accounts.email) ASC", userUUID)
+	if err != nil {
+		log.Errorf("could not query select: %s", err.Error())
+		return
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var email string
+		var kind int
+		var id int
+		var tokenType string
+		var refreshToken string
+		var accessToken string
+		var principal bool
+		var account Account
+		err = rows.Scan(&tokenType, &refreshToken, &email, &kind, &accessToken, &id, &principal)
+		if err != nil {
+			log.Errorf("error retrieving accounts for user: %s", userUUID)
+			return account, nil, err
+		}
+		account = Account{
+			TokenType:    tokenType,
+			RefreshToken: refreshToken,
+			Email:        email,
+			AccessToken:  accessToken,
+			Kind:         kind,
+			ID:           id,
+			Principal:    principal,
+		}
+		if principal {
+			principalAccount = account
+		} else {
+			accounts = append(accounts, account)
+		}
+	}
+	return
 }
