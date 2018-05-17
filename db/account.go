@@ -111,7 +111,6 @@ func getPrincipalAccountByUser(db *sql.DB, userUUID uuid.UUID) (principalAccount
 		var tokenType string
 		var refreshToken string
 		var accessToken string
-		var principalAccount api.AccountManager
 		var principal bool
 		err = rows.Scan(&tokenType, &refreshToken, &email, &kind, &accessToken, &id, &principal)
 		switch kind {

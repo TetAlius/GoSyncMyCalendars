@@ -7,6 +7,7 @@
         <h1>Added Accounts</h1>
         {{range .User.Accounts}}
                 <a href="/accounts/{{.GetInternalID}}">{{.Mail}}</a>
+                <span class="badge badge-secondary">({{len .GetSyncCalendars}})</span>
                     {{if .Principal}}
                     <span>(principal)</span>
                      {{end}}
@@ -14,9 +15,9 @@
         {{end}}
     {{end}}
     <br/>
-    <a href="/SignInWithGoogle">Add Google Account</a>
+    <div class="row"><a class="btn btn-info btn-block" href="/SignInWithGoogle">Add Google Account</a></div>
     <br/>
-    <a href="/SignInWithOutlook">Add Outlook Account</a>
+    <div class="row"><a class="btn btn-info btn-block" href="/SignInWithOutlook">Add Outlook Account</a></div>
 {{end}}
 {{define "javascript"}}
 {{end}}

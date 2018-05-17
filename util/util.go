@@ -25,14 +25,12 @@ func MailFromToken(tokens []string, addFinal string) (email string, preferred bo
 	encodedToken := strings.Replace(
 		strings.Replace(tokens[1], "-", "_", -1),
 		"+", "/", -1) + addFinal
-	log.Debugf("EncodedToken: %s", encodedToken)
 
 	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
 
 	if err != nil {
 		log.Errorf("Error decoding token: %s", err.Error())
 	}
-	log.Debugf("DecodedToken: %s", decodedToken)
 	var f interface{}
 	err = json.Unmarshal(decodedToken, &f)
 	if err != nil {
@@ -43,7 +41,7 @@ func MailFromToken(tokens []string, addFinal string) (email string, preferred bo
 		m := f.(map[string]interface{})
 
 		if m["email"] != nil {
-			log.Debugf("Got email %s", m["email"].(string))
+			log.Debugf("Got email %s", m["email"])
 			email = m["email"].(string)
 			preferred = false
 		} else if m["preferred_username"] != nil {

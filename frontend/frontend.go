@@ -38,9 +38,10 @@ type PageInfo struct {
 var root string
 
 var funcMap = template.FuncMap{
-	// The name "inc" is what the function will be called in the template text.
 	"inc": func(i int) int {
 		return i + 1
+	}, "dec": func(i int) int {
+		return i - 1
 	},
 }
 
@@ -140,10 +141,17 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
+	account, err := currentUser.GetPrincipalAccount()
+	if err != nil {
+		serverError(w, err)
+		return
+	}
 
 	data := PageInfo{
 		PageTitle: "Calendars",
-		User:      *currentUser,
+		//TODO: remove this user
+		User:    *currentUser,
+		Account: account,
 	}
 	t, err := template.New("layout.html").Funcs(funcMap).ParseFiles(root+"/html/shared/layout.html", root+"/html/calendars/list.html")
 	if err != nil {
@@ -257,17 +265,16 @@ func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
+	id := r.URL.Path[len("/calendars/"):]
 	switch r.Method {
 	case http.MethodDelete:
-		id := r.URL.Path[len("/calendars/"):]
+
 		err := currentUser.DeleteCalendar(id)
 		if err != nil {
 			serverError(w, err)
 			return
 		}
 	case http.MethodPost:
-		id := r.URL.Path[len("/calendars/"):]
 		log.Debugf("id: %s", id)
 		r.ParseForm() // Required if you don't call r.FormValue()
 		calendarIDs := r.Form["calendars"]
@@ -279,7 +286,16 @@ func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.Redirect(w, r, "/calendars", http.StatusFound)
+	case http.MethodPatch:
+		parent := r.FormValue("parent")
+		log.Debugf("parents ids: %s", parent)
 
+		err := currentUser.UpdateCalendar(id, parent)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
 	default:
 		notFound(w)
 		return

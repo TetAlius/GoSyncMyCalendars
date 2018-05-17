@@ -2,6 +2,9 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+
+	"errors"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -73,6 +76,36 @@ func getSynchronizedCalendars(db *sql.DB, calendar api.CalendarManager, principa
 		calendar.SetUUID(uuid)
 		calendars = append(calendars, calendar)
 
+	}
+	return
+}
+
+func updateCalendarFromUser(db *sql.DB, user *User, calendarUUID string, parentUUID string) (err error) {
+	stmt, err := db.Prepare("update calendars set parent_calendar_uuid = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid = $2 and calendars.uuid = $3;")
+	if err != nil {
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	var parent interface{}
+	parent = parentUUID
+	if len(parentUUID) == 0 {
+		parent = nil
+	}
+
+	res, err := stmt.Exec(parent, user.UUID, calendarUUID)
+	if err != nil {
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return
+	}
+	if affect != 1 {
+		return errors.New(fmt.Sprintf("could not update calendar with UUID: %s", calendarUUID))
 	}
 	return
 }

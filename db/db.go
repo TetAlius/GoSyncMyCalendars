@@ -30,6 +30,5 @@ func connect() (db *sql.DB, err error) {
 		log.Errorln(err.Error())
 		return
 	}
-	log.Infof("DB: opening connection")
 	return
 }

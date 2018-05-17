@@ -5,7 +5,7 @@
     {{else}}
         {{range .Account.GetSyncCalendars}}
                 <div id="div-{{.GetUUID}}">
-                <input type="submit" value="Remove from sync" onclick="deleteCalendar({{.GetUUID}});"/>
+                <input type="submit" value="Remove from sync" class="btn btn-danger" onclick="deleteCalendar({{.GetUUID}});"/>
                 <p style="display: inline-block" id={{.GetUUID}} >{{.GetName}}</p>
                 </div>
         {{end}}

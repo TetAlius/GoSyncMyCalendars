@@ -277,3 +277,21 @@ func (user *User) setAccounts(db *sql.DB) (err error) {
 
 	return
 }
+func (user *User) GetPrincipalAccount() (account api.AccountManager, err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	return getPrincipalAccountByUser(db, user.UUID)
+
+}
+func (user *User) UpdateCalendar(calendarID string, parentID string) (err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	return updateCalendarFromUser(db, user, calendarID, parentID)
+
+}
