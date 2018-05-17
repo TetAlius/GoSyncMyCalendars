@@ -14,6 +14,7 @@ import (
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/db"
+	db2 "github.com/TetAlius/GoSyncMyCalendars/frontend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -364,6 +365,24 @@ func manageSession(w http.ResponseWriter, r *http.Request) (*db.User, bool) {
 		return nil, false
 	}
 	user, err := db.RetrieveUser(session)
+	if err != nil {
+		serverError(w, err)
+		return nil, false
+	}
+	if user == nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return nil, false
+	}
+	return user, true
+}
+
+func manageNewSession(w http.ResponseWriter, r *http.Request) (*db2.User, bool) {
+	session, ok := r.Context().Value("Session").(string)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return nil, false
+	}
+	user, err := db2.RetrieveUser(session)
 	if err != nil {
 		serverError(w, err)
 		return nil, false

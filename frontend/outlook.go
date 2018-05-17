@@ -1,12 +1,14 @@
 package frontend
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
+	"github.com/TetAlius/GoSyncMyCalendars/frontend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -22,7 +24,7 @@ func (s *Server) outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageSession(w, r)
+	currentUser, ok := manageNewSession(w, r)
 	if !ok {
 		return
 	}
@@ -72,14 +74,32 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//TODO: DB to implement
-	account, err := api.NewGoogleAccount(contents)
-	account.SetKind(api.OUTLOOK)
-	currentUser.SetAccounts()
-	err = currentUser.AddAccount(account)
+	var objmap map[string]interface{}
+	err = json.Unmarshal(contents, &objmap)
 	if err != nil {
 		serverError(w, err)
 		return
 	}
 
-	http.Redirect(w, r, "http://localhost:8080", http.StatusPermanentRedirect)
+	// preferred is ignored on google
+	email, _, err := util.MailFromToken(strings.Split(objmap["id_token"].(string), "."), "=")
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+	acc := db.Account{
+		User:         currentUser,
+		TokenType:    objmap["token_type"].(string),
+		RefreshToken: objmap["refresh_token"].(string),
+		Email:        email,
+		AccessToken:  objmap["access_token"].(string),
+		Kind:         api.OUTLOOK,
+	}
+	err = currentUser.AddAccount(acc)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/accounts", http.StatusPermanentRedirect)
 }
