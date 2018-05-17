@@ -82,18 +82,6 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 		return
 	}
 
-	var event api.OutlookEvent
-	event.Subject = "Discuss the OutlookCalendar REST API"
-	event.SetCalendar(calendar)
-
-	// good call to create event
-	err = event.Create()
-	if err != nil {
-		t.Fail()
-		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
-	}
-
 	err = subscription.Renew(account)
 	if err != nil {
 		t.Fail()
