@@ -23,6 +23,37 @@ type Account struct {
 	Calendars    []Calendar
 }
 
+func (account *Account) FindCalendars() (err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	rows, err := db.Query("select calendars.id, calendars.name, calendars.uuid from calendars join accounts a on calendars.account_email = a.email where a.id=$1 order by calendars.name ASC", account.ID)
+	if err != nil {
+		log.Errorln("error selecting findCalendarsFromAccount")
+		return
+	}
+
+	defer rows.Close()
+	var calendars []Calendar
+	for rows.Next() {
+		var id string
+		var name string
+		var uid uuid.UUID
+		err = rows.Scan(&id, &name, &uid)
+		calendar := Calendar{
+			ID:   id,
+			Name: name,
+			UUID: uid,
+		}
+		calendars = append(calendars, calendar)
+	}
+	account.Calendars = calendars
+	return
+
+}
+
 func (account Account) save(db *sql.DB) (err error) {
 	stmt, err := db.Prepare("insert into accounts(user_uuid,token_type,refresh_token,email,kind,access_token, principal) values ($1,$2,$3,$4,$5,$6,$7)")
 	if err != nil {
@@ -127,11 +158,18 @@ func getAccountsByUser(db *sql.DB, userUUID uuid.UUID) (principalAccount Account
 			ID:           id,
 			Principal:    principal,
 		}
+		err = account.FindCalendars()
+		if err != nil {
+			log.Errorf("error adding calendars: %s", account.ID)
+			return
+		}
 		if principal {
+
 			principalAccount = account
 		} else {
 			accounts = append(accounts, account)
 		}
 	}
+
 	return
 }

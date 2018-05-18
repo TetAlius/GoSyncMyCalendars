@@ -4,9 +4,9 @@
         <p>You have no calendars right now. Try adding calendars:</p>
     {{else}}
         {{range .Account.Calendars}}
-                <div id="div-{{.GetUUID}}">
-                <input type="submit" value="Remove from sync" class="btn btn-danger" onclick="deleteCalendar({{.GetUUID}});"/>
-                <p style="display: inline-block" id={{.GetUUID}} >{{.GetName}}</p>
+                <div id="div-{{.UUID}}">
+                <input type="submit" value="Remove from sync" class="btn btn-warning" onclick="deleteCalendar({{.UUID}});"/>
+                <p style="display: inline-block" id={{.UUID}} >{{.Name}}</p>
                 </div>
         {{end}}
     {{end}}

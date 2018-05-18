@@ -222,7 +222,6 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
-
 	switch r.Method {
 	case http.MethodGet:
 	case http.MethodPost:
@@ -235,6 +234,12 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
+	err = account.FindCalendars()
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
 	data := PageInfoAccounts{
 		PageTitle: account.Email,
 		User:      *currentUser,
@@ -258,7 +263,7 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageSession(w, r)
+	currentUser, ok := manageNewSession(w, r)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -278,21 +283,21 @@ func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
 		calendarIDs := r.Form["calendars"]
 		log.Debugf("calendar ids: %s", calendarIDs)
 
-		err := currentUser.AddCalendarsRelation(id, calendarIDs)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
+		//err := currentUser.AddCalendarsRelation(id, calendarIDs)
+		//if err != nil {
+		//	serverError(w, err)
+		//	return
+		//}
 		http.Redirect(w, r, "/calendars", http.StatusFound)
 	case http.MethodPatch:
 		parent := r.FormValue("parent")
 		log.Debugf("parents ids: %s", parent)
 
-		err := currentUser.UpdateCalendar(id, parent)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
+		//err := currentUser.UpdateCalendar(id, parent)
+		//if err != nil {
+		//	serverError(w, err)
+		//	return
+		//}
 		w.WriteHeader(http.StatusOK)
 	default:
 		notFound(w)

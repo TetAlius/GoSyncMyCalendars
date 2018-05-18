@@ -128,6 +128,17 @@ func (user *User) AddCalendarsToAccount(account Account, values []string) (err e
 	return
 
 }
+func (user *User) DeleteCalendar(id string) (err error) {
+	//	TODO: subscrition delete
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	uid, err := uuid.Parse(id)
+	calendar := Calendar{UUID: uid}
+	return calendar.deleteFromUser(db, user)
+}
 
 func findUserByID(db *sql.DB, id string) (user *User, err error) {
 	rows, err := db.Query("SELECT users.uuid, users.name,users.surname, users.email from users where users.uuid = $1;", id)
