@@ -63,7 +63,7 @@ func updateAccount(db *sql.DB, account api.AccountManager) (err error) {
 }
 
 func getAccountsByUser(db *sql.DB, userUUID uuid.UUID) (accounts []api.AccountManager, err error) {
-	rows, err := db.Query("SELECT accounts.token_type, accounts.refresh_token,accounts.email,accounts.kind,accounts.access_token,accounts.id, accounts.principal FROM accounts where user_uuid = $1 order by accounts.principal DESC, accounts.email ASC", userUUID)
+	rows, err := db.Query("SELECT accounts.token_type, accounts.refresh_token,accounts.email,accounts.kind,accounts.access_token,accounts.id, accounts.principal FROM accounts where user_uuid = $1 order by accounts.principal DESC, lower(accounts.email) ASC", userUUID)
 	if err != nil {
 		log.Errorf("could not query select: %s", err.Error())
 		return
@@ -98,7 +98,7 @@ func getAccountsByUser(db *sql.DB, userUUID uuid.UUID) (accounts []api.AccountMa
 }
 
 func getPrincipalAccountByUser(db *sql.DB, userUUID uuid.UUID) (principalAccount api.AccountManager, err error) {
-	rows, err := db.Query("SELECT accounts.token_type, accounts.refresh_token,accounts.email,accounts.kind,accounts.access_token,accounts.id, accounts.principal FROM accounts where user_uuid = $1 and accounts.principal =true order by accounts.email ASC", userUUID)
+	rows, err := db.Query("SELECT accounts.token_type, accounts.refresh_token,accounts.email,accounts.kind,accounts.access_token,accounts.id, accounts.principal FROM accounts where user_uuid = $1 and accounts.principal =true order by lower(accounts.email) ASC", userUUID)
 	if err != nil {
 		return
 	}

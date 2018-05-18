@@ -48,3 +48,19 @@ type ConfigNotChargedCorrectlyError struct {
 func (err ConfigNotChargedCorrectlyError) Error() string {
 	return fmt.Sprintln(err.Message)
 }
+
+type WrongKindError struct {
+	Mail string
+}
+
+func (err *WrongKindError) Error() string {
+	return fmt.Sprintf("wrong kind of account %s", err.Mail)
+}
+
+type NotFoundError struct {
+	Code int
+}
+
+func (err *NotFoundError) Error() string {
+	return fmt.Sprintf("")
+}

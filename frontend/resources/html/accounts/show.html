@@ -1,28 +1,23 @@
 {{define "content"}}
     <h1>Synced Calendars</h1>
-    {{if not .Account.GetSyncCalendars }}
+    {{if not .Account.Calendars }}
         <p>You have no calendars right now. Try adding calendars:</p>
     {{else}}
-        {{range .Account.GetSyncCalendars}}
+        {{range .Account.Calendars}}
                 <div id="div-{{.GetUUID}}">
                 <input type="submit" value="Remove from sync" class="btn btn-danger" onclick="deleteCalendar({{.GetUUID}});"/>
                 <p style="display: inline-block" id={{.GetUUID}} >{{.GetName}}</p>
                 </div>
         {{end}}
     {{end}}
-        <form action="/accounts/{{.Account.GetInternalID}}" method="post">
+        <form action="/accounts/{{.Account.ID}}" method="post">
             <div class="form-group">
                 <p>These are all the calendars that are available to sync.</p>
                 <p>Select all that you want to start syncing</p>
                 <p>Calendars that are already syncing will be ignored</p>
                 <p>If you want to remove them, click on the "Remove from sync" button, please</p>
-                <label for="calendars">Calendars</label>
+                <label for="calendars">Calendars</label> <button type="button" onclick="retrieveAllCalendars({{.Account.ID}})">Refresh</button>
                 <select multiple class="form-control" name="calendars" id="calendars">
-
-        {{range .Calendars}}
-                <option value={{.GetID}}>{{.GetName}}</option>
-        {{end}}
-
                 </select>
             </div>
             <input type="submit" value="Send"/>
@@ -37,6 +32,39 @@
                 url: "/calendars/"+id,
                 success: function(msg){
                     $("#div-"+id).remove();
+                }
+            });
+        }
+
+        function retrieveAllCalendars(id){
+            console.log(id);
+            $.ajax({
+                type: "GET",
+                dataType: 'text',
+                crossDomain: true,
+                url: "http://localhost:8081/accounts/"+id+"/calendars/",
+                // withCredentials:true,
+                headers: {
+                    "Authorization": btoa({{.User.Email}} + ":" + {{.User.UUID}})
+                },
+                success: function(data){
+                    var obj = JSON.parse(data);
+                    var select=$("#calendars");
+                    select.empty();
+                    for (var i = 0; i < obj.length; i++){
+                        var opt = document.createElement('option');
+                        var id =obj[i].Id || obj[i].id;
+                        var name=obj[i].Name || obj[i].summary;
+                        opt.value = btoa(id +":"+name);
+                        opt.innerHTML =name;
+                        select.append(opt);
+                    }
+                },
+                error: function(responseData, textStatus, errorThrown) {
+                    console.log("error");
+                    console.log(responseData);
+                    console.log(textStatus);
+                    console.log(errorThrown);
                 }
             });
         }

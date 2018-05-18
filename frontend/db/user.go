@@ -2,8 +2,12 @@ package db
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"net/http"
 
+	"strings"
+
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/google/uuid"
 )
@@ -81,6 +85,42 @@ func (user *User) setAccounts(db *sql.DB) (err error) {
 	user.Accounts = accounts
 	return
 }
+func (user *User) FindAccount(ID int) (account Account, err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	account = Account{User: user, ID: ID}
+	err = account.findAccount(db)
+
+	if err != nil {
+		log.Errorf("error retrieving account: %s for user: %s", ID, user.UUID)
+		return
+	}
+	return
+
+}
+func (user *User) AddCalendarsToAccount(account Account, values []string) (err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	for _, value := range values {
+		decodedToken, err := base64.StdEncoding.DecodeString(value)
+		if err != nil {
+			return err
+		}
+		info := strings.Split(string(decodedToken), ":")
+		err = account.addCalendar(db, Calendar{ID: info[0], Name: info[1]})
+		if err != nil {
+			log.Errorf("error adding calendar: %s", err.Error())
+		}
+	}
+	return
+
+}
 
 func findUserByID(db *sql.DB, id string) (user *User, err error) {
 	rows, err := db.Query("SELECT users.uuid, users.name,users.surname, users.email from users where users.uuid = $1;", id)
@@ -100,7 +140,7 @@ func findUserByID(db *sql.DB, id string) (user *User, err error) {
 		}
 		user = &User{UUID: uid, Name: name, Surname: surname, Email: email}
 	} else {
-		return nil, &NotFoundError{Code: http.StatusNotFound}
+		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
 	}
 
 	return

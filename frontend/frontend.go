@@ -39,6 +39,8 @@ type PageInfo struct {
 type PageInfoAccounts struct {
 	PageTitle string
 	User      db2.User
+	Account   db2.Account
+	Calendars []db2.Calendar
 }
 
 var root string
@@ -205,7 +207,7 @@ func (s *Server) accountListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageSession(w, r)
+	currentUser, ok := manageNewSession(w, r)
 	if !ok {
 		return
 	}
@@ -218,10 +220,6 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 	account, err := currentUser.FindAccount(id)
 	if err != nil {
 		serverError(w, err)
-		return
-	}
-	if account == nil {
-		notFound(w)
 		return
 	}
 
@@ -237,16 +235,10 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
-	account.Refresh()
-	calendars, err := currentUser.RetrieveCalendarsFromAccount(account)
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-	data := PageInfo{
-		PageTitle: account.Mail(),
+	data := PageInfoAccounts{
+		PageTitle: account.Email,
+		User:      *currentUser,
 		Account:   account,
-		Calendars: calendars,
 	}
 
 	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/accounts/show.html")

@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
 
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/google/uuid"
 )
@@ -41,6 +43,55 @@ func (account Account) save(db *sql.DB) (err error) {
 	if affect != 1 {
 		return errors.New(fmt.Sprintf("could not create new account for user %s with name: %s", account.User.Email, account.Email))
 	}
+	return
+
+}
+func (account *Account) findAccount(db *sql.DB) (err error) {
+	rows, err := db.Query("SELECT accounts.email,accounts.kind,accounts.id, accounts.principal FROM accounts where user_uuid = $1 and id = $2", account.User.UUID, account.ID)
+	if err != nil {
+		log.Errorf("error querying select: %s", err.Error())
+		return
+	}
+
+	defer rows.Close()
+	if rows.Next() {
+		var email string
+		var kind int
+		var id int
+		var principal bool
+		err = rows.Scan(&email, &kind, &id, &principal)
+		account.Email = email
+		account.Kind = kind
+		account.ID = id
+		account.Principal = principal
+	} else {
+		return &customErrors.NotFoundError{Code: http.StatusNotFound}
+	}
+	return
+
+}
+func (account Account) addCalendar(db *sql.DB, calendar Calendar) (err error) {
+	stmt, err := db.Prepare("insert into calendars(uuid, account_email, name, id) values ($1,$2,$3,$4);")
+	if err != nil {
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	calendar.UUID = uuid.New()
+	res, err := stmt.Exec(calendar.UUID, account.Email, calendar.Name, calendar.ID)
+	if err != nil {
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+	affect, err := res.RowsAffected()
+	if err != nil {
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return
+	}
+	if affect != 1 {
+		return errors.New(fmt.Sprintf("could not create new calendar with id: %s and name: %s", calendar.ID, calendar.Name))
+	}
+
 	return
 
 }

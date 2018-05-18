@@ -14,6 +14,14 @@ const (
 	NAME     = "postgres"
 )
 
+type WrongKindError struct {
+	Mail string
+}
+
+func (err *WrongKindError) Error() string {
+	return fmt.Sprintf("wrong kind of account %s", err.Mail)
+}
+
 func connect() (db *sql.DB, err error) {
 	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
 		USER, PASSWORD, NAME)
