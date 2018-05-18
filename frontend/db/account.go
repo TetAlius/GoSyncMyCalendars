@@ -43,10 +43,12 @@ func (account *Account) FindCalendars() (err error) {
 		var uid uuid.UUID
 		err = rows.Scan(&id, &name, &uid)
 		calendar := Calendar{
-			ID:   id,
-			Name: name,
-			UUID: uid,
+			ID:      id,
+			Name:    name,
+			UUID:    uid,
+			Account: *account,
 		}
+		calendar.setSynchronizedCalendars(db, account.Principal)
 		calendars = append(calendars, calendar)
 	}
 	account.Calendars = calendars
@@ -164,7 +166,6 @@ func getAccountsByUser(db *sql.DB, userUUID uuid.UUID) (principalAccount Account
 			return
 		}
 		if principal {
-
 			principalAccount = account
 		} else {
 			accounts = append(accounts, account)

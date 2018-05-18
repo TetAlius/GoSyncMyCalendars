@@ -2,6 +2,8 @@ package db
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/google/uuid"
@@ -15,6 +17,7 @@ type Calendar struct {
 	ParentUUID   uuid.UUID
 	Events       []Event
 	Subscription Subscription
+	Calendars    []Calendar
 }
 
 func (calendar Calendar) deleteFromUser(db *sql.DB, user *User) (err error) {
@@ -38,4 +41,67 @@ func (calendar Calendar) deleteFromUser(db *sql.DB, user *User) (err error) {
 
 	return
 
+}
+
+func updateCalendarFromUser(db *sql.DB, user *User, calendarUUID string, parentUUID string) (err error) {
+	stmt, err := db.Prepare("update calendars set parent_calendar_uuid = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid = $2 and calendars.uuid = $3;")
+	if err != nil {
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	var parent interface{}
+	parent = parentUUID
+	if len(parentUUID) == 0 {
+		parent = nil
+	}
+
+	res, err := stmt.Exec(parent, user.UUID, calendarUUID)
+	if err != nil {
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return
+	}
+	if affect != 1 {
+		return errors.New(fmt.Sprintf("could not update calendar with UUID: %s", calendarUUID))
+	}
+	return
+}
+
+func (calendar *Calendar) setSynchronizedCalendars(db *sql.DB, principal bool) (err error) {
+	var query string
+	if principal {
+		query = "select calendars.id, calendars.name, calendars.uuid, a.kind from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = $1"
+	} else {
+		query = "select calendars.id, calendars.name, calendars.uuid, a.kind from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1)"
+	}
+	rows, err := db.Query(query, calendar.UUID)
+	if err != nil {
+		log.Errorln("error selecting setSynchronizedCalendars")
+		return
+	}
+	var calendars []Calendar
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		var name string
+		var uid uuid.UUID
+		var cal Calendar
+		var kind int
+		err = rows.Scan(&id, &name, &uid, &kind)
+
+		cal = Calendar{
+			ID:   id,
+			Name: name,
+			UUID: uid,
+		}
+		calendars = append(calendars, cal)
+	}
+	calendar.Calendars = calendars
+	return
 }

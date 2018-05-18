@@ -10,55 +10,57 @@
 <table class="table table-bordered table-striped">
     <thead>
     <tr>
-        <th colspan={{inc $lenAccounts}}> {{ .Account.Mail }}</th>
+        <th colspan={{inc $lenAccounts}}> {{ .Account.Email }}</th>
         <th></th>
     </tr>
     </thead>
     <tbody>
-    {{range .Account.GetSyncCalendars}}
-        {{$calendarName := .GetName}}
+    {{range .Account.Calendars}}
+        {{$calendarName := .Name}}
         <tr>
             <td rowspan="2">
-            {{$calendarName}} ({{.GetAccount.Mail}})
+            {{$calendarName}} ({{.Account.Email}})
             <th colspan={{$lenAccounts}}>Linked:
-                {{ if lt (len .GetCalendars) (dec $lenAccounts) }}
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#{{.GetUUID}}">
+                {{ if lt (len .Calendars) ($lenAccounts) }}
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#{{.UUID}}">
                         <span data-toggle="tooltip" data-placement="top" title="Link more calendars to {{$calendarName}}">Link Calendars</span>
                     </button>
                 {{end}}
             </th>
             <td rowspan="2">
-                <input type="submit" class="btn btn-success" value="Start synchronization" data-toggle="tooltip" data-placement="top" title="Start Synchronizing {{$calendarName}}" onclick="start({{.GetUUID}});"/>
+                <input type="submit" class="btn btn-success" value="Start synchronization" data-toggle="tooltip" data-placement="top" title="Start Synchronizing {{$calendarName}}" onclick="start({{.UUID}});"/>
             </td>
 
         <tr>
-        {{range .GetCalendars}}
-            <td id="td-{{.GetUUID}}">
-            <div>{{.GetName}}
-                <input type="submit" class="btn btn-warning" value="Unlink relation" data-toggle="tooltip" data-placement="top" title="Unlink {{.GetName}} from {{$calendarName}}" onclick="deleteRelationCalendar({{.GetUUID}});"/>
+        {{range .Calendars}}
+            <td id="td-{{.UUID}}">
+            <div>{{.Name}}({{.Account.Email}})
+                <input type="submit" class="btn btn-warning" value="Unlink relation" data-toggle="tooltip" data-placement="top" title="Unlink {{.Name}} from {{$calendarName}}" onclick="deleteRelationCalendar({{.UUID}});"/>
             </div>
             </td>
         {{end}}
         </tr>
         <!-- Modal -->
-        <div class="modal fade" id="{{.GetUUID}}" tabindex="-1" role="dialog" aria-labelledby="modal-{{.GetUUID}}-label" aria-hidden="true">
+        <div class="modal fade" id="{{.UUID}}" tabindex="-1" role="dialog" aria-labelledby="modal-{{.UUID}}-label" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="modal-{{.GetUUID}}-label">Add calendars to sync</h5>
+                        <h5 class="modal-title" id="modal-{{.UUID}}-label">Add calendars to sync</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form action="/calendars/{{.GetUUID}}" method="post">
+                    <form action="/calendars/{{.UUID}}" method="post">
                     {{range $.User.Accounts}}
                     {{if not .Principal}}
                         <div class="form-group">
-                            <label for="calendars">{{.Mail}}</label>
+                            <label for="calendars">{{.Email}}</label>
                             <select class="form-control" name="calendars" id="calendars">
                                 <option>Select</option>
-                            {{range .GetSyncCalendars}}
-                                <option value={{.GetUUID}}>{{.GetName}}</option>
+                            {{range .Calendars}}
+                                    {{if eq (len .Calendars) 0}}
+                                <option value={{.UUID}}>{{.Name}}</option>
+                                            {{end}}
                             {{end}}
                             </select>
                         </div>

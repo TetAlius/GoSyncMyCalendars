@@ -140,7 +140,7 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageSession(w, r)
+	currentUser, ok := manageNewSession(w, r)
 	if !ok {
 		return
 	}
@@ -149,17 +149,12 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
-	account, err := currentUser.GetPrincipalAccount()
-	if err != nil {
-		serverError(w, err)
-		return
-	}
 
-	data := PageInfo{
+	data := PageInfoAccounts{
 		PageTitle: "Calendars",
 		//TODO: remove this user
 		User:    *currentUser,
-		Account: account,
+		Account: currentUser.PrincipalAccount,
 	}
 	t, err := template.New("layout.html").Funcs(funcMap).ParseFiles(root+"/html/shared/layout.html", root+"/html/calendars/list.html")
 	if err != nil {
@@ -283,21 +278,21 @@ func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
 		calendarIDs := r.Form["calendars"]
 		log.Debugf("calendar ids: %s", calendarIDs)
 
-		//err := currentUser.AddCalendarsRelation(id, calendarIDs)
-		//if err != nil {
-		//	serverError(w, err)
-		//	return
-		//}
+		err := currentUser.AddCalendarsRelation(id, calendarIDs)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
 		http.Redirect(w, r, "/calendars", http.StatusFound)
 	case http.MethodPatch:
 		parent := r.FormValue("parent")
 		log.Debugf("parents ids: %s", parent)
 
-		//err := currentUser.UpdateCalendar(id, parent)
-		//if err != nil {
-		//	serverError(w, err)
-		//	return
-		//}
+		err := currentUser.UpdateCalendar(id, parent)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 	default:
 		notFound(w)
@@ -358,24 +353,6 @@ func serverError(w http.ResponseWriter, error error) {
 	if err != nil {
 		log.Errorln(err)
 	}
-}
-
-func manageSession(w http.ResponseWriter, r *http.Request) (*db.User, bool) {
-	session, ok := r.Context().Value("Session").(string)
-	if !ok {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return nil, false
-	}
-	user, err := db.RetrieveUser(session)
-	if err != nil {
-		serverError(w, err)
-		return nil, false
-	}
-	if user == nil {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return nil, false
-	}
-	return user, true
 }
 
 func manageNewSession(w http.ResponseWriter, r *http.Request) (*db2.User, bool) {

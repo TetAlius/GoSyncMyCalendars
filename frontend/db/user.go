@@ -3,6 +3,8 @@ package db
 import (
 	"database/sql"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"strings"
@@ -138,6 +140,51 @@ func (user *User) DeleteCalendar(id string) (err error) {
 	uid, err := uuid.Parse(id)
 	calendar := Calendar{UUID: uid}
 	return calendar.deleteFromUser(db, user)
+}
+func (user *User) AddCalendarsRelation(parentCalendarUUID string, calendarIDs []string) (err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	stmt, err := db.Prepare("update calendars set (parent_calendar_uuid) = ($1) from accounts as a where calendars.uuid = $2 and calendars.account_email = a.email and a.user_uuid = $3")
+	if err != nil {
+		log.Errorf("error preparing query: %s", err.Error())
+		return err
+	}
+	defer stmt.Close()
+	for _, childID := range calendarIDs {
+		_, err := uuid.Parse(childID)
+		if err != nil {
+			continue
+		}
+		res, err := stmt.Exec(parentCalendarUUID, childID, user.UUID)
+		if err != nil {
+			log.Errorf("error executing query: %s", err.Error())
+			return err
+		}
+
+		affect, err := res.RowsAffected()
+		if err != nil {
+			log.Errorf("error retrieving rows affected: %s", err.Error())
+			return err
+		}
+		if affect != 1 {
+			return errors.New(fmt.Sprintf("could not create relations with parent: %s and child: %s", parentCalendarUUID, childID))
+		}
+
+	}
+	return
+
+}
+func (user *User) UpdateCalendar(calendarID string, parentID string) (err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	return updateCalendarFromUser(db, user, calendarID, parentID)
+
 }
 
 func findUserByID(db *sql.DB, id string) (user *User, err error) {
