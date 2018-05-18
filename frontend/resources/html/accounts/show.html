@@ -55,7 +55,7 @@
                         var opt = document.createElement('option');
                         var id =obj[i].Id || obj[i].id;
                         var name=obj[i].Name || obj[i].summary;
-                        opt.value = btoa(id +":"+name);
+                        opt.value = btoa(encodeURIComponent(id +":::"+name));
                         opt.innerHTML =name;
                         select.append(opt);
                     }

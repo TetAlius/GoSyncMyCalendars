@@ -7,6 +7,8 @@ import (
 
 	"strings"
 
+	"net/url"
+
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/google/uuid"
@@ -112,7 +114,12 @@ func (user *User) AddCalendarsToAccount(account Account, values []string) (err e
 		if err != nil {
 			return err
 		}
-		info := strings.Split(string(decodedToken), ":")
+		query, err := url.QueryUnescape(string(decodedToken[:]))
+		if err != nil {
+			log.Errorf("error unscaping url: %s", query)
+		}
+		info := strings.Split(query, ":::")
+
 		err = account.addCalendar(db, Calendar{ID: info[0], Name: info[1]})
 		if err != nil {
 			log.Errorf("error adding calendar: %s", err.Error())
