@@ -40,6 +40,81 @@ func RetrieveUser(uuid string) (user *User, err error) {
 	return
 }
 
+func GetUserFromToken(token string) (user *User, err error) {
+	db, err := connect()
+	if err != nil {
+		log.Errorf("db could not load: %s", err.Error())
+	}
+	defer db.Close()
+	email := token
+	user, err = findUserByMail(db, email)
+	if _, ok := err.(*customErrors.NotFoundError); ok {
+		log.Debugf("no user found with email %s", email)
+		user = &User{UUID: uuid.New(), Name: "TESTING", Email: email, Surname: "asasd"}
+		err = user.creteUser(db)
+	}
+	if err != nil {
+		log.Errorf("error retrieving email: %s", email)
+		return nil, err
+
+	}
+	log.Infof("user with email %s successfully retrieve from DB", user.Email)
+	err = user.setAccounts(db)
+	if err != nil {
+		log.Errorf("error retrieving accounts: %s", err.Error())
+	}
+
+	return
+}
+
+func (user *User) creteUser(db *sql.DB) (err error) {
+	stmt, err := db.Prepare("insert into users(uuid,email,name,surname) values ($1,$2,$3,$4);")
+	if err != nil {
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(user.UUID, user.Email, user.Name, user.Surname)
+	if err != nil {
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+	affect, err := res.RowsAffected()
+	if err != nil {
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return
+	}
+	if affect != 1 {
+		return errors.New(fmt.Sprintf("could not create new user with mail: %s", user.Email))
+	}
+	return
+}
+
+func findUserByMail(db *sql.DB, email string) (user *User, err error) {
+	rows, err := db.Query("SELECT users.uuid,users.name,users.surname,users.email from users where users.email = $1;", email)
+	if err != nil {
+		log.Errorf("error querying: %s", err.Error())
+		return
+	}
+	defer rows.Close()
+	if rows.Next() {
+		var uid uuid.UUID
+		var name string
+		var surname string
+		var email string
+		err = rows.Scan(&uid, &name, &surname, &email)
+		if err != nil {
+			log.Errorf("error on scan: %s", err.Error())
+			return
+		}
+		user = &User{UUID: uid, Name: name, Surname: surname, Email: email}
+	} else {
+		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
+	}
+
+	return
+}
+
 func (user *User) AddAccount(account Account) (err error) {
 	db, err := connect()
 	if err != nil {
@@ -89,6 +164,7 @@ func (user *User) setAccounts(db *sql.DB) (err error) {
 	user.Accounts = accounts
 	return
 }
+
 func (user *User) FindAccount(ID int) (account Account, err error) {
 	db, err := connect()
 	if err != nil {
@@ -141,6 +217,7 @@ func (user *User) DeleteCalendar(id string) (err error) {
 	calendar := Calendar{UUID: uid}
 	return calendar.deleteFromUser(db, user)
 }
+
 func (user *User) AddCalendarsRelation(parentCalendarUUID string, calendarIDs []string) (err error) {
 	db, err := connect()
 	if err != nil {

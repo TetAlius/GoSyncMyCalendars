@@ -27,15 +27,13 @@ func NewOutlookAccount(contents []byte) (a *OutlookAccount, err error) {
 	return
 }
 
-func RetrieveOutlookAccount(tokenType string, refreshToken string, email string, kind int, accessToken string, id int, principal bool) (a *OutlookAccount) {
+func RetrieveOutlookAccount(tokenType string, refreshToken string, email string, kind int, accessToken string) (a *OutlookAccount) {
 	a = new(OutlookAccount)
 	a.TokenType = tokenType
 	a.RefreshToken = refreshToken
 	a.AnchorMailbox = email
 	a.Kind = kind
 	a.AccessToken = accessToken
-	a.InternID = id
-	a.principal = principal
 	return
 }
 

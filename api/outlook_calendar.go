@@ -8,6 +8,8 @@ import (
 
 	"net/http"
 
+	"strings"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -70,12 +72,21 @@ func (calendar *OutlookCalendar) Update() error {
 		bytes.NewBuffer(data),
 		headers, nil)
 
+	log.Debugf("contents: %s", contents)
 	if err != nil {
 		return errors.New(fmt.Sprintf("error updating a calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
 	}
 	err = createOutlookResponseError(contents)
-	if err != nil {
+	// default outlook calendar cannot be renamed, so ignore this kind of error as the request is valid.
+	if err != nil && !strings.Contains(err.Error(), "default calendar cannot be renamed") {
 		return err
+	}
+	if err != nil && strings.Contains(err.Error(), "default calendar cannot be renamed") {
+		cal, err := calendar.GetAccount().GetCalendar(calendar.GetID())
+		if err != nil {
+			return err
+		}
+		convert(cal, calendar)
 	}
 
 	calendarResponse := OutlookCalendarResponse{OdataContext: "", OutlookCalendar: calendar}
@@ -244,4 +255,8 @@ func (calendar *OutlookCalendar) SetCalendars(calendars []CalendarManager) {
 }
 func (calendar *OutlookCalendar) GetCalendars() []CalendarManager {
 	return calendar.calendars
+}
+
+func (calendar *OutlookCalendar) SetName(name string) {
+	calendar.Name = name
 }

@@ -1,8 +1,11 @@
 {{define "content"}}
 {{$lenAccounts:= len .User.Accounts}}
-<h1 style="display: inline-block">List of all calendars</h1> <a class="btn btn-dark" href="/accounts"><span data-toggle="tooltip" data-placement="top" title="You currently have {{$lenAccounts}} accounts">Add more Accounts</span> <span class="badge badge-light">+</span></a>
+<h1 style="display: inline-block">List of all calendars</h1> <a class="btn btn-dark" href="/accounts"><span data-toggle="tooltip" data-placement="top" title="You currently have {{inc $lenAccounts}} accounts">Add more Accounts</span> <span class="badge badge-light">+</span></a>
 <p>Every calendar that is added to sync inside the primary account will generate a new calendar in the other accounts if no calendar is given to sync.</p>
 <p>All calendars will have the same name as the one inside principal.</p>
+<div id="account-error" class="alert alert-info" role="alert">
+    Keep in mind the default outlook calendar cannot be renamed, so it won't have the same name as principal.
+</div>
 {{if not .User.Accounts }}
 <p>You have no calendars right now. Try adding some accounts to sync:</p>
 <br/>
@@ -11,31 +14,41 @@
     <thead>
     <tr>
         <th colspan={{inc $lenAccounts}}> {{ .Account.Email }}</th>
-        <th></th>
+        <th>
+            <button type="button" class="btn btn-primary" data-toggle="modal" id="refresh" onclick="refreshCalendarNames()">
+            <span data-toggle="tooltip" data-placement="top" title="Refresh all calendar names"><span class="fas fa-sync"></span> Refresh calendar Names</span>
+        </button></th>
     </tr>
     </thead>
     <tbody>
     {{range .Account.Calendars}}
         {{$calendarName := .Name}}
+        {{$subscription := (existsUUID .SubscriptionUUID)}}
         <tr>
             <td rowspan="2">
             {{$calendarName}} ({{.Account.Email}})
             <th colspan={{$lenAccounts}}>Linked:
-                {{ if lt (len .Calendars) ($lenAccounts) }}
+                {{ if and (lt (len .Calendars) ($lenAccounts)) (not $subscription)}}
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#{{.UUID}}">
                         <span data-toggle="tooltip" data-placement="top" title="Link more calendars to {{$calendarName}}">Link Calendars</span>
                     </button>
                 {{end}}
             </th>
             <td rowspan="2">
-                <input type="submit" class="btn btn-success" value="Start synchronization" data-toggle="tooltip" data-placement="top" title="Start Synchronizing {{$calendarName}}" onclick="start({{.UUID}});"/>
+                    {{if $subscription}}
+                        <input type="submit" class="btn btn-warning" value="Stop synchronization" data-toggle="tooltip" data-placement="top" title="Stop Synchronizing {{$calendarName}}" onclick="stop({{.UUID}});"/>
+                    {{else}}
+                        <input type="submit" class="btn btn-success" value="Start synchronization" data-toggle="tooltip" data-placement="top" title="Start Synchronizing {{$calendarName}}" onclick="start({{.UUID}});"/>
+                    {{end}}
             </td>
 
         <tr>
         {{range .Calendars}}
             <td id="td-{{.UUID}}">
-            <div>{{.Name}}({{.Account.Email}})
-                <input type="submit" class="btn btn-warning" value="Unlink relation" data-toggle="tooltip" data-placement="top" title="Unlink {{.Name}} from {{$calendarName}}" onclick="deleteRelationCalendar({{.UUID}});"/>
+            <div>{{.Name}} ({{.AccountEmail}})
+                {{if not $subscription}}
+                    <input type="submit" class="btn btn-warning" value="Unlink relation" data-toggle="tooltip" data-placement="top" title="Unlink {{.Name}} from {{$calendarName}}" onclick="deleteRelationCalendar({{.UUID}});"/>
+                {{end}}
             </div>
             </td>
         {{end}}
@@ -82,6 +95,7 @@
 {{define "javascript"}}
 <script>
     function deleteRelationCalendar(id){
+        $("#loader-wrapper").removeClass("hidden");
         $('[data-toggle="tooltip"]').tooltip('hide');
         console.log(id);
         $.ajax({
@@ -92,12 +106,56 @@
             },
             success: function(msg){
                 $("#td-"+id).remove();
+                location.reload()
             }
         });
     }
+    function refreshCalendarNames(){
+        $("#loader-wrapper").removeClass("hidden");
+        $.ajax({
+            type: "POST",
+            dataType: null,
+            crossDomain: true,
+            url: "http://localhost:8081/refresh/",
+            headers: {
+                "Authorization": btoa({{.User.Email}} +":" + {{.User.UUID}})
+            },
+            success: function (data) {
+                location.reload();
+            },
+            error: function (responseData, textStatus, errorThrown) {
+                console.log("error");
+                console.log(responseData);
+                console.log(textStatus);
+                console.log(errorThrown);
+                refresh.removeAttr("disabled");
+                $("#loader-wrapper").addClass("hidden");
+            }
+        });
 
+    }
     function start(uuid){
-        console.log("start "+uuid);
+        $("#loader-wrapper").removeClass("hidden");
+        console.log(uuid);
+        $.ajax({
+            type: "POST",
+            dataType: null,
+            crossDomain: true,
+            url: "http://localhost:8081/subscribe/" + uuid,
+            headers: {
+                "Authorization": btoa({{.User.Email}} +":" + {{.User.UUID}})
+            },
+            success: function (data) {
+                console.log(data);
+                location.reload();
+            },
+            error: function (responseData, textStatus, errorThrown) {
+                console.log("error");
+                console.log(responseData);
+                console.log(textStatus);
+                console.log(errorThrown);
+            }
+        });
     }
 </script>
 {{end}}

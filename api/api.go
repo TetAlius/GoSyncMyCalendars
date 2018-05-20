@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/TetAlius/GoSyncMyCalendars/logger"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 const (
@@ -66,6 +66,7 @@ type CalendarManager interface {
 	GetQueryID() string
 	GetName() string
 	GetAccount() AccountManager
+	SetName(string)
 	GetUUID() string
 	SetUUID(string)
 }
@@ -118,7 +119,7 @@ func Convert(from EventManager, to EventManager) (err error) {
 }
 
 func convert(in interface{}, out interface{}) (err error) {
-	logger.Debugln("Converting...")
+	log.Debugln("Converting...")
 	tag := "sync"
 	//m := make(map[string]interface{})
 
@@ -139,7 +140,7 @@ func convert(in interface{}, out interface{}) (err error) {
 		// gets us a StructField
 		fi := typ.Field(i)
 		if tagv := fi.Tag.Get(tag); tagv != "" && tagv != "-" {
-			logger.Debugf("tag: %s, value: %s", tagv, v.Field(i).Interface())
+			log.Debugf("tag: %s, value: %s", tagv, v.Field(i).Interface())
 			err := setField(out, tagv, v.Field(i).Interface())
 			if err != nil {
 				return err
@@ -169,4 +170,38 @@ func setField(obj interface{}, name string, value interface{}) error {
 
 	structFieldValue.Set(val)
 	return nil
+}
+
+func StartSync(calendar CalendarManager) (err error) {
+	err = calendar.GetAccount().Refresh()
+	if err != nil {
+		log.Errorf("error refreshing account: %s", err.Error())
+		return
+	}
+
+	cal, err := calendar.GetAccount().GetCalendar(calendar.GetID())
+	convert(cal, calendar)
+	for _, calen := range calendar.GetCalendars() {
+		err := convert(calendar, calen)
+		if err != nil {
+			log.Errorf("error converting info: %s", err.Error())
+			return err
+		}
+		log.Debugf("Name1: %s Name2: %s", calendar.GetName(), calen.GetName())
+		err = calen.GetAccount().Refresh()
+		if err != nil {
+			log.Errorf("error refreshing account calendar: %s error: %s", calen.GetID(), err.Error())
+			return err
+		}
+		err = calen.Update()
+
+		if err != nil {
+			log.Errorf("error updating calendar: %s error: %s", calen.GetID(), err.Error())
+			return err
+		}
+	}
+	//TODO: create subscriptions for all calendars
+	//TODO synchronize all events from principal to the other accounts
+
+	return
 }

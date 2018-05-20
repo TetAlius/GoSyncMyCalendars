@@ -29,7 +29,12 @@ func (account *Account) FindCalendars() (err error) {
 		log.Errorf("db could not load: %s", err.Error())
 	}
 	defer db.Close()
-	rows, err := db.Query("select calendars.id, calendars.name, calendars.uuid from calendars join accounts a on calendars.account_email = a.email where a.id=$1 order by calendars.name ASC", account.ID)
+	return account.findCalendars(db)
+
+}
+
+func (account *Account) findCalendars(db *sql.DB) (err error) {
+	rows, err := db.Query("select calendars.id, calendars.name, calendars.uuid, s2.uuid from calendars join accounts a on calendars.account_email = a.email left outer join subscriptions s2 on calendars.uuid = s2.calendar_uuid where a.id=$1 order by calendars.name ASC", account.ID)
 	if err != nil {
 		log.Errorln("error selecting findCalendarsFromAccount")
 		return
@@ -41,13 +46,9 @@ func (account *Account) FindCalendars() (err error) {
 		var id string
 		var name string
 		var uid uuid.UUID
-		err = rows.Scan(&id, &name, &uid)
-		calendar := Calendar{
-			ID:      id,
-			Name:    name,
-			UUID:    uid,
-			Account: *account,
-		}
+		var subscription uuid.UUID
+		err = rows.Scan(&id, &name, &uid, &subscription)
+		calendar := newCalendar(id, name, uid, account.Email, *account, subscription)
 		calendar.setSynchronizedCalendars(db, account.Principal)
 		calendars = append(calendars, calendar)
 	}
@@ -160,7 +161,7 @@ func getAccountsByUser(db *sql.DB, userUUID uuid.UUID) (principalAccount Account
 			ID:           id,
 			Principal:    principal,
 		}
-		err = account.FindCalendars()
+		err = account.findCalendars(db)
 		if err != nil {
 			log.Errorf("error adding calendars: %s", account.ID)
 			return

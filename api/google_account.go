@@ -32,15 +32,13 @@ func NewGoogleAccount(contents []byte) (a *GoogleAccount, err error) {
 	return
 }
 
-func RetrieveGoogleAccount(tokenType string, refreshToken string, email string, kind int, accessToken string, id int, principal bool) (a *GoogleAccount) {
+func RetrieveGoogleAccount(tokenType string, refreshToken string, email string, kind int, accessToken string) (a *GoogleAccount) {
 	a = new(GoogleAccount)
 	a.TokenType = tokenType
 	a.RefreshToken = refreshToken
 	a.Email = email
 	a.Kind = kind
 	a.AccessToken = accessToken
-	a.InternID = id
-	a.principal = principal
 	return
 }
 

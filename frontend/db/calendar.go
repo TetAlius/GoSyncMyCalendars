@@ -10,14 +10,27 @@ import (
 )
 
 type Calendar struct {
-	UUID         uuid.UUID
-	Account      Account
-	Name         string
-	ID           string
-	ParentUUID   uuid.UUID
-	Events       []Event
-	Subscription Subscription
-	Calendars    []Calendar
+	UUID             uuid.UUID
+	AccountEmail     string
+	Account          Account
+	Name             string
+	ID               string
+	ParentUUID       uuid.UUID
+	Events           []Event
+	SubscriptionUUID uuid.UUID
+	Calendars        []Calendar
+}
+
+func newCalendar(id string, name string, uid uuid.UUID, accountEmail string, account Account, subscriptionUUID uuid.UUID) Calendar {
+	return Calendar{
+		ID:               id,
+		Name:             name,
+		UUID:             uid,
+		AccountEmail:     accountEmail,
+		Account:          account,
+		SubscriptionUUID: subscriptionUUID,
+	}
+
 }
 
 func (calendar Calendar) deleteFromUser(db *sql.DB, user *User) (err error) {
@@ -76,9 +89,9 @@ func updateCalendarFromUser(db *sql.DB, user *User, calendarUUID string, parentU
 func (calendar *Calendar) setSynchronizedCalendars(db *sql.DB, principal bool) (err error) {
 	var query string
 	if principal {
-		query = "select calendars.id, calendars.name, calendars.uuid, a.kind from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = $1"
+		query = "select calendars.id, calendars.name, calendars.uuid, a.kind, a.email, s2.uuid from calendars join accounts a on calendars.account_email = a.email left outer join subscriptions s2 on calendars.uuid = s2.calendar_uuid where calendars.parent_calendar_uuid = $1"
 	} else {
-		query = "select calendars.id, calendars.name, calendars.uuid, a.kind from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1)"
+		query = "select calendars.id, calendars.name, calendars.uuid, a.kind, a.email, s2.uuid from calendars join accounts a on calendars.account_email = a.email left outer join subscriptions s2 on calendars.uuid = s2.calendar_uuid where calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1)"
 	}
 	rows, err := db.Query(query, calendar.UUID)
 	if err != nil {
@@ -93,13 +106,11 @@ func (calendar *Calendar) setSynchronizedCalendars(db *sql.DB, principal bool) (
 		var uid uuid.UUID
 		var cal Calendar
 		var kind int
-		err = rows.Scan(&id, &name, &uid, &kind)
+		var accountEmail string
+		var subscriptionUUID uuid.UUID
+		err = rows.Scan(&id, &name, &uid, &kind, &accountEmail, &subscriptionUUID)
 
-		cal = Calendar{
-			ID:   id,
-			Name: name,
-			UUID: uid,
-		}
+		cal = newCalendar(id, name, uid, accountEmail, Account{Email: accountEmail}, subscriptionUUID)
 		calendars = append(calendars, cal)
 	}
 	calendar.Calendars = calendars

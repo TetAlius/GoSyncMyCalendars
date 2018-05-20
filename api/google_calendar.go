@@ -279,6 +279,9 @@ func (calendar *GoogleCalendar) GetUUID() string {
 func (calendar *GoogleCalendar) SetUUID(id string) {
 	calendar.uuid = id
 }
+func (calendar *GoogleCalendar) SetName(name string) {
+	calendar.Name = name
+}
 
 func (calendar *GoogleCalendar) SetCalendars(calendars []CalendarManager) {
 	calendar.calendars = calendars

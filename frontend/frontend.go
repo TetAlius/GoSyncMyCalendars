@@ -12,11 +12,10 @@ import (
 
 	"strconv"
 
-	"github.com/TetAlius/GoSyncMyCalendars/api"
-	"github.com/TetAlius/GoSyncMyCalendars/db"
-	db2 "github.com/TetAlius/GoSyncMyCalendars/frontend/db"
+	"github.com/TetAlius/GoSyncMyCalendars/frontend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
+	"github.com/google/uuid"
 )
 
 //Frontend object
@@ -30,17 +29,9 @@ type Server struct {
 type PageInfo struct {
 	PageTitle string
 	User      db.User
+	Account   db.Account
+	Calendars []db.Calendar
 	Error     string
-	Account   api.AccountManager
-	Calendar  api.CalendarManager
-	Calendars []api.CalendarManager
-}
-
-type PageInfoAccounts struct {
-	PageTitle string
-	User      db2.User
-	Account   db2.Account
-	Calendars []db2.Calendar
 }
 
 var root string
@@ -50,6 +41,8 @@ var funcMap = template.FuncMap{
 		return i + 1
 	}, "dec": func(i int) int {
 		return i - 1
+	}, "existsUUID": func(uid uuid.UUID) bool {
+		return uid.String() != "00000000-0000-0000-0000-000000000000"
 	},
 }
 
@@ -150,11 +143,10 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := PageInfoAccounts{
+	data := PageInfo{
 		PageTitle: "Calendars",
-		//TODO: remove this user
-		User:    *currentUser,
-		Account: currentUser.PrincipalAccount,
+		User:      *currentUser,
+		Account:   currentUser.PrincipalAccount,
 	}
 	t, err := template.New("layout.html").Funcs(funcMap).ParseFiles(root+"/html/shared/layout.html", root+"/html/calendars/list.html")
 	if err != nil {
@@ -182,7 +174,7 @@ func (s *Server) accountListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := PageInfoAccounts{
+	data := PageInfo{
 		PageTitle: "Accounts",
 		User:      *currentUser,
 	}
@@ -235,7 +227,7 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := PageInfoAccounts{
+	data := PageInfo{
 		PageTitle: account.Email,
 		User:      *currentUser,
 		Account:   account,
@@ -355,13 +347,13 @@ func serverError(w http.ResponseWriter, error error) {
 	}
 }
 
-func manageNewSession(w http.ResponseWriter, r *http.Request) (*db2.User, bool) {
+func manageNewSession(w http.ResponseWriter, r *http.Request) (*db.User, bool) {
 	session, ok := r.Context().Value("Session").(string)
 	if !ok {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return nil, false
 	}
-	user, err := db2.RetrieveUser(session)
+	user, err := db.RetrieveUser(session)
 	if err != nil {
 		serverError(w, err)
 		return nil, false

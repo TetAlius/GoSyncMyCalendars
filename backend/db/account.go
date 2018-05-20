@@ -45,9 +45,9 @@ func findAccountFromUser(db *sql.DB, userUUID string, internalID string) (accoun
 		err = rows.Scan(&email, &kind, &id, &tokenType, &refreshToken, &accessToken)
 		switch kind {
 		case api.GOOGLE:
-			account = api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken, id, false)
+			account = api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken)
 		case api.OUTLOOK:
-			account = api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken, id, false)
+			account = api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken)
 		default:
 			return nil, &WrongKindError{email}
 		}
