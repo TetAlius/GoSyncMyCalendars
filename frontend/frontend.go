@@ -12,6 +12,8 @@ import (
 
 	"strconv"
 
+	"database/sql"
+
 	"github.com/TetAlius/GoSyncMyCalendars/frontend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
@@ -20,10 +22,11 @@ import (
 
 //Frontend object
 type Server struct {
-	IP     net.IP
-	Port   int
-	server *http.Server
-	mux    http.Handler
+	IP       net.IP
+	Port     int
+	server   *http.Server
+	mux      http.Handler
+	database db.Database
 }
 
 type PageInfo struct {
@@ -51,10 +54,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //NewFrontend creates a frontend
-func NewServer(ip string, port int, dir string) *Server {
+func NewServer(ip string, port int, dir string, database *sql.DB) *Server {
 	mux := http.NewServeMux()
 	root = dir
-	server := Server{IP: net.ParseIP(ip), Port: port}
+	server := Server{IP: net.ParseIP(ip), Port: port, database: db.Database{DB: database}}
 	cssFileServer := http.StripPrefix("/css/", http.FileServer(http.Dir(root+"/css/")))
 	jsFileServer := http.StripPrefix("/js/", http.FileServer(http.Dir(root+"/js/")))
 	imagesFileServer := http.StripPrefix("/images/", http.FileServer(http.Dir(root+"/images/")))
@@ -133,11 +136,11 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageNewSession(w, r)
+	currentUser, ok := s.manageSession(w, r)
 	if !ok {
 		return
 	}
-	err := currentUser.SetAccounts()
+	err := s.database.SetUserAccounts(currentUser)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -164,11 +167,11 @@ func (s *Server) calendarListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) accountListHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageNewSession(w, r)
+	currentUser, ok := s.manageSession(w, r)
 	if !ok {
 		return
 	}
-	err := currentUser.SetAccounts()
+	err := s.database.SetUserAccounts(currentUser)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -194,7 +197,7 @@ func (s *Server) accountListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageNewSession(w, r)
+	currentUser, ok := s.manageSession(w, r)
 	if !ok {
 		return
 	}
@@ -204,7 +207,7 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
-	account, err := currentUser.FindAccount(id)
+	account, err := s.database.FindAccount(currentUser, id)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -216,12 +219,12 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm() // Required if you don't call r.FormValue()
 		calendarIDs := r.Form["calendars"]
 		log.Debugf("IDs: %s", calendarIDs)
-		currentUser.AddCalendarsToAccount(account, calendarIDs)
+		s.database.AddCalendarsToAccount(currentUser, account, calendarIDs)
 	default:
 		serverError(w, err)
 		return
 	}
-	err = account.FindCalendars()
+	err = s.database.FindCalendars(&account)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -250,7 +253,7 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageNewSession(w, r)
+	currentUser, ok := s.manageSession(w, r)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -259,7 +262,7 @@ func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodDelete:
 
-		err := currentUser.DeleteCalendar(id)
+		err := s.database.DeleteCalendar(currentUser, id)
 		if err != nil {
 			serverError(w, err)
 			return
@@ -270,7 +273,7 @@ func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
 		calendarIDs := r.Form["calendars"]
 		log.Debugf("calendar ids: %s", calendarIDs)
 
-		err := currentUser.AddCalendarsRelation(id, calendarIDs)
+		err := s.database.AddCalendarsRelation(currentUser, id, calendarIDs)
 		if err != nil {
 			serverError(w, err)
 			return
@@ -280,7 +283,7 @@ func (s *Server) calendarHandler(w http.ResponseWriter, r *http.Request) {
 		parent := r.FormValue("parent")
 		log.Debugf("parents ids: %s", parent)
 
-		err := currentUser.UpdateCalendar(id, parent)
+		err := s.database.UpdateCalendar(currentUser, id, parent)
 		if err != nil {
 			serverError(w, err)
 			return
@@ -298,7 +301,7 @@ func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		token := r.FormValue("idtoken")
 		email, _, _ := util.MailFromToken(strings.Split(token, "."), "==")
-		user, err := db.GetUserFromToken(email) //strings.Split(token, ".")[1])
+		user, err := s.database.GetUserFromToken(email)
 		if err != nil {
 			log.Errorf("error retrieving user: %s", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -347,13 +350,13 @@ func serverError(w http.ResponseWriter, error error) {
 	}
 }
 
-func manageNewSession(w http.ResponseWriter, r *http.Request) (*db.User, bool) {
+func (s *Server) manageSession(w http.ResponseWriter, r *http.Request) (*db.User, bool) {
 	session, ok := r.Context().Value("Session").(string)
 	if !ok {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return nil, false
 	}
-	user, err := db.RetrieveUser(session)
+	user, err := s.database.RetrieveUser(session)
 	if err != nil {
 		serverError(w, err)
 		return nil, false
@@ -370,5 +373,6 @@ func (s *Server) Stop() (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	log.Debugf("Stopping frontend with ctx: %s", ctx)
 	err = s.server.Shutdown(nil)
+	s.database.Close()
 	return
 }

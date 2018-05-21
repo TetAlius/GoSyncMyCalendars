@@ -14,6 +14,10 @@ const (
 	NAME     = "postgres"
 )
 
+type Database struct {
+	*sql.DB
+}
+
 type WrongKindError struct {
 	Mail string
 }

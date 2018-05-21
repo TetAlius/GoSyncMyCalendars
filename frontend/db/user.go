@@ -25,13 +25,8 @@ type User struct {
 	Accounts         []Account
 }
 
-func RetrieveUser(uuid string) (user *User, err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
-	user, err = findUserByID(db, uuid)
+func (data Database) RetrieveUser(uuid string) (user *User, err error) {
+	user, err = data.findUserByID(uuid)
 	if err != nil {
 		log.Errorf("error retrieving user %s", uuid)
 		return
@@ -40,18 +35,13 @@ func RetrieveUser(uuid string) (user *User, err error) {
 	return
 }
 
-func GetUserFromToken(token string) (user *User, err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
+func (data Database) GetUserFromToken(token string) (user *User, err error) {
 	email := token
-	user, err = findUserByMail(db, email)
+	user, err = data.findUserByMail(email)
 	if _, ok := err.(*customErrors.NotFoundError); ok {
 		log.Debugf("no user found with email %s", email)
-		user = &User{UUID: uuid.New(), Name: "TESTING", Email: email, Surname: "asasd"}
-		err = user.creteUser(db)
+		user = &User{UUID: uuid.New(), Name: "Name", Email: email, Surname: "Surname"}
+		err = data.createUser(user)
 	}
 	if err != nil {
 		log.Errorf("error retrieving email: %s", email)
@@ -59,16 +49,17 @@ func GetUserFromToken(token string) (user *User, err error) {
 
 	}
 	log.Infof("user with email %s successfully retrieve from DB", user.Email)
-	err = user.setAccounts(db)
+	err = data.SetUserAccounts(user)
 	if err != nil {
 		log.Errorf("error retrieving accounts: %s", err.Error())
 	}
 
 	return
+
 }
 
-func (user *User) creteUser(db *sql.DB) (err error) {
-	stmt, err := db.Prepare("insert into users(uuid,email,name,surname) values ($1,$2,$3,$4);")
+func (data Database) createUser(user *User) (err error) {
+	stmt, err := data.DB.Prepare("insert into users(uuid,email,name,surname) values ($1,$2,$3,$4);")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return
@@ -88,48 +79,37 @@ func (user *User) creteUser(db *sql.DB) (err error) {
 		return errors.New(fmt.Sprintf("could not create new user with mail: %s", user.Email))
 	}
 	return
+
 }
 
-func findUserByMail(db *sql.DB, email string) (user *User, err error) {
-	rows, err := db.Query("SELECT users.uuid,users.name,users.surname,users.email from users where users.email = $1;", email)
-	if err != nil {
-		log.Errorf("error querying: %s", err.Error())
+func (data Database) findUserByMail(email string) (user *User, err error) {
+	var uid uuid.UUID
+	var name string
+	var surname string
+	var mail string
+	err = data.DB.QueryRow("SELECT users.uuid,users.name,users.surname,users.email from users where users.email = $1;", email).Scan(&uid, &name, &surname, &mail)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Debugf("No user with that email: %s.", email)
+		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
+	case err != nil:
+		log.Errorf("error looking for user with email: %s", email)
 		return
 	}
-	defer rows.Close()
-	if rows.Next() {
-		var uid uuid.UUID
-		var name string
-		var surname string
-		var email string
-		err = rows.Scan(&uid, &name, &surname, &email)
-		if err != nil {
-			log.Errorf("error on scan: %s", err.Error())
-			return
-		}
-		user = &User{UUID: uid, Name: name, Surname: surname, Email: email}
-	} else {
-		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
-	}
-
+	user = &User{UUID: uid, Name: name, Surname: surname, Email: mail}
 	return
 }
 
-func (user *User) AddAccount(account Account) (err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
+func (data Database) AddAccount(user *User, account Account) (err error) {
 	var accounts int
-	err = db.QueryRow("SELECT count(accounts.id) FROM accounts where accounts.user_uuid = $1", user.UUID).Scan(&accounts)
+	err = data.DB.QueryRow("SELECT count(accounts.id) FROM accounts where accounts.user_uuid = $1", user.UUID).Scan(&accounts)
 	if err != nil {
 		log.Errorf("error getting number of accounts from user: %s", err.Error())
 		return
 	}
 	principal := accounts < 1
 	account.Principal = principal
-	err = account.save(db)
+	err = data.save(account)
 	if err != nil {
 		log.Errorf("could not save account: %s", err.Error())
 		return
@@ -142,51 +122,32 @@ func (user *User) AddAccount(account Account) (err error) {
 
 	return
 }
-func (user *User) SetAccounts() (err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
-	err = user.setAccounts(db)
-	if err != nil {
-		log.Errorf("error retrieving accounts: %s", err.Error())
-	}
-	return
-}
 
-func (user *User) setAccounts(db *sql.DB) (err error) {
-	principal, accounts, err := getAccountsByUser(db, user.UUID)
+func (data Database) SetUserAccounts(user *User) (err error) {
+	principal, accounts, err := data.getAccountsByUser(user.UUID)
 	if err != nil {
 		return err
 	}
 	user.PrincipalAccount = principal
 	user.Accounts = accounts
 	return
+
 }
 
-func (user *User) FindAccount(ID int) (account Account, err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
+func (data Database) FindAccount(user *User, ID int) (account Account, err error) {
 	account = Account{User: user, ID: ID}
-	err = account.findAccount(db)
+	err = data.findAccount(&account)
 
 	if err != nil {
 		log.Errorf("error retrieving account: %s for user: %s", ID, user.UUID)
 		return
 	}
+	err = data.findCalendars(&account)
 	return
 
 }
-func (user *User) AddCalendarsToAccount(account Account, values []string) (err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
+
+func (data Database) AddCalendarsToAccount(user *User, account Account, values []string) (err error) {
 	for _, value := range values {
 		decodedToken, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
@@ -194,11 +155,11 @@ func (user *User) AddCalendarsToAccount(account Account, values []string) (err e
 		}
 		query, err := url.QueryUnescape(string(decodedToken[:]))
 		if err != nil {
-			log.Errorf("error unscaping url: %s", query)
+			log.Errorf("error unescaped url: %s", query)
 		}
 		info := strings.Split(query, ":::")
 
-		err = account.addCalendar(db, Calendar{ID: info[0], Name: info[1]})
+		data.addCalendar(account, Calendar{ID: info[0], Name: info[1]})
 		if err != nil {
 			log.Errorf("error adding calendar: %s", err.Error())
 		}
@@ -206,25 +167,15 @@ func (user *User) AddCalendarsToAccount(account Account, values []string) (err e
 	return
 
 }
-func (user *User) DeleteCalendar(id string) (err error) {
-	//	TODO: subscrition delete
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
+
+func (data Database) DeleteCalendar(user *User, id string) (err error) {
 	uid, err := uuid.Parse(id)
 	calendar := Calendar{UUID: uid}
-	return calendar.deleteFromUser(db, user)
+	return data.deleteFromUser(calendar, user)
 }
 
-func (user *User) AddCalendarsRelation(parentCalendarUUID string, calendarIDs []string) (err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
-	stmt, err := db.Prepare("update calendars set (parent_calendar_uuid) = ($1) from accounts as a where calendars.uuid = $2 and calendars.account_email = a.email and a.user_uuid = $3")
+func (data Database) AddCalendarsRelation(user *User, parentCalendarUUID string, calendarIDs []string) (err error) {
+	stmt, err := data.DB.Prepare("update calendars set (parent_calendar_uuid) = ($1) from accounts as a where calendars.uuid = $2 and calendars.account_email = a.email and a.user_uuid = $3")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return err
@@ -254,37 +205,27 @@ func (user *User) AddCalendarsRelation(parentCalendarUUID string, calendarIDs []
 	return
 
 }
-func (user *User) UpdateCalendar(calendarID string, parentID string) (err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
-	return updateCalendarFromUser(db, user, calendarID, parentID)
+
+func (data Database) UpdateCalendar(user *User, calendarID string, parentID string) (err error) {
+	return data.updateCalendarFromUser(user, calendarID, parentID)
 
 }
 
-func findUserByID(db *sql.DB, id string) (user *User, err error) {
-	rows, err := db.Query("SELECT users.uuid, users.name,users.surname, users.email from users where users.uuid = $1;", id)
-	if err != nil {
-		log.Errorf("error querying: %s", err.Error())
-	}
-	defer rows.Close()
-	if rows.Next() {
-		var uid uuid.UUID
-		var name string
-		var surname string
-		var email string
-		err = rows.Scan(&uid, &name, &surname, &email)
-		if err != nil {
-			log.Errorf("error on scan: %s", err.Error())
-			return
-		}
-		user = &User{UUID: uid, Name: name, Surname: surname, Email: email}
-	} else {
+func (data Database) findUserByID(id string) (user *User, err error) {
+	var uid uuid.UUID
+	var name string
+	var surname string
+	var email string
+	err = data.DB.QueryRow("SELECT users.uuid, users.name,users.surname, users.email from users where users.uuid = $1;", id).Scan(&uid, &name, &surname, &email)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Debugf("No user with that id: %s.", id)
 		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
+	case err != nil:
+		log.Errorf("error looking for user with id: %s", id)
+		return
 	}
-
+	user = &User{UUID: uid, Name: name, Surname: surname, Email: email}
 	return
 
 }

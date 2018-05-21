@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 
@@ -33,8 +32,33 @@ func newCalendar(id string, name string, uid uuid.UUID, accountEmail string, acc
 
 }
 
-func (calendar Calendar) deleteFromUser(db *sql.DB, user *User) (err error) {
-	stmt, err := db.Prepare("delete from calendars using accounts where calendars.account_email = accounts.email and accounts.user_uuid = $1 and calendars.uuid = $2")
+func (data Database) findCalendars(account *Account) (err error) {
+	rows, err := data.DB.Query("select calendars.id, calendars.name, calendars.uuid, s2.uuid from calendars join accounts a on calendars.account_email = a.email left outer join subscriptions s2 on calendars.uuid = s2.calendar_uuid where a.id=$1 order by calendars.name ASC", account.ID)
+	if err != nil {
+		log.Errorln("error selecting findCalendarsFromAccount")
+		return
+	}
+
+	defer rows.Close()
+	var calendars []Calendar
+	for rows.Next() {
+		var id string
+		var name string
+		var uid uuid.UUID
+		var subscription uuid.UUID
+		err = rows.Scan(&id, &name, &uid, &subscription)
+		calendar := newCalendar(id, name, uid, account.Email, *account, subscription)
+
+		data.setSynchronizedCalendars(&calendar, account.Principal)
+		calendars = append(calendars, calendar)
+	}
+	account.Calendars = calendars
+	return
+
+}
+
+func (data Database) deleteFromUser(calendar Calendar, user *User) (err error) {
+	stmt, err := data.DB.Prepare("delete from calendars using accounts where calendars.account_email = accounts.email and accounts.user_uuid = $1 and calendars.uuid = $2")
 	defer stmt.Close()
 	if err != nil {
 		log.Errorf("error preparing sql: %s", err.Error())
@@ -56,8 +80,8 @@ func (calendar Calendar) deleteFromUser(db *sql.DB, user *User) (err error) {
 
 }
 
-func updateCalendarFromUser(db *sql.DB, user *User, calendarUUID string, parentUUID string) (err error) {
-	stmt, err := db.Prepare("update calendars set parent_calendar_uuid = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid = $2 and calendars.uuid = $3;")
+func (data Database) updateCalendarFromUser(user *User, calendarUUID string, parentUUID string) (err error) {
+	stmt, err := data.DB.Prepare("update calendars set parent_calendar_uuid = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid = $2 and calendars.uuid = $3;")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return
@@ -86,14 +110,14 @@ func updateCalendarFromUser(db *sql.DB, user *User, calendarUUID string, parentU
 	return
 }
 
-func (calendar *Calendar) setSynchronizedCalendars(db *sql.DB, principal bool) (err error) {
+func (data Database) setSynchronizedCalendars(calendar *Calendar, principal bool) (err error) {
 	var query string
 	if principal {
 		query = "select calendars.id, calendars.name, calendars.uuid, a.kind, a.email, s2.uuid from calendars join accounts a on calendars.account_email = a.email left outer join subscriptions s2 on calendars.uuid = s2.calendar_uuid where calendars.parent_calendar_uuid = $1"
 	} else {
 		query = "select calendars.id, calendars.name, calendars.uuid, a.kind, a.email, s2.uuid from calendars join accounts a on calendars.account_email = a.email left outer join subscriptions s2 on calendars.uuid = s2.calendar_uuid where calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1)"
 	}
-	rows, err := db.Query(query, calendar.UUID)
+	rows, err := data.DB.Query(query, calendar.UUID)
 	if err != nil {
 		log.Errorln("error selecting setSynchronizedCalendars")
 		return

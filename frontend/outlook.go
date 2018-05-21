@@ -24,7 +24,7 @@ func (s *Server) outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
-	currentUser, ok := manageNewSession(w, r)
+	currentUser, ok := s.manageSession(w, r)
 	if !ok {
 		return
 	}
@@ -95,7 +95,7 @@ func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 		AccessToken:  objmap["access_token"].(string),
 		Kind:         api.OUTLOOK,
 	}
-	err = currentUser.AddAccount(acc)
+	err = s.database.AddAccount(currentUser, acc)
 	if err != nil {
 		serverError(w, err)
 		return
