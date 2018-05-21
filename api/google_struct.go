@@ -232,7 +232,7 @@ type GoogleSubscription struct {
 	ResourceURI     string    `json:"resourceUri,omitempty"`
 	Token           string    `json:"token,omitempty"`
 	Expiration      int64     `json:"expiration"`
-	Uuid            uuid.UUID `json:"uuid"`
+	Uuid            uuid.UUID `json:"-"`
 }
 
 func createGoogleResponseError(contents []byte) (err error) {
