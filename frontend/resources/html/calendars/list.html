@@ -36,9 +36,9 @@
             </th>
             <td rowspan="2">
                     {{if $subscription}}
-                        <input type="submit" class="btn btn-warning" value="Stop synchronization" data-toggle="tooltip" data-placement="top" title="Stop Synchronizing {{$calendarName}}" onclick="stop({{.UUID}});"/>
+                        <input type="submit" class="btn btn-warning" value="Stop synchronization" data-toggle="tooltip" data-placement="top" title="Stop Synchronizing {{$calendarName}}" onclick="stopSync({{.SubscriptionUUID.String}});"/>
                     {{else}}
-                        <input type="submit" class="btn btn-success" value="Start synchronization" data-toggle="tooltip" data-placement="top" title="Start Synchronizing {{$calendarName}}" onclick="start({{.UUID}});"/>
+                        <input type="submit" class="btn btn-success" value="Start synchronization" data-toggle="tooltip" data-placement="top" title="Start Synchronizing {{$calendarName}}" onclick="startSync({{.UUID}});"/>
                     {{end}}
             </td>
 
@@ -134,7 +134,7 @@
         });
 
     }
-    function start(uuid){
+    function startSync(uuid){
         $("#loader-wrapper").removeClass("hidden");
         console.log(uuid);
         $.ajax({
@@ -154,8 +154,34 @@
                 console.log(responseData);
                 console.log(textStatus);
                 console.log(errorThrown);
+                $("#loader-wrapper").addClass("hidden");
             }
         });
+
+    }
+    function stopSync(uuid){
+        $("#loader-wrapper").removeClass("hidden");
+        $.ajax({
+            type: "DELETE",
+            dataType: null,
+            crossDomain: true,
+            url: "http://localhost:8081/subscribe/" + uuid,
+            headers: {
+                "Authorization": btoa({{.User.Email}} +":" + {{.User.UUID}})
+            },
+            success: function (data) {
+                console.log(data);
+                location.reload();
+            },
+            error: function (responseData, textStatus, errorThrown) {
+                console.log("error");
+                console.log(responseData);
+                console.log(textStatus);
+                console.log(errorThrown);
+                $("#loader-wrapper").addClass("hidden");
+            }
+        });
+
     }
 </script>
 {{end}}

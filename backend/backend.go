@@ -20,6 +20,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/backend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/worker"
+	"github.com/google/uuid"
 )
 
 //Backend object
@@ -100,14 +101,14 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 	param := r.URL.Path[len("/subscribe/"):]
-	calendar, err := s.database.RetrieveCalendars(decoded[0], decoded[1], param)
-	if err != nil {
-		log.Errorf("error getting calendar")
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
 	switch r.Method {
 	case http.MethodPost:
+		calendar, err := s.database.RetrieveCalendars(decoded[0], decoded[1], param)
+		if err != nil {
+			log.Errorf("error getting calendar")
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		log.Debugf("%s", calendar)
 		err = api.StartSync(calendar)
 		if err != nil {
@@ -121,10 +122,10 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 		switch calendar.(type) {
 		case *api.GoogleCalendar:
 			//TODO: change this IDS
-			subs = api.NewGoogleSubscription("123", "URL")
+			subs = api.NewGoogleSubscription(uuid.New().String(), "URL")
 			subs.Subscribe(calendar)
 		case *api.OutlookCalendar:
-			subs = api.NewOutlookSubscription("234", "URL", "Created,Deleted,Updated")
+			subs = api.NewOutlookSubscription(uuid.New().String(), "URL", "Created,Deleted,Updated")
 			subs.Subscribe(calendar)
 		}
 		s.database.SaveSubscription(subs, calendar)
@@ -134,16 +135,27 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 			var subscript api.SubscriptionManager
 			switch cal.(type) {
 			case *api.GoogleCalendar:
-				subscript = api.NewGoogleSubscription("345", "URL")
+				//TODO: change this IDs
+				subscript = api.NewGoogleSubscription(uuid.New().String(), "URL")
 				subscript.Subscribe(cal)
 			case *api.OutlookCalendar:
-				subscript = api.NewOutlookSubscription("456", "URL", "Created,Deleted,Updated")
+				subscript = api.NewOutlookSubscription(uuid.New().String(), "URL", "Created,Deleted,Updated")
 				subscript.Subscribe(cal)
 			}
 			s.database.SaveSubscription(subscript, cal)
 		}
 	case http.MethodDelete:
-		//	TODO: Delete all subscriptions and stoping them
+		log.Debugf("Getting method delete")
+		subscriptions, err := s.database.RetrieveAllSubscriptions(param)
+
+		for _, subscription := range subscriptions {
+			//TODO stop all
+			//err := subscription.Delete()
+			if err != nil {
+				log.Errorf("error deleting subscription: %s", err.Error())
+			}
+			s.database.DeleteSubscription(subscription)
+		}
 
 	}
 }

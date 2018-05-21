@@ -7,12 +7,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	USER     = "postgres"
-	PASSWORD = "postgres"
-	NAME     = "postgres"
-)
-
 type Database struct {
 	*sql.DB
 }
