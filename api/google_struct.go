@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type GoogleError struct {
@@ -223,13 +225,14 @@ type GoogleAttachment struct {
 
 type GoogleSubscription struct {
 	calendar        *GoogleCalendar
-	ID              string `json:"id"`
-	Type            string `json:"type"`
-	NotificationURL string `json:"address"`
-	ResourceID      string `json:"resourceId,omitempty"`
-	ResourceURI     string `json:"resourceUri,omitempty"`
-	Token           string `json:"token,omitempty"`
-	Expiration      int64  `json:"expiration"`
+	ID              string    `json:"id"`
+	Type            string    `json:"type"`
+	NotificationURL string    `json:"address"`
+	ResourceID      string    `json:"resourceId,omitempty"`
+	ResourceURI     string    `json:"resourceUri,omitempty"`
+	Token           string    `json:"token,omitempty"`
+	Expiration      int64     `json:"expiration"`
+	Uuid            uuid.UUID `json:"uuid"`
 }
 
 func createGoogleResponseError(contents []byte) (err error) {

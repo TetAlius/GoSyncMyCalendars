@@ -17,11 +17,8 @@ func NewGoogleSubscription(ID string, notificationURL string) (subscription *Goo
 	subscription.NotificationURL = notificationURL
 	subscription.Type = "web_hook"
 	subscription.ID = ID
+	subscription.Uuid = uuid.New()
 	return
-}
-
-func generateID() string {
-	return uuid.New().String()
 }
 
 //TODO:
@@ -102,4 +99,7 @@ func (subscription *GoogleSubscription) Delete(a AccountManager) (err error) {
 
 func (subscription *GoogleSubscription) GetID() string {
 	return subscription.ID
+}
+func (subscription *GoogleSubscription) GetUUID() uuid.UUID {
+	return subscription.Uuid
 }

@@ -10,6 +10,7 @@ import (
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
+	"github.com/google/uuid"
 )
 
 func NewOutlookSubscription(ID string, notificationURL string, changeType string) (subscription *OutlookSubscription) {
@@ -18,6 +19,7 @@ func NewOutlookSubscription(ID string, notificationURL string, changeType string
 	subscription.ChangeType = changeType
 	subscription.ID = ID
 	subscription.Type = "#Microsoft.OutlookServices.PushSubscription"
+	subscription.Uuid = uuid.New()
 	return
 }
 
@@ -124,4 +126,8 @@ func (subscription *OutlookSubscription) Delete(a AccountManager) (err error) {
 
 func (subscription *OutlookSubscription) GetID() string {
 	return subscription.ID
+}
+
+func (subscription *OutlookSubscription) GetUUID() uuid.UUID {
+	return subscription.Uuid
 }

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type OutlookError struct {
@@ -261,10 +263,11 @@ type OutlookSubscription struct {
 	Resource        string `json:"Resource,omitempty"`
 	NotificationURL string `json:"NotificationURL,omitempty"`
 	//Created,Deleted,Updated
-	ChangeType         string `json:"ChangeType,omitempty"`
-	ID                 string `json:"id,omitempty"`
-	ClientState        string `json:"ClientState,omitempty"`
-	ExpirationDateTime string `json:"SubscriptionExpirationDateTime,omitempty"`
+	ChangeType         string    `json:"ChangeType,omitempty"`
+	ID                 string    `json:"id,omitempty"`
+	ClientState        string    `json:"ClientState,omitempty"`
+	ExpirationDateTime string    `json:"SubscriptionExpirationDateTime,omitempty"`
+	Uuid               uuid.UUID `json:"uuid"`
 }
 
 type OutlookNotification struct {

@@ -78,7 +78,7 @@ func (s *Server) Stop() (err error) {
 }
 
 func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request) {
-	ok := manageCORS(w, *r, map[string]bool{"POST": true})
+	ok := manageCORS(w, *r, map[string]bool{"POST": true, "DELETE": true})
 	if !ok {
 		return
 	}
@@ -102,20 +102,46 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	log.Debugf("%s", calendar)
-	err = api.StartSync(calendar)
-	if err != nil {
-		log.Errorf("error starting sync")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	db.UpdateAccountFromUser(calendar.GetAccount(), decoded[1])
-	db.UpdateCalendarFromUser(calendar, decoded[1])
-	for _, cal := range calendar.GetCalendars() {
-		db.UpdateAccountFromUser(cal.GetAccount(), decoded[1])
-		db.UpdateCalendarFromUser(cal, decoded[1])
-	}
+	switch r.Method {
+	case http.MethodPost:
+		log.Debugf("%s", calendar)
+		err = api.StartSync(calendar)
+		if err != nil {
+			log.Errorf("error starting sync")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		db.UpdateAccountFromUser(calendar.GetAccount(), decoded[1])
+		db.UpdateCalendarFromUser(calendar, decoded[1])
+		var subs api.SubscriptionManager
+		switch calendar.(type) {
+		case *api.GoogleCalendar:
+			//TODO: change this IDS
+			subs = api.NewGoogleSubscription("123", "URL")
+			subs.Subscribe(calendar)
+		case *api.OutlookCalendar:
+			subs = api.NewOutlookSubscription("234", "URL", "Created,Deleted,Updated")
+			subs.Subscribe(calendar)
+		}
+		db.SaveSubscription(subs, calendar)
+		for _, cal := range calendar.GetCalendars() {
+			db.UpdateAccountFromUser(cal.GetAccount(), decoded[1])
+			db.UpdateCalendarFromUser(cal, decoded[1])
+			var subscript api.SubscriptionManager
+			switch cal.(type) {
+			case *api.GoogleCalendar:
+				subscript = api.NewGoogleSubscription("345", "URL")
+				subscript.Subscribe(cal)
+			case *api.OutlookCalendar:
+				subscript = api.NewOutlookSubscription("456", "URL", "Created,Deleted,Updated")
+				subscript.Subscribe(cal)
+			}
+			db.SaveSubscription(subscript, cal)
+		}
+	case http.MethodDelete:
+		//	TODO: Delete all subscriptions and stoping them
 
+	}
 }
 
 func (s *Server) retrieveInfoHandler(w http.ResponseWriter, r *http.Request) {

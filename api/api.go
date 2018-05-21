@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/google/uuid"
 )
 
 const (
@@ -97,6 +98,7 @@ type SubscriptionManager interface {
 	Renew(AccountManager) error
 	Delete(AccountManager) error
 	GetID() string
+	GetUUID() uuid.UUID
 }
 
 type RefreshError struct {
