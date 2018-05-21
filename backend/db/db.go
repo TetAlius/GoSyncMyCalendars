@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	_ "github.com/lib/pq"
 )
 
@@ -24,15 +23,4 @@ type WrongKindError struct {
 
 func (err *WrongKindError) Error() string {
 	return fmt.Sprintf("wrong kind of account %s", err.Mail)
-}
-
-func connect() (db *sql.DB, err error) {
-	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-		USER, PASSWORD, NAME)
-	db, err = sql.Open("postgres", dbInfo)
-	if err != nil {
-		log.Errorln(err.Error())
-		return
-	}
-	return
 }

@@ -13,26 +13,16 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
-func RetrieveCalendars(userEmail string, userUUID string, calendarUUID string) (calendar api.CalendarManager, err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	calendar, err = findCalendarFromUser(db, userEmail, userUUID, calendarUUID)
+func (data Database) RetrieveCalendars(userEmail string, userUUID string, calendarUUID string) (calendar api.CalendarManager, err error) {
+	calendar, err = data.findCalendarFromUser(userEmail, userUUID, calendarUUID)
 	if err != nil {
 		log.Errorf("error retrieving calendar %s from user %s", calendarUUID, userUUID)
 	}
-	defer db.Close()
 	return
 }
 
-func UpdateAllCalendarsFromUser(userUUID string, userEmail string) (err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-
-	rows, err := db.Query("SELECT calendars.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email join users u on a.user_uuid = u.uuid where u.uuid = $1 and u.email=$2", userUUID, userEmail)
+func (data Database) UpdateAllCalendarsFromUser(userUUID string, userEmail string) (err error) {
+	rows, err := data.DB.Query("SELECT calendars.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email join users u on a.user_uuid = u.uuid where u.uuid = $1 and u.email=$2", userUUID, userEmail)
 	if err != nil {
 		log.Errorf("error querying get calendar: %s", err.Error())
 		return
@@ -57,53 +47,48 @@ func UpdateAllCalendarsFromUser(userUUID string, userEmail string) (err error) {
 			return &customErrors.WrongKindError{Mail: email}
 		}
 		account.Refresh()
-		UpdateAccountFromUser(account, userUUID)
+		data.UpdateAccountFromUser(account, userUUID)
 		calendar, err := account.GetCalendar(id)
 		if err != nil {
 			log.Errorf("error: %s", err.Error())
 		} else {
-			updateCalendarFromUser(db, calendar, userUUID)
+			data.updateCalendarFromUser(calendar, userUUID)
 		}
 
 	}
-
-	defer db.Close()
 	return
 }
 
-func findCalendarFromUser(db *sql.DB, userEmail string, userUUID string, calendarUUID string) (calendar api.CalendarManager, err error) {
-	rows, err := db.Query("SELECT calendars.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, a.principal from calendars join accounts a on calendars.account_email = a.email join users u on a.user_uuid = u.uuid where u.uuid = $1 and u.email=$2 and calendars.uuid =$3", userUUID, userEmail, calendarUUID)
-	if err != nil {
-		log.Errorf("error querying get calendar")
+func (data Database) findCalendarFromUser(userEmail string, userUUID string, calendarUUID string) (calendar api.CalendarManager, err error) {
+	var id string
+	var tokenType string
+	var refreshToken string
+	var email string
+	var kind int
+	var accessToken string
+	var principal bool
+	err = data.DB.QueryRow("SELECT calendars.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, a.principal from calendars join accounts a on calendars.account_email = a.email join users u on a.user_uuid = u.uuid where u.uuid = $1 and u.email=$2 and calendars.uuid =$3", userUUID, userEmail, calendarUUID).Scan(&id, &kind, &tokenType, &refreshToken, &email, &accessToken, &principal)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Debugf("No account from user: %s with that id: %d.", userUUID, id)
+		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
+	case err != nil:
+		log.Debugf("error looking for account from user: %s with id: %d.", userUUID, id)
 		return
 	}
-	defer rows.Close()
-	var principal bool
-	if rows.Next() {
-		var id string
-		var tokenType string
-		var refreshToken string
-		var email string
-		var kind int
-		var accessToken string
-		rows.Scan(&id, &kind, &tokenType, &refreshToken, &email, &accessToken, &principal)
-		switch kind {
-		case api.GOOGLE:
-			calendar = &api.GoogleCalendar{ID: id}
-			calendar.SetAccount(api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
-		case api.OUTLOOK:
-			calendar = &api.OutlookCalendar{ID: id}
-			calendar.SetAccount(api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
-		default:
-			log.Errorf("kind of calendar is not valid: %d", kind)
-			return nil, &customErrors.WrongKindError{Mail: email}
-		}
-	} else {
-		log.Errorf("calendar %s not found", calendarUUID)
-		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
+	switch kind {
+	case api.GOOGLE:
+		calendar = &api.GoogleCalendar{ID: id}
+		calendar.SetAccount(api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
+	case api.OUTLOOK:
+		calendar = &api.OutlookCalendar{ID: id}
+		calendar.SetAccount(api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
+	default:
+		log.Errorf("kind of calendar is not valid: %d", kind)
+		return nil, &customErrors.WrongKindError{Mail: email}
 	}
 	calendar.SetUUID(calendarUUID)
-	calendars, err := getSynchronizedCalendars(db, calendar, principal)
+	calendars, err := data.getSynchronizedCalendars(calendar, principal)
 	if err != nil {
 		log.Errorf("error retrieving sync calendars from %s", calendarUUID)
 	}
@@ -111,14 +96,14 @@ func findCalendarFromUser(db *sql.DB, userEmail string, userUUID string, calenda
 	return
 }
 
-func getSynchronizedCalendars(db *sql.DB, calendar api.CalendarManager, principal bool) (calendars []api.CalendarManager, err error) {
+func (data Database) getSynchronizedCalendars(calendar api.CalendarManager, principal bool) (calendars []api.CalendarManager, err error) {
 	var query string
 	if principal {
 		query = "select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = $1"
 	} else {
 		query = "select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1)"
 	}
-	rows, err := db.Query(query, calendar.GetUUID())
+	rows, err := data.DB.Query(query, calendar.GetUUID())
 	if err != nil {
 		log.Errorf("error selecting setSynchronizedCalendars: %s", err.Error())
 		return
@@ -150,18 +135,13 @@ func getSynchronizedCalendars(db *sql.DB, calendar api.CalendarManager, principa
 	return
 }
 
-func UpdateCalendarFromUser(calendar api.CalendarManager, userUUID string) (err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	err = updateCalendarFromUser(db, calendar, userUUID)
-	defer db.Close()
+func (data Database) UpdateCalendarFromUser(calendar api.CalendarManager, userUUID string) (err error) {
+	err = data.updateCalendarFromUser(calendar, userUUID)
 	return
 }
 
-func updateCalendarFromUser(db *sql.DB, calendar api.CalendarManager, userUUID string) (err error) {
-	stmt, err := db.Prepare("update calendars set name = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid =$2 and calendars.id =$3;")
+func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUUID string) (err error) {
+	stmt, err := data.DB.Prepare("update calendars set name = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid =$2 and calendars.id =$3;")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return
@@ -187,14 +167,9 @@ func updateCalendarFromUser(db *sql.DB, calendar api.CalendarManager, userUUID s
 
 }
 
-func SaveSubscription(subscription api.SubscriptionManager, calendar api.CalendarManager) (err error) {
-	db, err := connect()
-	if err != nil {
-		log.Errorf("db could not load: %s", err.Error())
-	}
-	defer db.Close()
+func (data Database) SaveSubscription(subscription api.SubscriptionManager, calendar api.CalendarManager) (err error) {
 
-	stmt, err := db.Prepare("insert into subscriptions(uuid,calendar_uuid,id) values ($1,$2,$3)")
+	stmt, err := data.DB.Prepare("insert into subscriptions(uuid,calendar_uuid,id) values ($1,$2,$3)")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return

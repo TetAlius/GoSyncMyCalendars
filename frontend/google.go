@@ -91,7 +91,7 @@ func (s *Server) googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// preferred is ignored on google
-	email, _, err := util.MailFromToken(strings.Split(objmap["id_token"].(string), "."), "==")
+	email, _, err := util.MailFromToken(strings.Split(objmap["id_token"].(string), "."), "=")
 	if err != nil {
 		serverError(w, err)
 		return

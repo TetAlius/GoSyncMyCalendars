@@ -70,7 +70,7 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 		return
 	}
-	b := backend.NewServer("127.0.0.1", 8081, 10)
+	b := backend.NewServer("127.0.0.1", 8081, 10, nil)
 	go func() {
 		b.Start()
 	}()

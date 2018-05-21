@@ -14,6 +14,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	"database/sql"
+
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -22,11 +24,12 @@ import (
 
 //Backend object
 type Server struct {
-	IP     net.IP
-	Port   int
-	server *http.Server
-	mux    *http.ServeMux
-	worker *worker.Worker
+	IP       net.IP
+	Port     int
+	server   *http.Server
+	mux      *http.ServeMux
+	worker   *worker.Worker
+	database db.Database
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -41,8 +44,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //NewBackend creates a backend
-func NewServer(ip string, port int, maxWorker int) *Server {
-	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker)}
+func NewServer(ip string, port int, maxWorker int, database *sql.DB) *Server {
+	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker), database: db.Database{DB: database}}
 	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
 	server.mux.HandleFunc("/outlook/watcher", server.OutlookWatcherHandler)
 	server.mux.HandleFunc("/accounts/", server.retrieveInfoHandler)
@@ -63,7 +66,7 @@ func (s *Server) Start() (err error) {
 
 	err = s.server.ListenAndServe()
 	if err != nil {
-		log.Fatalf("ListenAndServe: " + err.Error())
+		log.Errorf("ListenAndServe: " + err.Error())
 	}
 	return
 }
@@ -74,6 +77,7 @@ func (s *Server) Stop() (err error) {
 	log.Debugf("Stopping backend with ctx: %s", ctx)
 	err = s.server.Shutdown(ctx)
 	s.worker.Stop()
+	s.database.Close()
 	return
 }
 
@@ -96,7 +100,7 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 	param := r.URL.Path[len("/subscribe/"):]
-	calendar, err := db.RetrieveCalendars(decoded[0], decoded[1], param)
+	calendar, err := s.database.RetrieveCalendars(decoded[0], decoded[1], param)
 	if err != nil {
 		log.Errorf("error getting calendar")
 		w.WriteHeader(http.StatusNotFound)
@@ -111,8 +115,8 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		db.UpdateAccountFromUser(calendar.GetAccount(), decoded[1])
-		db.UpdateCalendarFromUser(calendar, decoded[1])
+		s.database.UpdateAccountFromUser(calendar.GetAccount(), decoded[1])
+		s.database.UpdateCalendarFromUser(calendar, decoded[1])
 		var subs api.SubscriptionManager
 		switch calendar.(type) {
 		case *api.GoogleCalendar:
@@ -123,10 +127,10 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 			subs = api.NewOutlookSubscription("234", "URL", "Created,Deleted,Updated")
 			subs.Subscribe(calendar)
 		}
-		db.SaveSubscription(subs, calendar)
+		s.database.SaveSubscription(subs, calendar)
 		for _, cal := range calendar.GetCalendars() {
-			db.UpdateAccountFromUser(cal.GetAccount(), decoded[1])
-			db.UpdateCalendarFromUser(cal, decoded[1])
+			s.database.UpdateAccountFromUser(cal.GetAccount(), decoded[1])
+			s.database.UpdateCalendarFromUser(cal, decoded[1])
 			var subscript api.SubscriptionManager
 			switch cal.(type) {
 			case *api.GoogleCalendar:
@@ -136,7 +140,7 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 				subscript = api.NewOutlookSubscription("456", "URL", "Created,Deleted,Updated")
 				subscript.Subscribe(cal)
 			}
-			db.SaveSubscription(subscript, cal)
+			s.database.SaveSubscription(subscript, cal)
 		}
 	case http.MethodDelete:
 		//	TODO: Delete all subscriptions and stoping them
@@ -164,7 +168,7 @@ func (s *Server) retrieveInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	param := r.URL.Path[len("/accounts/"):]
 	values := strings.Split(param, "/")
-	account, err := db.RetrieveAccount(decoded[1], values[0])
+	account, err := s.database.RetrieveAccount(decoded[1], values[0])
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(err.Error()))
@@ -176,7 +180,7 @@ func (s *Server) retrieveInfoHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	err = db.UpdateAccountFromUser(account, decoded[1])
+	err = s.database.UpdateAccountFromUser(account, decoded[1])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -212,7 +216,7 @@ func (s *Server) refreshHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	err = db.UpdateAllCalendarsFromUser(decoded[1], decoded[0])
+	err = s.database.UpdateAllCalendarsFromUser(decoded[1], decoded[0])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
