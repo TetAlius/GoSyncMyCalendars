@@ -15,7 +15,7 @@ before_install:
   - chmod +x ./ngrok
   # Open ngrok tunnel
   - ./ngrok authtoken $NGROK_AUTH
-  - ./ngrok start -config .ngrok2/ngrok.yml -config ./.ngrok.yml gosync > /dev/null &
+  - ./ngrok start -config /home/travis/.ngrok2/ngrok.yml -config ./.ngrok.yml gosync > /dev/null &
   - go get -t -v ./...
   - chmod +x ./scripts/cibuild.sh
   - chmod +x ./scripts/test.sh
