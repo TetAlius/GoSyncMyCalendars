@@ -22,11 +22,12 @@ func NewOutlookSubscription(ID string, notificationURL string, changeType string
 	subscription.Uuid = uuid.New()
 	return
 }
-func RetrieveOutlookSubscription(ID string, uid uuid.UUID, calendar CalendarManager) (subscription *OutlookSubscription) {
+func RetrieveOutlookSubscription(ID string, uid uuid.UUID, calendar CalendarManager, typ string) (subscription *OutlookSubscription) {
 	subscription = new(OutlookSubscription)
 	subscription.ID = ID
 	subscription.Uuid = uid
 	subscription.calendar = calendar.(*OutlookCalendar)
+	subscription.Type = typ
 	return
 }
 

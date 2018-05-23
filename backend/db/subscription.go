@@ -62,7 +62,8 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	var uid uuid.UUID
 	var calendarUUID string
 	var kind int
-	err = data.DB.QueryRow("select subscriptions.id,subscriptions.uuid,subscriptions.calendar_uuid, a.kind from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where subscriptions.uuid = $1 and u.uuid = $2 and u.email = $3", subscriptionUUID, userUUID, userEmail).Scan(&id, &uid, &calendarUUID, &kind)
+	var typ string
+	err = data.DB.QueryRow("select subscriptions.id,subscriptions.uuid,subscriptions.calendar_uuid, a.kind, subscriptions.type from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where subscriptions.uuid = $1 and u.uuid = $2 and u.email = $3", subscriptionUUID, userUUID, userEmail).Scan(&id, &uid, &calendarUUID, &kind, &typ)
 	switch {
 	case err == sql.ErrNoRows:
 		log.Debugf("no subscription with that uuid: %s.", subscriptionUUID)
@@ -76,7 +77,7 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	case api.GOOGLE:
 		subscription = api.RetrieveGoogleSubscription(id, uid, calendar)
 	case api.OUTLOOK:
-		subscription = api.RetrieveOutlookSubscription(id, uid, calendar)
+		subscription = api.RetrieveOutlookSubscription(id, uid, calendar, typ)
 	default:
 		return nil, &WrongKindError{subscriptionUUID}
 	}
