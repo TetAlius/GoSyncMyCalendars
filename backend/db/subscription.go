@@ -10,19 +10,19 @@ import (
 	"github.com/google/uuid"
 )
 
-func (data Database) RetrieveAllSubscriptions(principalSubscriptionUUID string) (subscriptions []api.SubscriptionManager, err error) {
-	subscription, err := data.getSubscription(principalSubscriptionUUID)
+func (data Database) RetrieveAllSubscriptionsFromUser(principalSubscriptionUUID string, userEmail string, userUUID string) (subscriptions []api.SubscriptionManager, err error) {
+	subscription, err := data.getSubscription(principalSubscriptionUUID, userEmail, userUUID)
 	if err != nil {
 		log.Errorf("some error retrieving principal subscription: %s", err.Error())
 		return
 	}
 	subscriptions = append(subscriptions, subscription)
-	rows, err := data.DB.Query("select s2.uuid from subscriptions as s2 join calendars c2 on s2.calendar_uuid = c2.uuid where c2.parent_calendar_uuid IN (select s.calendar_uuid from subscriptions as s where s.uuid=$1)", principalSubscriptionUUID)
+	rows, err := data.DB.Query("select s2.uuid from subscriptions as s2 join calendars c2 on s2.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where u.uuid = $1 and u.email = $2 and c2.parent_calendar_uuid IN (select s.calendar_uuid from subscriptions as s where s.uuid=$3)", userUUID, userEmail, principalSubscriptionUUID)
 	defer rows.Close()
 	for rows.Next() {
 		var uid uuid.UUID
 		rows.Scan(&uid)
-		subscription, err := data.getSubscription(uid.String())
+		subscription, err := data.getSubscription(uid.String(), userEmail, userUUID)
 		if err != nil {
 			log.Errorf("error getting subscription with uuid: %s", uid)
 		} else {
@@ -57,12 +57,12 @@ func (data Database) DeleteSubscription(subscription api.SubscriptionManager) (e
 	log.Debugf("affected %d rows", affect)
 	return
 }
-func (data Database) getSubscription(subscriptionUUID string) (subscription api.SubscriptionManager, err error) {
+func (data Database) getSubscription(subscriptionUUID string, userEmail string, userUUID string) (subscription api.SubscriptionManager, err error) {
 	var id string
 	var uid uuid.UUID
 	var calendarUUID string
 	var kind int
-	err = data.DB.QueryRow("select subscriptions.id,subscriptions.uuid,subscriptions.calendar_uuid, a.kind from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email where subscriptions.uuid = $1", subscriptionUUID).Scan(&id, &uid, &calendarUUID, &kind)
+	err = data.DB.QueryRow("select subscriptions.id,subscriptions.uuid,subscriptions.calendar_uuid, a.kind from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where subscriptions.uuid = $1 and u.uuid = $2 and u.email = $3", subscriptionUUID, userUUID, userEmail).Scan(&id, &uid, &calendarUUID, &kind)
 	switch {
 	case err == sql.ErrNoRows:
 		log.Debugf("no subscription with that uuid: %s.", subscriptionUUID)
@@ -71,11 +71,12 @@ func (data Database) getSubscription(subscriptionUUID string) (subscription api.
 		log.Errorf("error looking for subscription with uuid: %s", subscriptionUUID)
 		return
 	}
+	calendar, _ := data.findCalendarFromUser(userEmail, userUUID, calendarUUID)
 	switch kind {
 	case api.GOOGLE:
-		subscription = &api.GoogleSubscription{ID: id, Uuid: uid}
+		subscription = api.RetrieveGoogleSubscription(id, uid, calendar)
 	case api.OUTLOOK:
-		subscription = &api.OutlookSubscription{ID: id, Uuid: uid}
+		subscription = api.RetrieveOutlookSubscription(id, uid, calendar)
 	default:
 		return nil, &WrongKindError{subscriptionUUID}
 	}

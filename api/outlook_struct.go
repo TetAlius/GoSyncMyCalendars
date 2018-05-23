@@ -259,6 +259,7 @@ type OutlookFreeBusyStatus string
 type OutlookEventType string
 
 type OutlookSubscription struct {
+	calendar        *OutlookCalendar
 	Type            string `json:"@odata.type,omitempty"`
 	Resource        string `json:"Resource,omitempty"`
 	NotificationURL string `json:"NotificationURL,omitempty"`

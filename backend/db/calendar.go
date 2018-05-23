@@ -78,11 +78,9 @@ func (data Database) findCalendarFromUser(userEmail string, userUUID string, cal
 	}
 	switch kind {
 	case api.GOOGLE:
-		calendar = &api.GoogleCalendar{ID: id}
-		calendar.SetAccount(api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
+		calendar = api.RetrieveGoogleCalendar(id, api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
 	case api.OUTLOOK:
-		calendar = &api.OutlookCalendar{ID: id}
-		calendar.SetAccount(api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
+		calendar = api.RetrieveOutlookCalendar(id, api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
 	default:
 		log.Errorf("kind of calendar is not valid: %d", kind)
 		return nil, &customErrors.WrongKindError{Mail: email}
@@ -121,11 +119,9 @@ func (data Database) getSynchronizedCalendars(calendar api.CalendarManager, prin
 		err = rows.Scan(&id, &uid, &kind, &tokenType, &refreshToken, &email, &accessToken)
 		switch kind {
 		case api.GOOGLE:
-			calendar = &api.GoogleCalendar{ID: id}
-			calendar.SetAccount(api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
+			calendar = api.RetrieveGoogleCalendar(id, api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
 		case api.OUTLOOK:
-			calendar = &api.OutlookCalendar{ID: id}
-			calendar.SetAccount(api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
+			calendar = api.RetrieveOutlookCalendar(id, api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
 		default:
 			return nil, &WrongKindError{calendar.GetName()}
 		}
@@ -169,13 +165,13 @@ func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUU
 
 func (data Database) SaveSubscription(subscription api.SubscriptionManager, calendar api.CalendarManager) (err error) {
 
-	stmt, err := data.DB.Prepare("insert into subscriptions(uuid,calendar_uuid,id) values ($1,$2,$3)")
+	stmt, err := data.DB.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration) values ($1,$2,$3,$4,$5)")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(subscription.GetUUID(), calendar.GetUUID(), subscription.GetID())
+	res, err := stmt.Exec(subscription.GetUUID(), calendar.GetUUID(), subscription.GetID(), subscription.GetType(), subscription.GetExpiration())
 	if err != nil {
 		log.Errorf("error executing query: %s", err.Error())
 		return

@@ -82,13 +82,15 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 		return
 	}
 
-	err = subscription.Renew(account)
+	subscription = api.RetrieveOutlookSubscription(subscription.ID, subscription.Uuid, calendar)
+
+	err = subscription.Renew()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 		return
 	}
-	err = subscription.Delete(account)
+	err = subscription.Delete()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -103,13 +105,14 @@ func TestOutlookSubscription_SubscriptionLifeCycle(t *testing.T) {
 		t.Fatalf("something went wrong. Expected error found nil")
 		return
 	}
-	err = subscription.Renew(account)
+	subs = api.RetrieveOutlookSubscription(subs.ID, subs.Uuid, calendar)
+	err = subscription.Renew()
 	if err == nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected error found nil")
 		return
 	}
-	err = subscription.Delete(account)
+	err = subscription.Delete()
 	if err == nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected error found nil")

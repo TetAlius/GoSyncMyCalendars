@@ -22,8 +22,6 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 
 	var calendar api.GoogleCalendar
 	calendar.SetAccount(account)
-	var calendarWrong api.GoogleCalendar
-	calendarWrong.SetAccount(account)
 	var calendarJSON = []byte(`{
   		"summary": "Travis"
 	}`)
@@ -31,13 +29,6 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
-	}
-	// wrong call to create calendar
-	err = calendarWrong.Create()
-	if err == nil {
-		t.Fail()
-		t.Fatal("something went wrong. Expected error found nil")
 		return
 	}
 
@@ -49,28 +40,11 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 		return
 	}
 
-	// wrong call to get calendar
-	_, err = account.GetCalendar("asdasd")
-	if err == nil {
-		t.Fail()
-		t.Fatal("something went wrong. Expected error found nil")
-		return
-	}
-
 	//	good call to get calendar
 	_, err = account.GetCalendar(calendar.GetID())
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
-	}
-
-	//	wrong call to update calendar
-	calendarWrong.Name = fmt.Sprintf("TravisRenamed%s", calendarWrong.ID)
-	err = calendarWrong.Update()
-	if err == nil {
-		t.Fail()
-		t.Fatal("something went wrong. Expected error found nil")
 		return
 	}
 
@@ -83,18 +57,43 @@ func TestGoogleCalendar_CalendarLifeCycle(t *testing.T) {
 		return
 	}
 
-	// wrong call to delete calendar
-	err = calendarWrong.Delete()
-	if err == nil {
-		t.Fail()
-		t.Fatal("something went wrong. Expected error found nil")
-		return
-	}
 	//	good call to delete calendar
 	err = calendar.Delete()
 	if err != nil {
 		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
+		return
+	}
+
+	var calendarWrong api.GoogleCalendar
+	calendarWrong.SetAccount(account)
+	// wrong call to create calendar
+	err = calendarWrong.Create()
+	if err == nil {
+		t.Fail()
+		t.Fatal("something went wrong. Expected error found nil")
+		return
+	}
+	// wrong call to get calendar
+	_, err = account.GetCalendar("asdasd")
+	if err == nil {
+		t.Fail()
+		t.Fatal("something went wrong. Expected error found nil")
+		return
+	}
+	//	wrong call to update calendar
+	calendarWrong.Name = fmt.Sprintf("TravisRenamed%s", calendarWrong.ID)
+	err = calendarWrong.Update()
+	if err == nil {
+		t.Fail()
+		t.Fatal("something went wrong. Expected error found nil")
+		return
+	}
+	// wrong call to delete calendar
+	err = calendarWrong.Delete()
+	if err == nil {
+		t.Fail()
+		t.Fatal("something went wrong. Expected error found nil")
 		return
 	}
 }

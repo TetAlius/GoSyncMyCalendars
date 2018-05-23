@@ -21,6 +21,14 @@ func NewGoogleSubscription(ID string, notificationURL string) (subscription *Goo
 	return
 }
 
+func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManager) (subscription *GoogleSubscription) {
+	subscription = new(GoogleSubscription)
+	subscription.ID = ID
+	subscription.Uuid = uid
+	subscription.calendar = calendar.(*GoogleCalendar)
+	return
+}
+
 //TODO:
 //func manageRenewalData(subscription *GoogleSubscription) (data []byte, err error) {
 //	renewal := new(GoogleSubscription)
@@ -67,13 +75,14 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 
 //Google does not let subscription be renewed
 //A new subscription must be request
-func (subscription *GoogleSubscription) Renew(a AccountManager) (err error) {
+func (subscription *GoogleSubscription) Renew() (err error) {
 	log.Debugln("Renew google subscription")
 	return subscription.Subscribe(subscription.calendar)
 }
 
 //POST https://www.googleapis.com/calendar/v3/channels/stop
-func (subscription *GoogleSubscription) Delete(a AccountManager) (err error) {
+func (subscription *GoogleSubscription) Delete() (err error) {
+	a := subscription.calendar.GetAccount()
 	log.Debugln("Delete google subscription")
 	//TODO: this URL
 	route, err := util.CallAPIRoot("google/subscription/stop")
@@ -102,4 +111,16 @@ func (subscription *GoogleSubscription) GetID() string {
 }
 func (subscription *GoogleSubscription) GetUUID() uuid.UUID {
 	return subscription.Uuid
+}
+func (subscription *GoogleSubscription) GetAccount() AccountManager {
+	return subscription.calendar.account
+}
+
+func (subscription *GoogleSubscription) GetType() string {
+	return subscription.Type
+}
+
+//TODO: this
+func (subscription *GoogleSubscription) GetExpiration() string {
+	return fmt.Sprintf("%d", subscription.Expiration)
 }

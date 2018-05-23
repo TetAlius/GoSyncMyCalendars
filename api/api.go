@@ -95,10 +95,13 @@ type EventManager interface {
 
 type SubscriptionManager interface {
 	Subscribe(CalendarManager) error
-	Renew(AccountManager) error
-	Delete(AccountManager) error
+	Renew() error
+	Delete() error
 	GetID() string
 	GetUUID() uuid.UUID
+	GetAccount() AccountManager
+	GetType() string
+	GetExpiration() string
 }
 
 type RefreshError struct {

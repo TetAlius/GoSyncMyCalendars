@@ -146,10 +146,13 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 		}
 	case http.MethodDelete:
 		log.Debugf("Getting method delete")
-		subscriptions, err := s.database.RetrieveAllSubscriptions(param)
-
+		subscriptions, err := s.database.RetrieveAllSubscriptionsFromUser(param, decoded[0], decoded[1])
 		for _, subscription := range subscriptions {
-			//TODO stop all
+			acc := subscription.GetAccount()
+			if err := acc.Refresh(); err != nil {
+				continue
+			}
+			go func() { s.database.UpdateAccountFromUser(acc, decoded[1]) }()
 			//err := subscription.Delete()
 			if err != nil {
 				log.Errorf("error deleting subscription: %s", err.Error())

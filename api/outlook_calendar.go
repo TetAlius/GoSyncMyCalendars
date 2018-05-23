@@ -14,6 +14,12 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+func RetrieveOutlookCalendar(ID string, account *OutlookAccount) *OutlookCalendar {
+	cal := new(OutlookCalendar)
+	cal.ID = ID
+	cal.account = account
+	return cal
+}
 func (calendar *OutlookCalendar) Create() (err error) {
 	log.Debugln("createCalendars outlook")
 

@@ -17,6 +17,13 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+func RetrieveGoogleCalendar(ID string, account *GoogleAccount) *GoogleCalendar {
+	cal := new(GoogleCalendar)
+	cal.ID = ID
+	cal.account = account
+	return cal
+}
+
 // PUT https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
 func (calendar *GoogleCalendar) Update() (err error) {
 	log.Debugln("updateCalendar google")

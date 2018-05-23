@@ -22,6 +22,13 @@ func NewOutlookSubscription(ID string, notificationURL string, changeType string
 	subscription.Uuid = uuid.New()
 	return
 }
+func RetrieveOutlookSubscription(ID string, uid uuid.UUID, calendar CalendarManager) (subscription *OutlookSubscription) {
+	subscription = new(OutlookSubscription)
+	subscription.ID = ID
+	subscription.Uuid = uid
+	subscription.calendar = calendar.(*OutlookCalendar)
+	return
+}
 
 func manageRenewalData(subscription *OutlookSubscription) (data []byte, err error) {
 	renewal := new(OutlookSubscription)
@@ -72,7 +79,9 @@ func (subscription *OutlookSubscription) Subscribe(calendar CalendarManager) (er
 }
 
 //PATCH https://outlook.office.com/api/v2.0/me/subscriptions/{subscriptionId}
-func (subscription *OutlookSubscription) Renew(a AccountManager) (err error) {
+func (subscription *OutlookSubscription) Renew() (err error) {
+	a := subscription.calendar.GetAccount()
+
 	log.Debugln("subscribe calendar outlook")
 
 	route, err := util.CallAPIRoot("outlook/subscription")
@@ -101,7 +110,8 @@ func (subscription *OutlookSubscription) Renew(a AccountManager) (err error) {
 }
 
 //DELETE https://outlook.office.com/api/v2.0/me/subscriptions('{subscriptionId}')
-func (subscription *OutlookSubscription) Delete(a AccountManager) (err error) {
+func (subscription *OutlookSubscription) Delete() (err error) {
+	a := subscription.calendar.GetAccount()
 	log.Debugln("Delete outlook subscription")
 	route, err := util.CallAPIRoot("outlook/subscription")
 	if err != nil {
@@ -130,4 +140,18 @@ func (subscription *OutlookSubscription) GetID() string {
 
 func (subscription *OutlookSubscription) GetUUID() uuid.UUID {
 	return subscription.Uuid
+}
+
+func (subscription *OutlookSubscription) GetAccount() AccountManager {
+	return subscription.calendar.account
+}
+
+func (subscription *OutlookSubscription) GetType() string {
+	return subscription.Type
+}
+func (subscription *OutlookSubscription) GetExpiration() string {
+	return subscription.ExpirationDateTime
+}
+func (subscription *OutlookSubscription) SetCalendar(calendar *OutlookCalendar) {
+	subscription.calendar = calendar
 }
