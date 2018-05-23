@@ -14,8 +14,8 @@ before_install:
   - unzip ./ngrok-stable-linux-amd64.zip
   - chmod +x ./ngrok
   # Open ngrok tunnel
-  - echo "\nauthtoken: $NGROK_AUTH" >> ./.ngrok.yml
-  - ./ngrok start -config ./.ngrok.yml gosync > /dev/null &
+  - ./ngrok authtoken $NGROK_AUTH
+  - ./ngrok start -config .ngrok2/ngrok.yml -config ./.ngrok.yml gosync > /dev/null &
   - go get -t -v ./...
   - chmod +x ./scripts/cibuild.sh
   - chmod +x ./scripts/test.sh
