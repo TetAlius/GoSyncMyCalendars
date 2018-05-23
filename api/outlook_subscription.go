@@ -8,6 +8,8 @@ import (
 
 	"encoding/json"
 
+	"time"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"github.com/google/uuid"
@@ -75,6 +77,7 @@ func (subscription *OutlookSubscription) Subscribe(calendar CalendarManager) (er
 	}
 
 	err = json.Unmarshal(contents, subscription)
+	subscription.setTime()
 
 	return
 }
@@ -150,9 +153,19 @@ func (subscription *OutlookSubscription) GetAccount() AccountManager {
 func (subscription *OutlookSubscription) GetType() string {
 	return subscription.Type
 }
-func (subscription *OutlookSubscription) GetExpiration() string {
-	return subscription.ExpirationDateTime
-}
 func (subscription *OutlookSubscription) SetCalendar(calendar *OutlookCalendar) {
 	subscription.calendar = calendar
+}
+
+func (subscription *OutlookSubscription) setTime() {
+	expiration, err := time.Parse(time.RFC3339Nano, subscription.ExpirationDateTime)
+	if err != nil {
+		subscription.expirationDate = time.Now().Add(time.Hour * 24 * 7)
+		return
+	}
+	subscription.expirationDate = expiration
+}
+
+func (subscription *OutlookSubscription) GetExpirationDate() time.Time {
+	return subscription.expirationDate
 }

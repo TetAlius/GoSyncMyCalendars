@@ -164,14 +164,13 @@ func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUU
 }
 
 func (data Database) SaveSubscription(subscription api.SubscriptionManager, calendar api.CalendarManager) (err error) {
-
-	stmt, err := data.DB.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration) values ($1,$2,$3,$4,$5)")
+	stmt, err := data.DB.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration_date) values ($1,$2,$3,$4,$5)")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(subscription.GetUUID(), calendar.GetUUID(), subscription.GetID(), subscription.GetType(), subscription.GetExpiration())
+	res, err := stmt.Exec(subscription.GetUUID(), calendar.GetUUID(), subscription.GetID(), subscription.GetType(), subscription.GetExpirationDate())
 	if err != nil {
 		log.Errorf("error executing query: %s", err.Error())
 		return

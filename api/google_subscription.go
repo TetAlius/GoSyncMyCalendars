@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
@@ -69,6 +70,7 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 	}
 
 	err = json.Unmarshal(contents, subscription)
+	subscription.setTime()
 	//TODO manage Expiration
 	return
 }
@@ -120,7 +122,10 @@ func (subscription *GoogleSubscription) GetType() string {
 	return subscription.Type
 }
 
-//TODO: this
-func (subscription *GoogleSubscription) GetExpiration() string {
-	return fmt.Sprintf("%d", subscription.Expiration)
+func (subscription *GoogleSubscription) setTime() {
+	subscription.expirationDate = time.Now().Add(time.Second * time.Duration(subscription.Expiration))
+}
+
+func (subscription *GoogleSubscription) GetExpirationDate() time.Time {
+	return subscription.expirationDate
 }

@@ -269,6 +269,7 @@ type OutlookSubscription struct {
 	ClientState        string    `json:"ClientState,omitempty"`
 	ExpirationDateTime string    `json:"SubscriptionExpirationDateTime,omitempty"`
 	Uuid               uuid.UUID `json:"-"`
+	expirationDate     time.Time
 }
 
 type OutlookNotification struct {

@@ -233,6 +233,7 @@ type GoogleSubscription struct {
 	Token           string    `json:"token,omitempty"`
 	Expiration      int64     `json:"expiration"`
 	Uuid            uuid.UUID `json:"-"`
+	expirationDate  time.Time
 }
 
 func createGoogleResponseError(contents []byte) (err error) {

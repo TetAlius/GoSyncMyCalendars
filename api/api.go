@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"time"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/google/uuid"
 )
@@ -101,7 +103,8 @@ type SubscriptionManager interface {
 	GetUUID() uuid.UUID
 	GetAccount() AccountManager
 	GetType() string
-	GetExpiration() string
+	setTime()
+	GetExpirationDate() time.Time
 }
 
 type RefreshError struct {
