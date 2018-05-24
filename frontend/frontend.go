@@ -14,9 +14,14 @@ import (
 
 	"database/sql"
 
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"reflect"
+
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	"github.com/TetAlius/GoSyncMyCalendars/frontend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
-	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"github.com/google/uuid"
 )
 
@@ -300,8 +305,8 @@ func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		token := r.FormValue("idtoken")
-		email, _, _ := util.MailFromToken(strings.Split(token, "."), "==")
-		user, err := s.database.GetUserFromToken(email)
+		user, err := userFromToken(strings.Split(token, "."))
+		err = s.database.FindOrCreateUser(user)
 		if err != nil {
 			log.Errorf("error retrieving user: %s", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -374,5 +379,47 @@ func (s *Server) Stop() (err error) {
 	log.Debugf("Stopping frontend with ctx: %s", ctx)
 	err = s.server.Shutdown(nil)
 	s.database.Close()
+	return
+}
+func userFromToken(tokens []string) (user *db.User, err error) {
+	if len(tokens) < 2 {
+		return nil, errors.New("TokenID was not parsed correctly")
+	}
+	encodedToken := strings.Replace(
+		strings.Replace(tokens[1], "-", "_", -1),
+		"+", "/", -1)
+	if encodedToken[len(encodedToken)-1:] != "=" {
+		encodedToken = encodedToken + "="
+	}
+	if encodedToken[len(encodedToken)-2:] != "==" {
+		encodedToken = encodedToken + "="
+	}
+	decodedToken, err := base64.StdEncoding.DecodeString(encodedToken)
+	log.Debugf("%s", decodedToken)
+
+	if err != nil {
+		log.Errorf("Error decoding token: %s", err.Error())
+	}
+	var f interface{}
+	err = json.Unmarshal(decodedToken, &f)
+	if err != nil {
+		log.Errorf("Error unmarshaling decoded token: %s", err.Error())
+	}
+
+	var email string
+	var name string
+	if reflect.TypeOf(f) != nil && reflect.TypeOf(f).Kind() == reflect.Map {
+		m := f.(map[string]interface{})
+
+		if m["email"] != nil {
+			email = m["email"].(string)
+		}
+		if m["name"] != nil {
+			name = m["name"].(string)
+		}
+		user = &db.User{Email: email, Name: name}
+	} else {
+		err = customErrors.DecodedError{Message: "Decoded token is not a map"}
+	}
 	return
 }

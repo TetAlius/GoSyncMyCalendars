@@ -23,7 +23,7 @@ func NewGoogleAccount(contents []byte) (a *GoogleAccount, err error) {
 	log.Debugf("%s", contents)
 
 	// preferred is ignored on google
-	email, _, err := util.MailFromToken(strings.Split(a.TokenID, "."), "==")
+	email, _, err := util.MailFromToken(strings.Split(a.TokenID, "."))
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error retrieving google mail: %s", err.Error()))
 	}

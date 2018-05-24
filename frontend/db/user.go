@@ -20,7 +20,6 @@ type User struct {
 	UUID             uuid.UUID
 	Email            string
 	Name             string
-	Surname          string
 	PrincipalAccount Account
 	Accounts         []Account
 }
@@ -35,17 +34,15 @@ func (data Database) RetrieveUser(uuid string) (user *User, err error) {
 	return
 }
 
-func (data Database) GetUserFromToken(token string) (user *User, err error) {
-	email := token
-	user, err = data.findUserByMail(email)
+func (data Database) FindOrCreateUser(user *User) (err error) {
+	err = data.findUserByMail(user)
 	if _, ok := err.(*customErrors.NotFoundError); ok {
-		log.Debugf("no user found with email %s", email)
-		user = &User{UUID: uuid.New(), Name: "Name", Email: email, Surname: "Surname"}
+		log.Debugf("no user found with email %s", user.Email)
 		err = data.createUser(user)
 	}
 	if err != nil {
-		log.Errorf("error retrieving email: %s", email)
-		return nil, err
+		log.Errorf("error retrieving email: %s", user.Email)
+		return
 
 	}
 	log.Infof("user with email %s successfully retrieve from DB", user.Email)
@@ -59,13 +56,14 @@ func (data Database) GetUserFromToken(token string) (user *User, err error) {
 }
 
 func (data Database) createUser(user *User) (err error) {
-	stmt, err := data.DB.Prepare("insert into users(uuid,email,name,surname) values ($1,$2,$3,$4);")
+	user.UUID = uuid.New()
+	stmt, err := data.DB.Prepare("insert into users(uuid,email,name) values ($1,$2,$3);")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(user.UUID, user.Email, user.Name, user.Surname)
+	res, err := stmt.Exec(user.UUID, user.Email, user.Name)
 	if err != nil {
 		log.Errorf("error executing query: %s", err.Error())
 		return
@@ -82,21 +80,23 @@ func (data Database) createUser(user *User) (err error) {
 
 }
 
-func (data Database) findUserByMail(email string) (user *User, err error) {
+func (data Database) findUserByMail(user *User) (err error) {
 	var uid uuid.UUID
 	var name string
-	var surname string
 	var mail string
-	err = data.DB.QueryRow("SELECT users.uuid,users.name,users.surname,users.email from users where users.email = $1;", email).Scan(&uid, &name, &surname, &mail)
+	err = data.DB.QueryRow("SELECT users.uuid,users.name,users.email from users where users.email = $1;", user.Email).Scan(&uid, &name, &mail)
 	switch {
 	case err == sql.ErrNoRows:
-		log.Debugf("No user with that email: %s.", email)
-		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
+		log.Debugf("No user with that email: %s.", user.Email)
+		return &customErrors.NotFoundError{Code: http.StatusNotFound}
 	case err != nil:
-		log.Errorf("error looking for user with email: %s", email)
+		log.Errorf("error looking for user with email: %s", user.Email)
 		return
 	}
-	user = &User{UUID: uid, Name: name, Surname: surname, Email: mail}
+	//user.UUID = uid
+	//user.Name = name
+	//user.Email = mail
+	*user = User{UUID: uid, Name: name, Email: mail}
 	return
 }
 
@@ -214,9 +214,8 @@ func (data Database) UpdateCalendar(user *User, calendarID string, parentID stri
 func (data Database) findUserByID(id string) (user *User, err error) {
 	var uid uuid.UUID
 	var name string
-	var surname string
 	var email string
-	err = data.DB.QueryRow("SELECT users.uuid, users.name,users.surname, users.email from users where users.uuid = $1;", id).Scan(&uid, &name, &surname, &email)
+	err = data.DB.QueryRow("SELECT users.uuid, users.name, users.email from users where users.uuid = $1;", id).Scan(&uid, &name, &email)
 	switch {
 	case err == sql.ErrNoRows:
 		log.Debugf("No user with that id: %s.", id)
@@ -225,7 +224,7 @@ func (data Database) findUserByID(id string) (user *User, err error) {
 		log.Errorf("error looking for user with id: %s", id)
 		return
 	}
-	user = &User{UUID: uid, Name: name, Surname: surname, Email: email}
+	user = &User{UUID: uid, Name: name, Email: email}
 	return
 
 }

@@ -1,5 +1,5 @@
 {{define "content"}}
-    {{if not (or .User.Accounts .User.PrincipalAccount)}}
+    {{if not (or .User.Accounts .User.PrincipalAccount.ID)}}
         <p>You have no accounts right now. Try adding accounts:</p>
         <p>Keep in mind that first account added will be consider the principal one</p>
         <p>And will be the one used to make all calendar relations</p>

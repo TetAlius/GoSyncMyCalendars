@@ -18,7 +18,7 @@ func NewOutlookAccount(contents []byte) (a *OutlookAccount, err error) {
 		return nil, errors.New(fmt.Sprintf("error unmarshaling outlook response: %s", err.Error()))
 	}
 
-	email, preferred, err := util.MailFromToken(strings.Split(a.TokenID, "."), "=")
+	email, preferred, err := util.MailFromToken(strings.Split(a.TokenID, "."))
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error retrieving outlook mail: %s", err.Error()))
 	}
