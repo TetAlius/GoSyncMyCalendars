@@ -24,6 +24,12 @@ func (s *Server) outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	if len(query.Get("error")) > 0 {
+		log.Errorf("google authorization with error: %s", query.Get("error"))
+		http.Redirect(w, r, "/accounts", http.StatusPermanentRedirect)
+		return
+	}
 	currentUser, ok := s.manageSession(w, r)
 	if !ok {
 		return

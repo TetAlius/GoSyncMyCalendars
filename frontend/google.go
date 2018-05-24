@@ -26,6 +26,12 @@ func (s *Server) googleSignInHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) googleTokenHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	if len(query.Get("error")) > 0 {
+		log.Errorf("google authorization with error: %s", query.Get("error"))
+		http.Redirect(w, r, "/accounts", http.StatusPermanentRedirect)
+		return
+	}
 	currentUser, ok := s.manageSession(w, r)
 	if !ok {
 		return
@@ -44,7 +50,7 @@ func (s *Server) googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
-	query := r.URL.Query()
+
 	// TODO: Know how to send state
 	//state := query.Get("state")
 
