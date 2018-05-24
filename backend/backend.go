@@ -297,9 +297,9 @@ func (s *Server) manageSubscriptions() {
 
 func updateTicker() *time.Ticker {
 	tim := time.Now()
-	nextTick := time.Date(tim.Year(), tim.Month(), tim.Day(), tim.Hour(), tim.Minute(), tim.Second(), 0, time.Local)
+	nextTick := time.Date(tim.Year(), tim.Month(), tim.Day(), 0, 5, 0, 0, time.Local)
 	if !nextTick.After(time.Now()) {
-		nextTick = nextTick.Add(time.Second * 15)
+		nextTick = nextTick.Add(time.Hour * 24)
 	}
 	diff := nextTick.Sub(time.Now())
 	log.Debugf("next tick: %s", nextTick)
