@@ -31,6 +31,7 @@ type Server struct {
 	mux      *http.ServeMux
 	worker   *worker.Worker
 	database db.Database
+	ticker   *time.Ticker
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +65,7 @@ func (s *Server) Start() (err error) {
 	h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
 	s.server = h
 	log.Infof("Backend server listening at %s", laddr)
+	go func() { s.manageSubscriptions() }()
 
 	err = s.server.ListenAndServe()
 	if err != nil {
@@ -78,6 +80,7 @@ func (s *Server) Stop() (err error) {
 	log.Debugf("Stopping backend with ctx: %s", ctx)
 	err = s.server.Shutdown(ctx)
 	s.worker.Stop()
+	s.ticker.Stop()
 	s.database.Close()
 	return
 }
@@ -261,4 +264,44 @@ func manageCORS(w http.ResponseWriter, r http.Request, methods map[string]bool) 
 	}
 	return
 
+}
+
+func (s *Server) manageSubscriptions() {
+	s.ticker = updateTicker()
+	for {
+		<-s.ticker.C
+		log.Debugf("next ticking: %s")
+		subscriptions, err := s.database.GetExpiredSubscriptions()
+		if err != nil {
+			log.Errorf("error: %s", err.Error())
+			s.ticker = updateTicker()
+			continue
+		}
+		for _, subscription := range subscriptions {
+			acc := subscription.GetAccount()
+			if err := acc.Refresh(); err != nil {
+				continue
+			}
+			if err = s.database.UpdateAccountFromSubscription(acc, subscription); err != nil {
+				log.Errorf("error updating account: %s", err.Error())
+			}
+			//subscription.Renew()
+			err := s.database.UpdateSubscription(subscription)
+			if err != nil {
+				log.Errorf("error updating subscription: %s", err.Error())
+			}
+		}
+		s.ticker = updateTicker()
+	}
+}
+
+func updateTicker() *time.Ticker {
+	tim := time.Now()
+	nextTick := time.Date(tim.Year(), tim.Month(), tim.Day(), tim.Hour(), tim.Minute(), tim.Second(), 0, time.Local)
+	if !nextTick.After(time.Now()) {
+		nextTick = nextTick.Add(time.Second * 15)
+	}
+	diff := nextTick.Sub(time.Now())
+	log.Debugf("next tick: %s", nextTick)
+	return time.NewTicker(diff)
 }

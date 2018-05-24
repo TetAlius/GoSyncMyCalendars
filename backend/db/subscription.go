@@ -57,6 +57,39 @@ func (data Database) DeleteSubscription(subscription api.SubscriptionManager) (e
 	log.Debugf("affected %d rows", affect)
 	return
 }
+
+func (data Database) GetExpiredSubscriptions() (subscriptions []api.SubscriptionManager, err error) {
+	rows, err := data.DB.Query("select subscriptions.uuid, u.email, u.uuid from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where subscriptions.expiration_date <= current_date")
+	if err != nil {
+		log.Errorf("error retrieving all subscription expired: %s", err.Error())
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var subscription api.SubscriptionManager
+		var subscriptionUUID string
+		var userEmail string
+		var userUUID string
+		err = rows.Scan(&subscriptionUUID, &userEmail, &userUUID)
+		if err != nil {
+			log.Errorf("error scanning results: %s", err.Error())
+			return nil, err
+		}
+		subscription, err = data.getSubscription(subscriptionUUID, userEmail, userUUID)
+		if err != nil {
+			log.Errorf("error getting subscription with uuid: %s email: %s user uuid: %s error: %s", subscriptionUUID, userEmail, userUUID, err.Error())
+			return nil, err
+		}
+		subscriptions = append(subscriptions, subscription)
+	}
+	return
+
+}
+
+func (data Database) UpdateSubscription(subscription api.SubscriptionManager) (err error) {
+	return
+}
+
 func (data Database) getSubscription(subscriptionUUID string, userEmail string, userUUID string) (subscription api.SubscriptionManager, err error) {
 	var id string
 	var uid uuid.UUID

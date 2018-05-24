@@ -109,6 +109,7 @@ func (subscription *OutlookSubscription) Renew() (err error) {
 		bytes.NewBuffer(data),
 		headers, nil)
 	err = createOutlookResponseError(contents)
+	subscription.setTime()
 
 	return
 }
