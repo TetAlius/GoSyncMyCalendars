@@ -20,7 +20,6 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/backend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/worker"
-	"github.com/google/uuid"
 )
 
 //Backend object
@@ -119,33 +118,10 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		s.database.UpdateAccountFromUser(calendar.GetAccount(), decoded[1])
-		s.database.UpdateCalendarFromUser(calendar, decoded[1])
-		var subs api.SubscriptionManager
-		switch calendar.(type) {
-		case *api.GoogleCalendar:
-			//TODO: change this IDS
-			subs = api.NewGoogleSubscription(uuid.New().String(), "URL")
-			subs.Subscribe(calendar)
-		case *api.OutlookCalendar:
-			subs = api.NewOutlookSubscription(uuid.New().String(), "URL", "Created,Deleted,Updated")
-			subs.Subscribe(calendar)
-		}
-		s.database.SaveSubscription(subs, calendar)
-		for _, cal := range calendar.GetCalendars() {
-			s.database.UpdateAccountFromUser(cal.GetAccount(), decoded[1])
-			s.database.UpdateCalendarFromUser(cal, decoded[1])
-			var subscript api.SubscriptionManager
-			switch cal.(type) {
-			case *api.GoogleCalendar:
-				//TODO: change this IDs
-				subscript = api.NewGoogleSubscription(uuid.New().String(), "URL")
-				subscript.Subscribe(cal)
-			case *api.OutlookCalendar:
-				subscript = api.NewOutlookSubscription(uuid.New().String(), "URL", "Created,Deleted,Updated")
-				subscript.Subscribe(cal)
-			}
-			s.database.SaveSubscription(subscript, cal)
+		err = s.database.StartSync(calendar, decoded[1])
+		if err != nil {
+			log.Errorf("error trying to start sync: %s", calendar.GetUUID())
+			w.WriteHeader(http.StatusInternalServerError)
 		}
 	case http.MethodDelete:
 		log.Debugf("Getting method delete")

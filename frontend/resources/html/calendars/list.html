@@ -1,4 +1,7 @@
 {{define "content"}}
+<div id="sync-error" class="alert alert-danger hidden" role="alert">
+    An error has occurred subscribing to your calendars. Try again in a few minutes.
+</div>
 {{$lenAccounts:= len .User.Accounts}}
 <h1 style="display: inline-block">List of all calendars</h1> <a class="btn btn-dark" href="/accounts"><span data-toggle="tooltip" data-placement="top" title="You currently have {{inc $lenAccounts}} accounts">Add more Accounts</span> <span class="badge badge-light">+</span></a>
 <p>Every calendar that is added to sync inside the primary account will generate a new calendar in the other accounts if no calendar is given to sync.</p>
@@ -124,10 +127,6 @@
                 location.reload();
             },
             error: function (responseData, textStatus, errorThrown) {
-                console.log("error");
-                console.log(responseData);
-                console.log(textStatus);
-                console.log(errorThrown);
                 refresh.removeAttr("disabled");
                 $("#loader-wrapper").addClass("hidden");
             }
@@ -150,11 +149,8 @@
                 location.reload();
             },
             error: function (responseData, textStatus, errorThrown) {
-                console.log("error");
-                console.log(responseData);
-                console.log(textStatus);
-                console.log(errorThrown);
                 $("#loader-wrapper").addClass("hidden");
+                $("#sync-error").removeClass("hidden");
             }
         });
 
