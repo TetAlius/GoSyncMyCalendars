@@ -377,7 +377,7 @@ func (s *Server) manageSession(w http.ResponseWriter, r *http.Request) (*db.User
 func (s *Server) Stop() (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	log.Debugf("Stopping frontend with ctx: %s", ctx)
-	err = s.server.Shutdown(nil)
+	err = s.server.Shutdown(ctx)
 	s.database.Close()
 	return
 }
