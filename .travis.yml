@@ -11,11 +11,11 @@ go:
 before_install:
   # Download ngrok
   - curl -sO https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
-  - unzip ./ngrok-stable-linux-amd64.zip
-  - chmod +x ./ngrok
+#  - unzip ./ngrok-stable-linux-amd64.zip
+#  - chmod +x ./ngrok
   # Open ngrok tunnel
-  - ./ngrok authtoken $NGROK_AUTH
-  - ./ngrok start -config /home/travis/.ngrok2/ngrok.yml -config ./.ngrok.yml gosync > /dev/null &
+#  - ./ngrok authtoken $NGROK_AUTH
+#  - ./ngrok start -config /home/travis/.ngrok2/ngrok.yml -config ./.ngrok.yml gosync > /dev/null &
   - go get -t -v ./...
   - chmod +x ./scripts/cibuild.sh
   - chmod +x ./scripts/test.sh

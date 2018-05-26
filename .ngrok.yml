@@ -4,3 +4,7 @@ tunnels:
     proto: http
     addr: 8081
     bind_tls: true
+  gosync_tls:
+    proto: tls
+    addr: 8081
+    bind_tls: true
