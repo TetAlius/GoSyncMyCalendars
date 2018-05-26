@@ -16,6 +16,8 @@ import (
 
 	"database/sql"
 
+	"os"
+
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -66,7 +68,7 @@ func (s *Server) Start() (err error) {
 	log.Infof("Backend server listening at %s", laddr)
 	go func() { s.manageSubscriptions() }()
 
-	err = s.server.ListenAndServe()
+	err = s.server.ListenAndServeTLS("server.crt", "server.key")
 	if err != nil {
 		log.Errorf("ListenAndServe: " + err.Error())
 	}
@@ -225,7 +227,7 @@ func manageCORS(w http.ResponseWriter, r http.Request, methods map[string]bool) 
 		keys = append(keys, key)
 	}
 
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("DNS_NAME"))
 	w.Header().Set("Access-Control-Allow-Methods", fmt.Sprintf("OPTIONS,%s", strings.Join(keys, ",")))
 	w.Header().Set("Access-Control-Allow-Headers",
 		"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")

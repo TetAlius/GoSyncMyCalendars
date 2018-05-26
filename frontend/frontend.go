@@ -110,7 +110,7 @@ func (s *Server) Start() (err error) {
 	go func() {
 		log.Infof("Web server listening at %s", laddr)
 
-		if err := s.server.ListenAndServe(); err != nil {
+		if err := s.server.ListenAndServeTLS("server.crt", "server.key"); err != nil {
 			log.Errorf("%s", err.Error())
 		}
 	}()

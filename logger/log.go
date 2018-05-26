@@ -6,13 +6,14 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"strings"
 )
 
 func ShortFile(file string) (short string) {
 	short = file
 	for i := len(file) - 1; i > 0; i-- {
-		if file[i] == '/' {
-			short = file[i+1:]
+		if strings.Contains(file[i+1:], "GoSyncMyCalendars") {
+			short = file[i+1:][len("GoSyncMyCalendars/"):]
 			break
 		}
 	}

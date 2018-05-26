@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="google-site-verification" content="A2EeYzoCfgArz74-P6yZNKE2SNnMKz-NpiN5S-GFK0I" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
     <style>
@@ -195,7 +196,7 @@
         //TODO: send request to register new user
         var xhr = new XMLHttpRequest();
         var id_token = googleUser.getAuthResponse().id_token;
-        xhr.open('POST', 'http://localhost:8080/user?idtoken=' + id_token);
+        xhr.open('POST', '/user?idtoken=' + id_token);
         xhr.onreadystatechange = function () {//Call a function when the state changes.
             if (xhr.readyState == XMLHttpRequest.DONE && xhr.status != 202) {
                 $("#account-error").removeClass("hidden");
@@ -205,16 +206,9 @@
             }
         };
         xhr.send("idtoken=" + id_token);
-        // console.log("ID Token: " + id_token);
-        // var profile = googleUser.getBasicProfile();
-        // console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-        // console.log('Name: ' + profile.getName());
-        // console.log('Image URL: ' + profile.getImageUrl());
-        // console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
     }
 
     function onFailure(error) {
-        console.log(error);
         $("#account-error").removeClass("hidden");
         auth2.signOut();
     }
@@ -267,11 +261,9 @@
     var signinChanged = function (val) {
         // Sign in the user if they are currently signed in.
         if (val) {
-            console.log('public hidden');
             $('.auth').removeClass("hidden");
             $('.public').addClass("hidden");
         } else {
-            console.log('auth hidden');
             $('.auth').addClass("hidden");
             $('.public').removeClass("hidden");
             if (window.location.pathname !== '/') {

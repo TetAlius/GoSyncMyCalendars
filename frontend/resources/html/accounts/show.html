@@ -26,7 +26,6 @@
 {{define "javascript"}}
     <script>
         function deleteCalendar(id){
-            console.log(id);
             $.ajax({
                 type: "DELETE",
                 url: "/calendars/"+id,
@@ -38,12 +37,11 @@
 
         function retrieveAllCalendars(id){
             $("#loader-wrapper").removeClass("hidden");
-            console.log(id);
             $.ajax({
                 type: "GET",
                 dataType: 'text',
                 crossDomain: true,
-                url: "http://localhost:8081/accounts/"+id+"/calendars/",
+                url: ":8081/accounts/"+id+"/calendars/",
                 // withCredentials:true,
                 headers: {
                     "Authorization": btoa({{.User.Email}} + ":" + {{.User.UUID}})
