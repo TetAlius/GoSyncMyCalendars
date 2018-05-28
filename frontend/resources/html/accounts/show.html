@@ -37,6 +37,7 @@
 
         function retrieveAllCalendars(id){
             $("#loader-wrapper").removeClass("hidden");
+            $("#loader-text").html("Retrieving all calendars. Please wait");
             $.ajax({
                 type: "GET",
                 dataType: 'text',
@@ -59,9 +60,11 @@
                         select.append(opt);
                     }
                     $("#loader-wrapper").addClass("hidden");
+                    $("#loader-text").html("");
                 },
                 error: function(responseData, textStatus, errorThrown) {
                     $("#loader-wrapper").addClass("hidden");
+                    $("#loader-text").html("");
                     console.log("error");
                     console.log(responseData);
                     console.log(textStatus);

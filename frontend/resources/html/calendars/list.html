@@ -99,6 +99,7 @@
 <script>
     function deleteRelationCalendar(id){
         $("#loader-wrapper").removeClass("hidden");
+        $("#loader-text").html("Removing relation. Please wait");
         $('[data-toggle="tooltip"]').tooltip('hide');
         $.ajax({
             type: "PATCH",
@@ -114,6 +115,7 @@
     }
     function refreshCalendarNames(){
         $("#loader-wrapper").removeClass("hidden");
+        $("#loader-text").html("Refreshing calendar names. Please wait");
         $.ajax({
             type: "POST",
             dataType: null,
@@ -128,12 +130,14 @@
             error: function (responseData, textStatus, errorThrown) {
                 refresh.removeAttr("disabled");
                 $("#loader-wrapper").addClass("hidden");
+                $("#loader-text").html("");
             }
         });
 
     }
     function startSync(uuid){
         $("#loader-wrapper").removeClass("hidden");
+        $("#loader-text").html("Synchronizing calendars. Creating events from principal to secondaries. Please wait");
         $.ajax({
             type: "POST",
             dataType: null,
@@ -147,6 +151,7 @@
             },
             error: function (responseData, textStatus, errorThrown) {
                 $("#loader-wrapper").addClass("hidden");
+                $("#loader-text").html("");
                 $("#sync-error").removeClass("hidden");
             }
         });
@@ -154,6 +159,7 @@
     }
     function stopSync(uuid){
         $("#loader-wrapper").removeClass("hidden");
+        $("#loader-text").html("Stopping all subscriptions. Please wait");
         $.ajax({
             type: "DELETE",
             dataType: null,
@@ -171,6 +177,7 @@
                 console.log(textStatus);
                 console.log(errorThrown);
                 $("#loader-wrapper").addClass("hidden");
+                $("#loader-text").html("");
             }
         });
 
