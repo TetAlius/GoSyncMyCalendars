@@ -110,7 +110,7 @@ func (s *Server) Start() (err error) {
 	go func() {
 		log.Infof("Web server listening at %s", laddr)
 
-		if err := s.server.ListenAndServeTLS("server.crt", "server.key"); err != nil {
+		if err := s.server.ListenAndServeTLS("server.crt", "server.key"); err != nil && err != http.ErrServerClosed {
 			log.Errorf("%s", err.Error())
 		}
 	}()
@@ -375,7 +375,7 @@ func (s *Server) manageSession(w http.ResponseWriter, r *http.Request) (*db.User
 
 //Stop the frontend
 func (s *Server) Stop() (err error) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 	log.Debugf("Stopping frontend with ctx: %s", ctx)
 	err = s.server.Shutdown(ctx)
 	s.database.Close()

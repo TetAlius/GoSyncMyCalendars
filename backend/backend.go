@@ -69,7 +69,7 @@ func (s *Server) Start() (err error) {
 	go func() { s.manageSubscriptions() }()
 
 	err = s.server.ListenAndServeTLS("server.crt", "server.key")
-	if err != nil {
+	if err != nil && err != http.ErrServerClosed {
 		log.Errorf("ListenAndServe: " + err.Error())
 	}
 	return
@@ -77,7 +77,7 @@ func (s *Server) Start() (err error) {
 
 //Stop the backend
 func (s *Server) Stop() (err error) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 	log.Debugf("Stopping backend with ctx: %s", ctx)
 	err = s.server.Shutdown(ctx)
 	s.worker.Stop()
