@@ -114,7 +114,7 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 		log.Debugf("%s", calendar)
-		err = api.StartSync(calendar)
+		err = api.PrepareSync(calendar)
 		if err != nil {
 			log.Errorf("error starting sync")
 			w.WriteHeader(http.StatusInternalServerError)

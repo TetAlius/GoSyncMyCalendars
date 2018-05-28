@@ -5,20 +5,22 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"encoding/json"
 
 	"time"
 
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"github.com/google/uuid"
 )
 
-func NewOutlookSubscription(ID string, notificationURL string, changeType string) (subscription *OutlookSubscription) {
+func NewOutlookSubscription(ID string) (subscription *OutlookSubscription) {
 	subscription = new(OutlookSubscription)
-	subscription.NotificationURL = notificationURL
-	subscription.ChangeType = changeType
+	subscription.NotificationURL = fmt.Sprintf("%s:8081/outlook/watcher", os.Getenv("DNS_NAME"))
+	subscription.ChangeType = "Created,Deleted,Updated"
 	subscription.ID = ID
 	subscription.Type = "#Microsoft.OutlookServices.PushSubscription"
 	subscription.Uuid = uuid.New()
@@ -43,6 +45,10 @@ func manageRenewalData(subscription *OutlookSubscription) (data []byte, err erro
 
 // POST https://outlook.office.com/api/v2.0/me/subscriptions
 func (subscription *OutlookSubscription) Subscribe(calendar CalendarManager) (err error) {
+	if err = subscription.setCalendar(calendar); err != nil {
+		log.Errorf("kind of subscription and calender differs: %s", calendar.GetName())
+		return err
+	}
 	a := calendar.GetAccount()
 	log.Debugln("subscribe calendar outlook")
 
@@ -165,6 +171,17 @@ func (subscription *OutlookSubscription) setTime() {
 		return
 	}
 	subscription.expirationDate = expiration
+}
+
+func (subscription *OutlookSubscription) setCalendar(calendar CalendarManager) (err error) {
+	switch calendar.(type) {
+	case *OutlookCalendar:
+		subscription.calendar = calendar.(*OutlookCalendar)
+	default:
+		return &customErrors.WrongKindError{Mail: calendar.GetName()}
+	}
+
+	return
 }
 
 func (subscription *OutlookSubscription) GetExpirationDate() time.Time {

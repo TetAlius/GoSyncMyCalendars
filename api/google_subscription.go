@@ -8,14 +8,17 @@ import (
 	"net/http"
 	"time"
 
+	"os"
+
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 	"github.com/google/uuid"
 )
 
-func NewGoogleSubscription(ID string, notificationURL string) (subscription *GoogleSubscription) {
+func NewGoogleSubscription(ID string) (subscription *GoogleSubscription) {
 	subscription = new(GoogleSubscription)
-	subscription.NotificationURL = notificationURL
+	subscription.NotificationURL = fmt.Sprintf("%s:8081/google/watcher", os.Getenv("DNS_NAME"))
 	subscription.Type = "web_hook"
 	subscription.ID = ID
 	subscription.Uuid = uuid.New()
@@ -41,6 +44,10 @@ func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManag
 
 // POST https://www.googleapis.com/apiName/apiVersion/resourcePath/watch
 func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err error) {
+	if err = subscription.setCalendar(calendar); err != nil {
+		log.Errorf("kind of subscription and calender differs: %s", calendar.GetName())
+		return err
+	}
 	a := calendar.GetAccount()
 	log.Debugln("subscribe calendar google")
 
@@ -124,6 +131,16 @@ func (subscription *GoogleSubscription) GetType() string {
 
 func (subscription *GoogleSubscription) setTime() {
 	subscription.expirationDate = time.Now().Add(time.Second * time.Duration(subscription.Expiration))
+}
+func (subscription *GoogleSubscription) setCalendar(calendar CalendarManager) (err error) {
+	switch calendar.(type) {
+	case *GoogleCalendar:
+		subscription.calendar = calendar.(*GoogleCalendar)
+	default:
+		return &customErrors.WrongKindError{Mail: calendar.GetName()}
+	}
+
+	return
 }
 
 func (subscription *GoogleSubscription) GetExpirationDate() time.Time {

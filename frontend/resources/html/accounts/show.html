@@ -41,7 +41,7 @@
                 type: "GET",
                 dataType: 'text',
                 crossDomain: true,
-                url: ":8081/accounts/"+id+"/calendars/",
+                url: "https://localhost:8081/accounts/"+id+"/calendars/",
                 // withCredentials:true,
                 headers: {
                     "Authorization": btoa({{.User.Email}} + ":" + {{.User.UUID}})

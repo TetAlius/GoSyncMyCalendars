@@ -18,6 +18,7 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_HOST=${DB_HOST}
       - DNS_NAME=${DNS_NAME}
+      - SENTRY_DSN=${SENTRY_DSN}
 
   postgres:
     volumes:

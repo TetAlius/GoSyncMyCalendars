@@ -129,7 +129,6 @@ func Convert(from EventManager, to EventManager) (err error) {
 func convert(in interface{}, out interface{}) (err error) {
 	log.Debugln("Converting...")
 	tag := "sync"
-	//m := make(map[string]interface{})
 
 	v := reflect.ValueOf(in)
 	if v.Kind() == reflect.Ptr {
@@ -142,13 +141,9 @@ func convert(in interface{}, out interface{}) (err error) {
 	}
 
 	typ := v.Type()
-	//logger.Debugf("%d\n", v.NumField())
 	for i := 0; i < v.NumField(); i++ {
-		//logger.Debugln("Looping...")
-		// gets us a StructField
 		fi := typ.Field(i)
 		if tagv := fi.Tag.Get(tag); tagv != "" && tagv != "-" {
-			log.Debugf("tag: %s, value: %s", tagv, v.Field(i).Interface())
 			err := setField(out, tagv, v.Field(i).Interface())
 			if err != nil {
 				return err
@@ -180,9 +175,10 @@ func setField(obj interface{}, name string, value interface{}) error {
 	return nil
 }
 
-func StartSync(calendar CalendarManager) (err error) {
+func PrepareSync(calendar CalendarManager) (err error) {
 	err = calendar.GetAccount().Refresh()
 	if err != nil {
+		//raven.CaptureError(err, map[string]string{"browser": "Firefox"})
 		log.Errorf("error refreshing account: %s", err.Error())
 		return
 	}
@@ -208,8 +204,5 @@ func StartSync(calendar CalendarManager) (err error) {
 			return err
 		}
 	}
-	//TODO: create subscriptions for all calendars
-	//TODO synchronize all events from principal to the other accounts
-
 	return
 }

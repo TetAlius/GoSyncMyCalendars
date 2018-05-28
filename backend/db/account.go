@@ -45,7 +45,7 @@ func (data Database) findAccountFromUser(userUUID string, internalID string) (ac
 	case api.OUTLOOK:
 		account = api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken)
 	default:
-		return nil, &WrongKindError{email}
+		return nil, &customErrors.WrongKindError{email}
 	}
 	return
 

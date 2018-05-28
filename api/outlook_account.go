@@ -125,10 +125,9 @@ func (a *OutlookAccount) GetAllCalendars() (calendars []CalendarManager, err err
 	calendarResponse := new(OutlookCalendarListResponse)
 	err = json.Unmarshal(contents, &calendarResponse)
 
-	calendars = make([]CalendarManager, len(calendarResponse.Calendars))
-	for i, s := range calendarResponse.Calendars {
+	for _, s := range calendarResponse.Calendars {
 		s.SetAccount(a)
-		calendars[i] = s
+		calendars = append(calendars, s)
 	}
 	return
 }

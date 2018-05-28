@@ -13,6 +13,7 @@ import (
 
 	"errors"
 
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -152,16 +153,20 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 	eventList := new(GoogleEventList)
 	err = json.Unmarshal(contents, &eventList)
 
-	events = make([]EventManager, len(eventList.Events))
-	for i, s := range eventList.Events {
+	//events = new([]EventManager)
+	for _, s := range eventList.Events {
 		s.SetCalendar(calendar)
-		err := s.extractTime()
-		if err != nil {
-			return nil, err
+		// ignore cancelled events
+		if s.Status != "cancelled" {
+
+			err := s.extractTime()
+			if err != nil {
+				return nil, err
+			}
+			events = append(events, s)
 		}
-		events[i] = s
 	}
-	return
+	return events, err
 }
 
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
@@ -198,13 +203,17 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 	if err != nil {
 		return
 	}
-	err = eventResponse.extractTime()
-	if err != nil {
-		return
-	}
+	if eventResponse.Status != "cancelled" {
+		err = eventResponse.extractTime()
+		if err != nil {
+			return
+		}
 
-	eventResponse.SetCalendar(calendar)
-	event = eventResponse
+		eventResponse.SetCalendar(calendar)
+		event = eventResponse
+	} else {
+		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
+	}
 
 	return
 }

@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -15,17 +14,21 @@ type Database struct {
 }
 
 func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (err error) {
+	transaction, err := data.DB.Begin()
+	if err != nil {
+		log.Errorf("error creating transaction: %s", err.Error())
+		return
+	}
 	data.UpdateAccountFromUser(calendar.GetAccount(), userUUID)
 	data.UpdateCalendarFromUser(calendar, userUUID)
 	var subscriptions []api.SubscriptionManager
 	var subs api.SubscriptionManager
 	switch calendar.(type) {
 	case *api.GoogleCalendar:
-		//TODO: change this IDS
-		subs = api.NewGoogleSubscription(uuid.New().String(), "URL")
+		subs = api.NewGoogleSubscription(uuid.New().String())
 		err = subs.Subscribe(calendar)
 	case *api.OutlookCalendar:
-		subs = api.NewOutlookSubscription(uuid.New().String(), "URL", "Created,Deleted,Updated")
+		subs = api.NewOutlookSubscription(uuid.New().String())
 		err = subs.Subscribe(calendar)
 	}
 	if err != nil {
@@ -33,40 +36,62 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 		return
 	}
 	subscriptions = append(subscriptions, subs)
-	data.SaveSubscription(subs, calendar)
+	data.saveSubscription(transaction, subs, calendar)
+	events, err := calendar.GetAllEvents()
+	data.savePrincipalEvents(transaction, events)
+
+	var eventsCreated []api.EventManager
 	for _, cal := range calendar.GetCalendars() {
 		data.UpdateAccountFromUser(cal.GetAccount(), userUUID)
 		data.UpdateCalendarFromUser(cal, userUUID)
 		var subscript api.SubscriptionManager
+		var toEvent api.EventManager
 		switch cal.(type) {
 		case *api.GoogleCalendar:
-			//TODO: change this IDs
-			subscript = api.NewGoogleSubscription(uuid.New().String(), "URL")
-			err = subscript.Subscribe(cal)
+			toEvent = &api.GoogleEvent{}
+			subscript = api.NewGoogleSubscription(uuid.New().String())
 		case *api.OutlookCalendar:
-			subscript = api.NewOutlookSubscription(uuid.New().String(), "URL", "Created,Deleted,Updated")
-			err = subscript.Subscribe(cal)
+			toEvent = &api.OutlookEvent{}
+			subscript = api.NewOutlookSubscription(uuid.New().String())
 		}
+		for _, event := range events {
+			api.Convert(event, toEvent)
+			err = toEvent.SetCalendar(cal)
+			if err != nil {
+				log.Errorf("error converting event for calendar: %s, error: %s", cal.GetUUID(), err.Error())
+				break
+			}
+			toEvent.Create()
+			if err != nil {
+				log.Errorf("error creating event for calendar: %s, error: %s", cal.GetUUID(), err.Error())
+				break
+			}
+			eventsCreated = append(eventsCreated, toEvent)
+			err = data.saveEventsRelation(transaction, event, toEvent)
+		}
+		if err != nil {
+			log.Errorln("some error saving events")
+			break
+		}
+		subscript.Subscribe(cal)
 		if err != nil {
 			log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
 			break
 		}
 		subscriptions = append(subscriptions, subscript)
-		data.SaveSubscription(subscript, cal)
+		data.saveSubscription(transaction, subscript, cal)
 	}
 	if err != nil {
+		transaction.Rollback()
 		for _, subscription := range subscriptions {
 			subscription.Delete()
-			data.DeleteSubscription(subscription)
 		}
+
+		for _, event := range eventsCreated {
+			event.Delete()
+		}
+		return
 	}
+	transaction.Commit()
 	return
-}
-
-type WrongKindError struct {
-	Mail string
-}
-
-func (err *WrongKindError) Error() string {
-	return fmt.Sprintf("wrong kind of account %s", err.Mail)
 }

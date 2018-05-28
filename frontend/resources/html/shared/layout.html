@@ -14,7 +14,7 @@
 
         body {
             /* Margin bottom by footer height */
-            margin-bottom: 60px;
+            margin-bottom: 75px;
         }
 
         .footer {
@@ -26,19 +26,9 @@
             line-height: 60px; /* Vertically center the text there */
             background-color: #f5f5f5;
         }
-
-        /* Custom page CSS
-        -------------------------------------------------- */
-        /* Not required for template or sticky footer method. */
-
-        body > .container {
-            padding: 60px 15px 0;
-        }
-
-        .footer > .container {
-            padding-right: 15px;
-            padding-left: 15px;
-        }
+        /*.container{*/
+            /*padding-bottom: 50px;*/
+        /*}*/
 
         code {
             font-size: 80%;
@@ -60,6 +50,13 @@
             z-index: 1000;
             background-color: black;
             opacity: 0.75;
+        }
+        #loader-text {
+            position: relative;
+            color: white;
+            left: 50%;
+            top: 45%;
+            margin: -75px 0 0 -75px;
         }
         #loader {
             display: block;
@@ -140,11 +137,12 @@
     <title>{{.PageTitle}} - GoSyncMyCalendars</title>
 </head>
 <body>
-<div id="loader-wrapper" class="hidden">
+<div id="loader-wrapper" class=>
+    <div id="loader-text">Please wait</div>
     <div id="loader"></div>
 </div>
 <header>
-    <nav class="navbar navbar-expand-sm fixed-top navbar-light bg-light">
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
         <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbar1">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -175,15 +173,13 @@
         </div>
     </nav>
 </header>
-
 <main role="main" class="container">
     <div id="account-error" class="alert alert-danger hidden" role="alert">
         An error has occurred retrieving your account info. SignIn again, please.
     </div>
 {{template "content" . }}
 </main>
-
-<footer class="footer">
+<footer class="footer bg-dark">
     <div class="container">
         <span class="text-muted">This is an educational project. Keep in mind some errors might occur.</span>
         <span class="text-muted float-right">Source Code on <a href="https://github.com/TetAlius/GoSyncMyCalendars">GitHub</a></span>

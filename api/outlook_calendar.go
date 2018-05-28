@@ -163,14 +163,13 @@ func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err erro
 	eventListResponse := new(OutlookEventListResponse)
 	err = json.Unmarshal(contents, &eventListResponse)
 
-	events = make([]EventManager, len(eventListResponse.Events))
-	for i, s := range eventListResponse.Events {
+	for _, s := range eventListResponse.Events {
 		s.SetCalendar(calendar)
 		err = s.extractTime()
 		if err != nil {
 			return
 		}
-		events[i] = s
+		events = append(events, s)
 	}
 	return
 }

@@ -87,6 +87,7 @@ func (data Database) GetExpiredSubscriptions() (subscriptions []api.Subscription
 }
 
 func (data Database) UpdateSubscription(subscription api.SubscriptionManager) (err error) {
+
 	return
 }
 
@@ -112,7 +113,7 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	case api.OUTLOOK:
 		subscription = api.RetrieveOutlookSubscription(id, uid, calendar, typ)
 	default:
-		return nil, &WrongKindError{subscriptionUUID}
+		return nil, &customErrors.WrongKindError{Mail: subscriptionUUID}
 	}
 	return
 }

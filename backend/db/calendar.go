@@ -106,6 +106,7 @@ func (data Database) getSynchronizedCalendars(calendar api.CalendarManager, prin
 		log.Errorf("error selecting setSynchronizedCalendars: %s", err.Error())
 		return
 	}
+
 	defer rows.Close()
 	for rows.Next() {
 		var id string
@@ -123,7 +124,7 @@ func (data Database) getSynchronizedCalendars(calendar api.CalendarManager, prin
 		case api.OUTLOOK:
 			calendar = api.RetrieveOutlookCalendar(id, api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
 		default:
-			return nil, &WrongKindError{calendar.GetName()}
+			return nil, &customErrors.WrongKindError{Mail: calendar.GetName()}
 		}
 		calendar.SetUUID(uid)
 		calendars = append(calendars, calendar)
@@ -163,8 +164,8 @@ func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUU
 
 }
 
-func (data Database) SaveSubscription(subscription api.SubscriptionManager, calendar api.CalendarManager) (err error) {
-	stmt, err := data.DB.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration_date) values ($1,$2,$3,$4,$5)")
+func (data Database) saveSubscription(transaction *sql.Tx, subscription api.SubscriptionManager, calendar api.CalendarManager) (err error) {
+	stmt, err := transaction.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration_date) values ($1,$2,$3,$4,$5)")
 	if err != nil {
 		log.Errorf("error preparing query: %s", err.Error())
 		return

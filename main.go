@@ -9,9 +9,11 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/backend"
 	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/getsentry/raven-go"
 )
 
 func main() {
+
 	missing := false
 	user := os.Getenv("DB_USER")
 	if len(user) <= 0 {
@@ -35,6 +37,10 @@ func main() {
 	}
 	if len(os.Getenv("DNS_NAME")) <= 0 {
 		log.Errorf("missing DNS_NAME variable")
+		missing = true
+	}
+	if len(os.Getenv("SENTRY_DSN")) <= 0 {
+		log.Errorf("missing SENTRY_DSN variable")
 		missing = true
 	}
 	if missing {
@@ -66,35 +72,37 @@ func main() {
 		log.Errorf("error ping backend database: %s", err.Error())
 		os.Exit(1)
 	}
+	raven.CapturePanic(func() {
+		f := frontend.NewServer("127.0.0.1", 8080, "./frontend/resources", frontendDB)
+		maxWorker := 15
+		b := backend.NewServer("127.0.0.1", 8081, maxWorker, backendDB)
 
-	f := frontend.NewServer("127.0.0.1", 8080, "./frontend/resources", frontendDB)
-	maxWorker := 15
-	b := backend.NewServer("127.0.0.1", 8081, maxWorker, backendDB)
+		// Control + C interrupt handler
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
+		//signal.Notify(c, syscall.SIGKILL)
+		//
+		//signal.Notify(c, syscall.SIGINT)
+		//signal.Notify(c, syscall.SIGTERM)
 
-	// Control + C interrupt handler
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	//signal.Notify(c, syscall.SIGKILL)
-	//
-	//signal.Notify(c, syscall.SIGINT)
-	//signal.Notify(c, syscall.SIGTERM)
-
-	go func() {
-		for range c {
-			err := f.Stop()
-			exit := 0
-			if err != nil {
-				log.Errorf("not finished frontend correctly: %s", err.Error())
-				exit = 1
+		go func() {
+			for range c {
+				err := f.Stop()
+				exit := 0
+				if err != nil {
+					log.Errorf("not finished frontend correctly: %s", err.Error())
+					exit = 1
+				}
+				err = b.Stop()
+				if err != nil {
+					log.Errorf("not finished backend correctly: %s", err.Error())
+					exit = 1
+				}
+				os.Exit(exit)
 			}
-			err = b.Stop()
-			if err != nil {
-				log.Errorf("not finished backend correctly: %s", err.Error())
-				exit = 1
-			}
-			os.Exit(exit)
-		}
-	}()
-	f.Start()
-	b.Start()
+		}()
+		f.Start()
+		b.Start()
+	}, nil)
+
 }
