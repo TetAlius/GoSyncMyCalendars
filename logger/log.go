@@ -127,7 +127,7 @@ func init() {
 		warningHandle = ioutil.Discard
 		errorHandle = ioutil.Discard
 		fatalHandle = ioutil.Discard
-	default:
+	case "develop":
 		fd, err := os.OpenFile("./gsmc-develop.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalln("Failed to open log file gsmc-develop.log: ", err)
@@ -137,6 +137,10 @@ func init() {
 		warningHandle = io.MultiWriter(fd, os.Stdout)
 		errorHandle = io.MultiWriter(fd, os.Stdout)
 		fatalHandle = io.MultiWriter(fd, os.Stdout)
+	default:
+		log.Fatalf("ENVIRONMENT not given")
+		os.Exit(1)
+
 	}
 
 	debug = log.New(debugHandle,
