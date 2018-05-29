@@ -18,7 +18,7 @@ import (
 
 func NewGoogleSubscription(ID string) (subscription *GoogleSubscription) {
 	subscription = new(GoogleSubscription)
-	subscription.NotificationURL = fmt.Sprintf("%s:8081/google/watcher", os.Getenv("DNS_NAME"))
+	subscription.NotificationURL = fmt.Sprintf("%s:8081/google/watcher", os.Getenv("ENDPOINT"))
 	subscription.Type = "web_hook"
 	subscription.ID = ID
 	subscription.Uuid = uuid.New()

@@ -12,13 +12,13 @@ services:
     depends_on:
       - postgres
     environment:
-      - API_ROOT=${API_ROOT}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - DB_HOST=${DB_HOST}
-      - DNS_NAME=${DNS_NAME}
+      - ENDPOINT=${ENDPOINT}
       - SENTRY_DSN=${SENTRY_DSN}
+      - ORIGIN=${ORIGIN}
 
   postgres:
     volumes:

@@ -14,8 +14,6 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-var recoverableGoogleErrors = map[string]bool{}
-
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
 func (event *GoogleEvent) Create() (err error) {
 	a := event.GetCalendar().GetAccount()
@@ -185,19 +183,33 @@ func (event *GoogleEvent) GetState() int {
 	return event.state
 }
 
+func (event *GoogleEvent) SetInternalID(internalID int) {
+	event.internalID = internalID
+}
+func (event *GoogleEvent) GetInternalID() int {
+	return event.internalID
+}
+
 func (event *GoogleEvent) extractTime() (err error) {
 	var start, end, format string
-	if len(event.Start.Date) != 0 && len(event.End.Date) != 0 {
-		event.IsAllDay = true
-		start = event.Start.Date
-		end = event.End.Date
-		format = "2006-01-02"
+	sentry := sentryClient()
+	recoveredPanic, sentryID := sentry.CapturePanic(func() {
+		if len(event.Start.Date) != 0 && len(event.End.Date) != 0 {
+			event.IsAllDay = true
+			start = event.Start.Date
+			end = event.End.Date
+			format = "2006-01-02"
 
-	} else {
-		event.IsAllDay = false
-		start = event.Start.DateTime
-		end = event.End.DateTime
-		format = time.RFC3339
+		} else {
+			event.IsAllDay = false
+			start = event.Start.DateTime
+			end = event.End.DateTime
+			format = time.RFC3339
+		}
+	}, map[string]string{"api": "google"})
+	if recoveredPanic != nil {
+		log.Errorf("panic recovered with sentry ID: %s", sentryID)
+		return fmt.Errorf("panic was launched")
 	}
 
 	event.StartsAt, err = time.Parse(format, start)

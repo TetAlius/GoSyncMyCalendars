@@ -19,9 +19,12 @@ import (
 	"errors"
 	"reflect"
 
+	"os"
+
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	"github.com/TetAlius/GoSyncMyCalendars/frontend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/getsentry/raven-go"
 	"github.com/google/uuid"
 )
 
@@ -32,6 +35,7 @@ type Server struct {
 	server   *http.Server
 	mux      http.Handler
 	database db.Database
+	sentry   *raven.Client
 }
 
 type PageInfo struct {
@@ -51,6 +55,13 @@ var funcMap = template.FuncMap{
 		return i - 1
 	}, "existsUUID": func(uid uuid.UUID) bool {
 		return uid.String() != "00000000-0000-0000-0000-000000000000"
+	}, "endpoint": func() string {
+		return os.Getenv("ENDPOINT")
+	}, "disabledByUUID": func(uid uuid.UUID) string {
+		if uid.String() != "00000000-0000-0000-0000-000000000000" {
+			return "disabled"
+		}
+		return ""
 	},
 }
 
@@ -59,10 +70,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //NewFrontend creates a frontend
-func NewServer(ip string, port int, dir string, database *sql.DB) *Server {
+func NewServer(ip string, port int, dir string, database *sql.DB, sentry *raven.Client) *Server {
 	mux := http.NewServeMux()
 	root = dir
-	server := Server{IP: net.ParseIP(ip), Port: port, database: db.Database{DB: database}}
+	server := Server{IP: net.ParseIP(ip), Port: port, database: db.New(database, sentry), sentry: sentry}
 	cssFileServer := http.StripPrefix("/css/", http.FileServer(http.Dir(root+"/css/")))
 	jsFileServer := http.StripPrefix("/js/", http.FileServer(http.Dir(root+"/js/")))
 	imagesFileServer := http.StripPrefix("/images/", http.FileServer(http.Dir(root+"/images/")))
@@ -125,7 +136,7 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 		notFound(w)
 		return
 	}
-	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/index.html")
+	t, err := template.New("layout.html").Funcs(funcMap).ParseFiles(root+"/html/shared/layout.html", root+"/html/index.html")
 	if err != nil {
 		log.Errorln("error parsing files %s", err.Error())
 		serverError(w, err)
@@ -186,7 +197,7 @@ func (s *Server) accountListHandler(w http.ResponseWriter, r *http.Request) {
 		PageTitle: "Accounts",
 		User:      *currentUser,
 	}
-	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/accounts/list.html")
+	t, err := template.New("layout.html").Funcs(funcMap).ParseFiles(root+"/html/shared/layout.html", root+"/html/accounts/list.html")
 	if err != nil {
 		log.Errorf("error parsing files: %s", err.Error())
 		serverError(w, err)
@@ -241,7 +252,7 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		Account:   account,
 	}
 
-	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/accounts/show.html")
+	t, err := template.New("layout.html").Funcs(funcMap).ParseFiles(root+"/html/shared/layout.html", root+"/html/accounts/show.html")
 	if err != nil {
 		log.Errorf("error parsing files: %s", err.Error())
 		serverError(w, err)
@@ -322,7 +333,7 @@ func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func notFound(w http.ResponseWriter) {
-	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/404.html")
+	t, err := template.New("layout.html").Funcs(funcMap).ParseFiles(root+"/html/shared/layout.html", root+"/html/404.html")
 	if err != nil {
 		serverError(w, err)
 		return
@@ -339,7 +350,7 @@ func notFound(w http.ResponseWriter) {
 }
 
 func serverError(w http.ResponseWriter, error error) {
-	t, err := template.ParseFiles(root+"/html/shared/layout.html", root+"/html/500.html")
+	t, err := template.New("layout.html").Funcs(funcMap).ParseFiles(root+"/html/shared/layout.html", root+"/html/500.html")
 	if err != nil {
 		panic(err)
 	}
@@ -377,9 +388,18 @@ func (s *Server) manageSession(w http.ResponseWriter, r *http.Request) (*db.User
 func (s *Server) Stop() (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 	log.Debugf("Stopping frontend with ctx: %s", ctx)
+	var returnErr error
 	err = s.server.Shutdown(ctx)
-	s.database.Close()
-	return
+	if err != nil {
+		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "frontend server"})
+		returnErr = err
+	}
+	err = s.database.Close()
+	if err != nil {
+		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "frontend database"})
+		returnErr = err
+	}
+	return returnErr
 }
 func userFromToken(tokens []string) (user *db.User, err error) {
 	if len(tokens) < 2 {

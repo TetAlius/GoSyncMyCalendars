@@ -5,7 +5,7 @@
     {{else}}
         {{range .Account.Calendars}}
                 <div id="div-{{.UUID}}">
-                <input type="submit" value="Remove from sync" class="btn btn-warning" onclick="deleteCalendar({{.UUID}});"/>
+                <input type="submit" value="Remove from sync" class="btn btn-warning" {{disabledByUUID .SubscriptionUUID}} onclick="deleteCalendar({{.UUID}});"/>
                 <p style="display: inline-block" id={{.UUID}} >{{.Name}}</p>
                 </div>
         {{end}}
@@ -42,7 +42,7 @@
                 type: "GET",
                 dataType: 'text',
                 crossDomain: true,
-                url: "https://localhost:8081/accounts/"+id+"/calendars/",
+                url: {{endpoint}}+":8081/accounts/"+id+"/calendars/",
                 // withCredentials:true,
                 headers: {
                     "Authorization": btoa({{.User.Email}} + ":" + {{.User.UUID}})

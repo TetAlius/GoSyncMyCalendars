@@ -120,15 +120,14 @@
             type: "POST",
             dataType: null,
             crossDomain: true,
-            url: "https://localhost:8081/refresh/",
+            url: {{endpoint}}+":8081/refresh/",
             headers: {
                 "Authorization": btoa({{.User.Email}} +":" + {{.User.UUID}})
             },
             success: function (data) {
                 location.reload();
             },
-            error: function (responseData, textStatus, errorThrown) {
-                refresh.removeAttr("disabled");
+            error: function (responseData, textStatus, errorThrown) {;
                 $("#loader-wrapper").addClass("hidden");
                 $("#loader-text").html("");
             }
@@ -142,7 +141,7 @@
             type: "POST",
             dataType: null,
             crossDomain: true,
-            url: "https://localhost:8081/subscribe/" + uuid,
+            url: {{endpoint}}+":8081/subscribe/" + uuid,
             headers: {
                 "Authorization": btoa({{.User.Email}} +":" + {{.User.UUID}})
             },
@@ -164,7 +163,7 @@
             type: "DELETE",
             dataType: null,
             crossDomain: true,
-            url: "https://localhost:8081/subscribe/" + uuid,
+            url: {{endpoint}}+":8081/subscribe/" + uuid,
             headers: {
                 "Authorization": btoa({{.User.Email}} +":" + {{.User.UUID}})
             },

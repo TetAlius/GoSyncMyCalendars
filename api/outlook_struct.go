@@ -95,6 +95,7 @@ type OutlookEvent struct {
 	relations          []EventManager
 	state              int
 	exponentialBackoff int
+	internalID         int
 
 	ID string `json:"Id"`
 

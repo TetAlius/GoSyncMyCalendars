@@ -58,9 +58,9 @@ func (err *WrongKindError) Error() string {
 }
 
 type NotFoundError struct {
-	Code int
+	Message string
 }
 
 func (err *NotFoundError) Error() string {
-	return fmt.Sprintf("")
+	return err.Message
 }

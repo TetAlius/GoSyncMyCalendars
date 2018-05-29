@@ -203,6 +203,7 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 	if err != nil {
 		return
 	}
+	//TODO: this part
 	if eventResponse.Status != "cancelled" {
 		err = eventResponse.extractTime()
 		if err != nil {
@@ -212,7 +213,7 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 		eventResponse.SetCalendar(calendar)
 		event = eventResponse
 	} else {
-		return nil, &customErrors.NotFoundError{Code: http.StatusNotFound}
+		return nil, &customErrors.NotFoundError{Message: fmt.Sprintf("event with id: %s not found", eventID)}
 	}
 
 	return

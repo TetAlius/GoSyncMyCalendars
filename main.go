@@ -38,12 +38,16 @@ func init() {
 		log.Fatalf("missing DB_USER variable")
 		missing = true
 	}
-	if len(os.Getenv("DNS_NAME")) <= 0 {
-		log.Fatalf("missing DNS_NAME variable")
+	if len(os.Getenv("ENDPOINT")) <= 0 {
+		log.Fatalf("missing ENDPOINT variable")
 		missing = true
 	}
 	if len(os.Getenv("SENTRY_DSN")) <= 0 {
 		log.Fatalf("missing SENTRY_DSN variable")
+		missing = true
+	}
+	if len(os.Getenv("ORIGIN")) <= 0 {
+		log.Fatalf("missing ORIGIN variable")
 		missing = true
 	}
 	if missing {
@@ -51,10 +55,13 @@ func init() {
 	}
 }
 func main() {
-
-	raven.SetDSN(os.Getenv("SENTRY_DSN"))
-	raven.SetEnvironment(os.Getenv("ENVIRONMENT"))
-	raven.SetRelease(os.Getenv("SENTRY_RELEASE"))
+	sentry, err := raven.New(os.Getenv("SENTRY_DSN"))
+	if err != nil {
+		logger.Errorf("error initializing sentry: %s", err.Error())
+		os.Exit(1)
+	}
+	sentry.SetEnvironment(os.Getenv("ENVIRONMENT"))
+	sentry.SetRelease(os.Getenv("RELEASE"))
 
 	dbInfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 		host, user, password, name)
@@ -81,36 +88,35 @@ func main() {
 		logger.Errorf("error ping backend database: %s", err.Error())
 		os.Exit(1)
 	}
-	raven.CapturePanic(func() {
-		f := frontend.NewServer("127.0.0.1", 8080, "./frontend/resources", frontendDB)
-		maxWorker := 15
-		b := backend.NewServer("127.0.0.1", 8081, maxWorker, backendDB)
+	f := frontend.NewServer("127.0.0.1", 8080, "./frontend/resources", frontendDB, sentry)
+	maxWorker := 15
+	b := backend.NewServer("127.0.0.1", 8081, maxWorker, backendDB, sentry)
 
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		//signal.Notify(c, syscall.SIGKILL)
-		//
-		//signal.Notify(c, syscall.SIGINT)
-		//signal.Notify(c, syscall.SIGTERM)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	//TODO: test this calls....
+	//signal.Notify(c, syscall.SIGKILL)
+	//signal.Notify(c, syscall.SIGINT)
+	//signal.Notify(c, syscall.SIGTERM)
 
-		go func() {
-			for range c {
-				err := f.Stop()
-				exit := 0
-				if err != nil {
-					logger.Errorf("not finished frontend correctly: %s", err.Error())
-					exit = 1
-				}
-				err = b.Stop()
-				if err != nil {
-					logger.Errorf("not finished backend correctly: %s", err.Error())
-					exit = 1
-				}
-				os.Exit(exit)
+	go func() {
+		for range c {
+			err := f.Stop()
+			exit := 0
+			if err != nil {
+				sentry.CaptureErrorAndWait(err, map[string]string{"server": "frontend"})
+				logger.Errorf("not finished frontend correctly: %s", err.Error())
+				exit = 1
 			}
-		}()
-		f.Start()
-		b.Start()
-	}, nil)
-
+			err = b.Stop()
+			if err != nil {
+				sentry.CaptureErrorAndWait(err, map[string]string{"server": "backend"})
+				logger.Errorf("not finished backend correctly: %s", err.Error())
+				exit = 1
+			}
+			os.Exit(exit)
+		}
+	}()
+	f.Start()
+	b.Start()
 }

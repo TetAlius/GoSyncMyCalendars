@@ -7,7 +7,10 @@ import (
 
 	"time"
 
+	"os"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/getsentry/raven-go"
 	"github.com/google/uuid"
 )
 
@@ -93,6 +96,8 @@ type EventManager interface {
 	PrepareFields()
 	CanProcessAgain() bool
 	IncrementBackoff()
+	SetInternalID(int)
+	GetInternalID() int
 }
 
 type SubscriptionManager interface {
@@ -122,7 +127,6 @@ func Convert(from EventManager, to EventManager) (err error) {
 		return errors.New(fmt.Sprintf("could not convert events: %s", err.Error()))
 	}
 	to.PrepareFields()
-
 	return
 }
 
@@ -170,15 +174,16 @@ func setField(obj interface{}, name string, value interface{}) error {
 	if structFieldType != val.Type() {
 		return errors.New(fmt.Sprintf("provided value type didn't match obj field type"))
 	}
+	//TODO: error here
+	sentry := sentryClient()
+	sentry.CapturePanic(func() { structFieldValue.Set(val) }, map[string]string{"api": "setField"})
 
-	structFieldValue.Set(val)
 	return nil
 }
 
 func PrepareSync(calendar CalendarManager) (err error) {
 	err = calendar.GetAccount().Refresh()
 	if err != nil {
-		//raven.CaptureError(err, map[string]string{"browser": "Firefox"})
 		log.Errorf("error refreshing account: %s", err.Error())
 		return
 	}
@@ -204,5 +209,12 @@ func PrepareSync(calendar CalendarManager) (err error) {
 			return err
 		}
 	}
+	return
+}
+
+func sentryClient() (sentry *raven.Client) {
+	sentry, _ = raven.New(os.Getenv("SENTRY_DSN"))
+	sentry.SetEnvironment(os.Getenv("ENVIRONMENT"))
+	sentry.SetRelease(os.Getenv("RELEASE"))
 	return
 }

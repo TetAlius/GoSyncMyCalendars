@@ -181,30 +181,67 @@ func (event *OutlookEvent) SetState(stateInformed string) (err error) {
 	return
 }
 
+func (event *OutlookEvent) SetInternalID(internalID int) {
+	event.internalID = internalID
+}
+
+func (event *OutlookEvent) GetInternalID() int {
+	return event.internalID
+}
+
 func (event *OutlookEvent) GetState() int {
 	return event.state
 }
 
 func (event *OutlookEvent) extractTime() (err error) {
 	format := "2006-01-02T15:04:05.999999999"
-	location, err := time.LoadLocation(event.Start.TimeZone)
+	var location *time.Location
+	sentry := sentryClient()
+	recoveredPanic, sentryID := sentry.CapturePanic(func() {
+		location, err = time.LoadLocation(event.Start.TimeZone)
+	}, map[string]string{"api": "outlook"})
+	if recoveredPanic != nil {
+		log.Errorf("panic recovered with sentry ID: %s", sentryID)
+		return fmt.Errorf("panic was launched")
+	}
 	if err != nil {
 		log.Errorf("error getting start location: %s", event.Start.TimeZone)
 		return err
 	}
-	date, err := time.ParseInLocation(format, event.Start.DateTime, location)
+	var date time.Time
+	recoveredPanic, sentryID = sentry.CapturePanic(func() {
+		date, err = time.ParseInLocation(format, event.Start.DateTime, location)
+	}, map[string]string{"api": "outlook"})
+	if recoveredPanic != nil {
+		log.Errorf("panic recovered with sentry ID: %s", sentryID)
+		return fmt.Errorf("panic was launched")
+	}
 	if err != nil {
 		log.Errorf("error parsing start time: %s %s", event.Start.DateTime, err.Error())
 		return
 	}
 	event.StartsAt = date.UTC()
+	recoveredPanic, sentryID = sentry.CapturePanic(func() {
+		location, err = time.LoadLocation(event.End.TimeZone)
+	}, map[string]string{"api": "outlook"})
 
-	location, err = time.LoadLocation(event.End.TimeZone)
+	if recoveredPanic != nil {
+		log.Errorf("panic recovered with sentry ID: %s", sentryID)
+		return fmt.Errorf("panic was launched")
+	}
+
 	if err != nil {
 		log.Errorf("error getting end location: %s", event.End.TimeZone)
 		return err
 	}
-	event.EndsAt, err = time.ParseInLocation(format, event.Start.DateTime, location)
+	recoveredPanic, sentryID = sentry.CapturePanic(func() {
+		event.EndsAt, err = time.ParseInLocation(format, event.Start.DateTime, location)
+	}, map[string]string{"api": "outlook"})
+
+	if recoveredPanic != nil {
+		log.Errorf("panic recovered with sentry ID: %s", sentryID)
+		return fmt.Errorf("panic was launched")
+	}
 	if err != nil {
 		log.Errorf("error parsing end time: %s %s", event.Start.DateTime, err.Error())
 		return

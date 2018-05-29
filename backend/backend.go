@@ -22,6 +22,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/backend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/worker"
+	"github.com/getsentry/raven-go"
 )
 
 //Backend object
@@ -33,6 +34,7 @@ type Server struct {
 	worker   *worker.Worker
 	database db.Database
 	ticker   *time.Ticker
+	sentry   *raven.Client
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -47,8 +49,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //NewBackend creates a backend
-func NewServer(ip string, port int, maxWorker int, database *sql.DB) *Server {
-	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker), database: db.Database{DB: database}}
+func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry *raven.Client) *Server {
+	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker), database: db.New(database, sentry), sentry: sentry}
 	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
 	server.mux.HandleFunc("/outlook/watcher", server.OutlookWatcherHandler)
 	server.mux.HandleFunc("/accounts/", server.retrieveInfoHandler)
@@ -79,11 +81,24 @@ func (s *Server) Start() (err error) {
 func (s *Server) Stop() (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 	log.Debugf("Stopping backend with ctx: %s", ctx)
+	var returnErr error
 	err = s.server.Shutdown(ctx)
-	s.worker.Stop()
+	if err != nil {
+		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "backend server"})
+		returnErr = err
+	}
+	err = s.worker.Stop()
+	if err != nil {
+		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "backend worker"})
+		returnErr = err
+	}
 	s.ticker.Stop()
-	s.database.Close()
-	return
+	err = s.database.Close()
+	if err != nil {
+		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "backend database"})
+		returnErr = err
+	}
+	return returnErr
 }
 
 func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request) {
@@ -227,7 +242,7 @@ func manageCORS(w http.ResponseWriter, r http.Request, methods map[string]bool) 
 		keys = append(keys, key)
 	}
 
-	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("DNS_NAME"))
+	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("ORIGIN"))
 	w.Header().Set("Access-Control-Allow-Methods", fmt.Sprintf("OPTIONS,%s", strings.Join(keys, ",")))
 	w.Header().Set("Access-Control-Allow-Headers",
 		"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")

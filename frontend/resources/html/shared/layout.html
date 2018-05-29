@@ -44,6 +44,8 @@
         #loader-wrapper {
             position: fixed;
             text-align: center;
+            align-content: center;
+            align-text: center;
             top: 0;
             left: 0;
             width: 100%;
@@ -56,18 +58,17 @@
             position: relative;
             color: white;
             font-size: 50px;
-            top: 35%;
-            margin: -75px 0 0 -75px;
+            top: 15%;
             opacity: 1 !important;
         }
         #loader {
             /*display: block;*/
             position: relative;
-            left: 43%;
-            top: 50%;
+            align-content: center;
+            left: 38%;
+            top: 20%;
             width: 250px;
             height: 250px;
-            margin: -75px 0 0 -75px;
             border-radius: 50%;
             border: 3px solid transparent;
             border-top-color: #3498db;
@@ -166,8 +167,6 @@
                     <a id="username" href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
                     </a>
                     <ul class="dropdown-menu float-right">
-                        <li class="dropdown-item"><a href="/me">Account</a></li>
-                        <li class="dropdown-divider"></li>
                         <li class="dropdown-item"><a href="#" onclick="signOut();">Log Out</a></li>
                     </ul>
                 </li>

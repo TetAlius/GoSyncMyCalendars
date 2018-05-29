@@ -5,16 +5,31 @@ import (
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+	"github.com/getsentry/raven-go"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
 type Database struct {
-	*sql.DB
+	sentry *raven.Client
+	client *sql.DB
 }
 
+func New(client *sql.DB, sentry *raven.Client) Database {
+	return Database{
+		client: client,
+		sentry: sentry,
+	}
+
+}
+
+func (data Database) Close() error {
+	return data.client.Close()
+}
+
+//TODO: raven this
 func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (err error) {
-	transaction, err := data.DB.Begin()
+	transaction, err := data.client.Begin()
 	if err != nil {
 		log.Errorf("error creating transaction: %s", err.Error())
 		return
@@ -31,10 +46,10 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 		subs = api.NewOutlookSubscription(uuid.New().String())
 		err = subs.Subscribe(calendar)
 	}
-	if err != nil {
-		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
-		return
-	}
+	//if err != nil {
+	//	log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
+	//	return
+	//}
 	subscriptions = append(subscriptions, subs)
 	data.saveSubscription(transaction, subs, calendar)
 	events, err := calendar.GetAllEvents()
@@ -68,6 +83,9 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 			}
 			eventsCreated = append(eventsCreated, toEvent)
 			err = data.saveEventsRelation(transaction, event, toEvent)
+			if err != nil {
+
+			}
 		}
 		if err != nil {
 			log.Errorln("some error saving events")
@@ -81,17 +99,17 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 		subscriptions = append(subscriptions, subscript)
 		data.saveSubscription(transaction, subscript, cal)
 	}
-	if err != nil {
-		transaction.Rollback()
-		for _, subscription := range subscriptions {
-			subscription.Delete()
-		}
-
-		for _, event := range eventsCreated {
-			event.Delete()
-		}
-		return
-	}
+	//if err != nil {
+	//	transaction.Rollback()
+	//	for _, subscription := range subscriptions {
+	//		subscription.Delete()
+	//	}
+	//
+	//	for _, event := range eventsCreated {
+	//		event.Delete()
+	//	}
+	//	return
+	//}
 	transaction.Commit()
 	return
 }
