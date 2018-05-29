@@ -145,21 +145,21 @@ func init() {
 
 	debug = log.New(debugHandle,
 		"[DEBUG] ",
-		log.Ldate|log.Ltime)
+		log.Ldate|log.Ltime|log.LUTC)
 
 	info = log.New(infoHandle,
 		"[INFO] ",
-		log.Ldate|log.Ltime)
+		log.Ldate|log.Ltime|log.LUTC)
 
 	warning = log.New(warningHandle,
 		"[WARN] ",
-		log.Ldate|log.Ltime)
+		log.Ldate|log.Ltime|log.LUTC)
 
 	er = log.New(errorHandle,
 		"[ERROR] ",
-		log.Ldate|log.Ltime)
+		log.Ldate|log.Ltime|log.LUTC)
 
 	fatal = log.New(fatalHandle,
 		"[ERROR] ",
-		log.Ldate|log.Ltime)
+		log.Ldate|log.Ltime|log.LUTC)
 }
