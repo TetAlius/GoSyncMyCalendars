@@ -71,7 +71,7 @@ func (data Database) findCalendarFromUser(userEmail string, userUUID string, cal
 	err = data.client.QueryRow("SELECT calendars.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, a.principal from calendars join accounts a on calendars.account_email = a.email join users u on a.user_uuid = u.uuid where u.uuid = $1 and u.email=$2 and calendars.uuid =$3", userUUID, userEmail, calendarUUID).Scan(&id, &kind, &tokenType, &refreshToken, &email, &accessToken, &principal)
 	switch {
 	case err == sql.ErrNoRows:
-		err = &customErrors.NotFoundError{Message: fmt.Sprintf("No account from user: %s with that id: %d.", userUUID, id)}
+		err = &customErrors.NotFoundError{Message: fmt.Sprintf("No account from user: %s with that uuid: %s.", userUUID, calendarUUID)}
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Debugf("No account from user: %s with that id: %d.", userUUID, id)
 		return nil, err
