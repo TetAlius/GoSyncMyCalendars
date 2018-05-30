@@ -64,3 +64,11 @@ type NotFoundError struct {
 func (err *NotFoundError) Error() string {
 	return err.Message
 }
+
+type AccountAlreadyUsed struct {
+	Mail string
+}
+
+func (err *AccountAlreadyUsed) Error() string {
+	return fmt.Sprintf("account with email: %s is already in used", err.Mail)
+}
