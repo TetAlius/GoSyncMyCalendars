@@ -9,6 +9,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type Account struct {
@@ -82,8 +83,14 @@ func (data Database) save(account Account) (err error) {
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
+
 	defer stmt.Close()
 	res, err := stmt.Exec(account.User.UUID, account.TokenType, account.RefreshToken, account.Email, account.Kind, account.AccessToken, account.Principal)
+	if pgerr, ok := err.(*pq.Error); ok && pgerr.Code == uniqueViolationError {
+		log.Warningf("account already used: %s", account.Email)
+		return &customErrors.AccountAlreadyUsed{Mail: account.Email}
+	}
+
 	if err != nil {
 		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
 		log.Errorf("error executing query: %s", err.Error())
@@ -152,6 +159,34 @@ func (data Database) addCalendar(account Account, calendar Calendar) (err error)
 		return errors.New(fmt.Sprintf("could not create new calendar with id: %s and name: %s", calendar.ID, calendar.Name))
 	}
 
+	return
+}
+
+func (data Database) updateAccountFromUser(account Account, user *User) (err error) {
+	stmt, err := data.client.Prepare("update accounts set (token_type,refresh_token,access_token) = ($1,$2,$3) where accounts.email = $4 and accounts.user_uuid =$5;")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(account.TokenType, account.RefreshToken, account.AccessToken, account.Email, user.UUID)
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return
+	}
+	if affect != 1 {
+		data.sentry.CaptureErrorAndWait(errors.New(fmt.Sprintf("could not update account with mail: %s for user: %s", account.Email, user.UUID)), map[string]string{"database": "frontend"})
+		return errors.New(fmt.Sprintf("could not associate the account with mail: %s", account.Email))
+	}
 	return
 
 }
