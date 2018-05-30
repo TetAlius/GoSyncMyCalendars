@@ -48,8 +48,7 @@ func (data Database) RetrieveAllSubscriptionsFromUser(principalSubscriptionUUID 
 	return
 }
 
-func (data Database) DeleteSubscription(subscription api.SubscriptionManager) (err error) {
-	transaction, err := data.client.Begin()
+func (data Database) deleteSubscription(transaction *sql.Tx, subscription api.SubscriptionManager) (err error) {
 	stmt, err := transaction.Prepare("delete from subscriptions where subscriptions.uuid = $1")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
@@ -75,7 +74,6 @@ func (data Database) DeleteSubscription(subscription api.SubscriptionManager) (e
 		transaction.Rollback()
 		return
 	}
-	transaction.Commit()
 	return
 }
 
