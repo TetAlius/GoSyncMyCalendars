@@ -46,6 +46,7 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 		subs = api.NewOutlookSubscription(uuid.New().String())
 		err = subs.Subscribe(calendar)
 	}
+	//TODO:
 	//if err != nil {
 	//	log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
 	//	return
@@ -53,7 +54,17 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 	subscriptions = append(subscriptions, subs)
 	data.saveSubscription(transaction, subs, calendar)
 	events, err := calendar.GetAllEvents()
-	data.savePrincipalEvents(transaction, events)
+	//TODO:
+	//if err != nil {
+	//	log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
+	//	return
+	//}
+	err = data.savePrincipalEvents(transaction, events)
+	//TODO:
+	//if err != nil {
+	//	log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
+	//	return
+	//}
 
 	var eventsCreated []api.EventManager
 	for _, cal := range calendar.GetCalendars() {
@@ -99,6 +110,7 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 		subscriptions = append(subscriptions, subscript)
 		data.saveSubscription(transaction, subscript, cal)
 	}
+	//TODO:
 	//if err != nil {
 	//	transaction.Rollback()
 	//	for _, subscription := range subscriptions {
@@ -110,6 +122,45 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 	//	}
 	//	return
 	//}
+	transaction.Commit()
+	return
+}
+
+func (data Database) StopSync(principalSubscriptionUUID string, userEmail string, userUUID string) (err error) {
+	subscriptions, err := data.RetrieveAllSubscriptionsFromUser(principalSubscriptionUUID, userEmail, userUUID)
+	transaction, err := data.client.Begin()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error starting transaction: %s", err.Error())
+		return
+	}
+	for _, subscription := range subscriptions {
+		acc := subscription.GetAccount()
+		//TODO: manage when account access is refused
+		if err = acc.Refresh(); err != nil {
+			continue
+		}
+		go func() { data.UpdateAccountFromUser(acc, userUUID) }()
+		//err := subscription.Delete()
+		if err != nil {
+			log.Errorf("error deleting subscription: %s", err.Error())
+		}
+		err = data.deleteEventsFromSubscription(transaction, subscription)
+		if err != nil {
+			log.Errorf("error deleting events from subscription: %s", subscription.GetUUID())
+			break
+		}
+		err = data.deleteSubscription(transaction, subscription)
+		if err != nil {
+			log.Errorf("error deleting subscription: %s", subscription.GetUUID())
+			break
+		}
+	}
+	if err != nil {
+		transaction.Rollback()
+		log.Errorf("error deleting subscriptions for user: %s", userUUID)
+		return
+	}
 	transaction.Commit()
 	return
 }
