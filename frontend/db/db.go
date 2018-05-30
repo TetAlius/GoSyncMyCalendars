@@ -4,8 +4,10 @@ import (
 	"database/sql"
 
 	"github.com/getsentry/raven-go"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
+
+const uniqueViolationError = pq.ErrorCode("23505")
 
 type Database struct {
 	client *sql.DB
