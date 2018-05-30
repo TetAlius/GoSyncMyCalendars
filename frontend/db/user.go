@@ -118,6 +118,10 @@ func (data Database) AddAccount(user *User, account Account) (err error) {
 	principal := accounts < 1
 	account.Principal = principal
 	err = data.save(account)
+	if _, ok := err.(*customErrors.AccountAlreadyUsed); ok {
+		//TODO:
+		err = data.updateAccountFromUser(account, user)
+	}
 	if err != nil {
 		log.Errorf("could not save account: %s", err.Error())
 		return
