@@ -1,0 +1,185 @@
+{{define "content"}}
+<div id="sync-error" class="alert alert-danger hidden" role="alert">
+    An error has occurred subscribing to your calendars. Try again in a few minutes.
+</div>
+{{$lenAccounts:= len .User.Accounts}}
+<h1 style="display: inline-block">List of all calendars</h1> <a class="btn btn-dark" href="/accounts"><span data-toggle="tooltip" data-placement="top" title="You currently have {{inc $lenAccounts}} accounts">Add more Accounts</span> <span class="badge badge-light">+</span></a>
+<p>Every calendar that is added to sync inside the primary account will generate a new calendar in the other accounts if no calendar is given to sync.</p>
+<p>All calendars will have the same name as the one inside principal.</p>
+<div id="account-error" class="alert alert-info" role="alert">
+    Keep in mind the default outlook calendar cannot be renamed, so it won't have the same name as principal.
+</div>
+{{if not .User.Accounts }}
+<p>You have no calendars right now. Try adding some accounts to sync:</p>
+<br/>
+{{else}}
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th colspan={{inc $lenAccounts}}> {{ .Account.Email }}</th>
+        <th>
+            <button type="button" class="btn btn-primary" data-toggle="modal" id="refresh" onclick="refreshCalendarNames()">
+            <span data-toggle="tooltip" data-placement="top" title="Refresh all calendar names"><span class="fas fa-sync"></span> Refresh calendar Names</span>
+        </button></th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .Account.Calendars}}
+        {{$calendarName := .Name}}
+        {{$subscription := (existsUUID .SubscriptionUUID)}}
+        <tr>
+            <td rowspan="2">
+            {{$calendarName}} ({{.Account.Email}})
+            <th colspan={{$lenAccounts}}>Linked:
+                {{ if and (lt (len .Calendars) ($lenAccounts)) (not $subscription)}}
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#{{.UUID}}">
+                        <span data-toggle="tooltip" data-placement="top" title="Link more calendars to {{$calendarName}}">Link Calendars</span>
+                    </button>
+                {{end}}
+            </th>
+            <td rowspan="2">
+                    {{if $subscription}}
+                        <input type="submit" class="btn btn-warning" value="Stop synchronization" data-toggle="tooltip" data-placement="top" title="Stop Synchronizing {{$calendarName}}" onclick="stopSync({{.SubscriptionUUID.String}});"/>
+                    {{else}}
+                        <input type="submit" class="btn btn-success" value="Start synchronization" data-toggle="tooltip" data-placement="top" title="Start Synchronizing {{$calendarName}}" onclick="startSync({{.UUID}});"/>
+                    {{end}}
+            </td>
+
+        <tr>
+        {{range .Calendars}}
+            <td id="td-{{.UUID}}">
+            <div>{{.Name}} ({{.AccountEmail}})
+                {{if not $subscription}}
+                    <input type="submit" class="btn btn-warning" value="Unlink relation" data-toggle="tooltip" data-placement="top" title="Unlink {{.Name}} from {{$calendarName}}" onclick="deleteRelationCalendar({{.UUID}});"/>
+                {{end}}
+            </div>
+            </td>
+        {{end}}
+        </tr>
+        <!-- Modal -->
+        <div class="modal fade" id="{{.UUID}}" tabindex="-1" role="dialog" aria-labelledby="modal-{{.UUID}}-label" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modal-{{.UUID}}-label">Add calendars to sync</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form action="/calendars/{{.UUID}}" method="post">
+                    {{range $.User.Accounts}}
+                    {{if not .Principal}}
+                        <div class="form-group">
+                            <label for="calendars">{{.Email}}</label>
+                            <select class="form-control" name="calendars" id="calendars">
+                                <option>Select</option>
+                            {{range .Calendars}}
+                                    {{if eq (len .Calendars) 0}}
+                                <option value={{.UUID}}>{{.Name}}</option>
+                                            {{end}}
+                            {{end}}
+                            </select>
+                        </div>
+                    {{end}}
+                    {{end}}
+
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {{end}}
+    </tbody>
+</table>
+{{end}}
+{{end}}
+{{define "javascript"}}
+<script>
+    function deleteRelationCalendar(id){
+        $("#loader-wrapper").removeClass("hidden");
+        $("#loader-text").html("Removing relation. Please wait");
+        $('[data-toggle="tooltip"]').tooltip('hide');
+        $.ajax({
+            type: "PATCH",
+            url: "/calendars/"+id,
+            data:{
+                parent: null
+            },
+            success: function(msg){
+                $("#td-"+id).remove();
+                location.reload()
+            }
+        });
+    }
+    function refreshCalendarNames(){
+        $("#loader-wrapper").removeClass("hidden");
+        $("#loader-text").html("Refreshing calendar names. Please wait");
+        $.ajax({
+            type: "POST",
+            dataType: null,
+            crossDomain: true,
+            url: {{endpoint}}+":8081/refresh/",
+            headers: {
+                "Authorization": btoa({{.User.Email}} +":" + {{.User.UUID}})
+            },
+            success: function (data) {
+                location.reload();
+            },
+            error: function (responseData, textStatus, errorThrown) {;
+                $("#loader-wrapper").addClass("hidden");
+                $("#loader-text").html("");
+            }
+        });
+
+    }
+    function startSync(uuid){
+        $("#loader-wrapper").removeClass("hidden");
+        $("#loader-text").html("Synchronizing calendars. Creating events from principal to secondaries. Please wait");
+        $.ajax({
+            type: "POST",
+            dataType: null,
+            crossDomain: true,
+            url: {{endpoint}}+":8081/subscribe/" + uuid,
+            headers: {
+                "Authorization": btoa({{.User.Email}} +":" + {{.User.UUID}})
+            },
+            success: function (data) {
+                location.reload();
+            },
+            error: function (responseData, textStatus, errorThrown) {
+                $("#loader-wrapper").addClass("hidden");
+                $("#loader-text").html("");
+                $("#sync-error").removeClass("hidden");
+            }
+        });
+
+    }
+    function stopSync(uuid){
+        $("#loader-wrapper").removeClass("hidden");
+        $("#loader-text").html("Stopping all subscriptions. Please wait");
+        $.ajax({
+            type: "DELETE",
+            dataType: null,
+            crossDomain: true,
+            url: {{endpoint}}+":8081/subscribe/" + uuid,
+            headers: {
+                "Authorization": btoa({{.User.Email}} +":" + {{.User.UUID}})
+            },
+            success: function (data) {
+                location.reload();
+            },
+            error: function (responseData, textStatus, errorThrown) {
+                console.log("error");
+                console.log(responseData);
+                console.log(textStatus);
+                console.log(errorThrown);
+                $("#loader-wrapper").addClass("hidden");
+                $("#loader-text").html("");
+            }
+        });
+
+    }
+</script>
+{{end}}

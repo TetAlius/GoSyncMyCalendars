@@ -1,0 +1,6 @@
+region: eu
+tunnels:
+  gosync:
+    proto: http
+    addr: 8081
+    bind_tls: true

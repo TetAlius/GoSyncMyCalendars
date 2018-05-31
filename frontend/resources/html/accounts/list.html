@@ -1,0 +1,27 @@
+{{define "content"}}
+    {{if not (or .User.Accounts .User.PrincipalAccount.ID)}}
+        <p>You have no accounts right now. Try adding accounts:</p>
+        <p>Keep in mind that first account added will be consider the principal one</p>
+        <p>And will be the one used to make all calendar relations</p>
+    {{else}}
+        <h1>Added Accounts</h1>
+        {{$principalAccount:= .User.PrincipalAccount}}
+        {{if $principalAccount}}
+            <a href="/accounts/{{$principalAccount.ID}}">{{$principalAccount.Email}}</a>
+            <span class="badge badge-secondary">({{len $principalAccount.Calendars}})</span>
+            <span>(principal)</span>
+            <br/>
+        {{end}}
+        {{range .User.Accounts}}
+            <a href="/accounts/{{.ID}}">{{.Email}}</a>
+            <span class="badge badge-secondary">({{len .Calendars}})</span>
+           <br/>
+        {{end}}
+    {{end}}
+    <br/>
+    <div class="row"><a class="btn btn-info btn-block" href="/SignInWithGoogle">Add Google Account</a></div>
+    <br/>
+    <div class="row"><a class="btn btn-info btn-block" href="/SignInWithOutlook">Add Outlook Account</a></div>
+{{end}}
+{{define "javascript"}}
+{{end}}

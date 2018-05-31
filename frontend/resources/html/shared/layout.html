@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-site-verification" content="A2EeYzoCfgArz74-P6yZNKE2SNnMKz-NpiN5S-GFK0I" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+    <style>
+        /* Sticky footer styles
+        -------------------------------------------------- */
+        html {
+            position: relative;
+            min-height: 100%;
+        }
+
+        body {
+            /* Margin bottom by footer height */
+            margin-bottom: 75px;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            /* Set the fixed height of the footer here */
+            height: 60px;
+            line-height: 60px; /* Vertically center the text there */
+            background-color: #f5f5f5;
+        }
+        /*.container{*/
+            /*padding-bottom: 50px;*/
+        /*}*/
+
+        code {
+            font-size: 80%;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #username > img {
+            border-radius: 50%;
+        }
+        #loader-wrapper {
+            position: fixed;
+            text-align: center;
+            align-content: center;
+            align-text: center;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.75);
+        }
+        #loader-text {
+            font-weight: bold;
+            position: relative;
+            color: white;
+            font-size: 50px;
+            top: 15%;
+            opacity: 1 !important;
+        }
+        #loader {
+            /*display: block;*/
+            position: relative;
+            align-content: center;
+            left: 38%;
+            top: 20%;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #3498db;
+            opacity: 1;
+
+            -webkit-animation: spin 2s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
+            animation: spin 2s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
+        }
+
+        #loader:before {
+            content: "";
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #e74c3c;
+            opacity: 1;
+
+            -webkit-animation: spin 3s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
+            animation: spin 3s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
+        }
+
+        #loader:after {
+            content: "";
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #f9c922;
+            opacity: 1;
+
+            -webkit-animation: spin 1.5s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
+            animation: spin 1.5s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
+        }
+
+        @-webkit-keyframes spin {
+            0%   {
+                -webkit-transform: rotate(0deg);  /* Chrome, Opera 15+, Safari 3.1+ */
+                -ms-transform: rotate(0deg);  /* IE 9 */
+                transform: rotate(0deg);  /* Firefox 16+, IE 10+, Opera */
+            }
+            100% {
+                -webkit-transform: rotate(360deg);  /* Chrome, Opera 15+, Safari 3.1+ */
+                -ms-transform: rotate(360deg);  /* IE 9 */
+                transform: rotate(360deg);  /* Firefox 16+, IE 10+, Opera */
+            }
+        }
+        @keyframes spin {
+            0%   {
+                -webkit-transform: rotate(0deg);  /* Chrome, Opera 15+, Safari 3.1+ */
+                -ms-transform: rotate(0deg);  /* IE 9 */
+                transform: rotate(0deg);  /* Firefox 16+, IE 10+, Opera */
+            }
+            100% {
+                -webkit-transform: rotate(360deg);  /* Chrome, Opera 15+, Safari 3.1+ */
+                -ms-transform: rotate(360deg);  /* IE 9 */
+                transform: rotate(360deg);  /* Firefox 16+, IE 10+, Opera */
+            }
+        }
+
+
+    </style>
+    <title>{{.PageTitle}} - GoSyncMyCalendars</title>
+</head>
+<body>
+<div id="loader-wrapper" class="hidden">
+    <div id="loader-text"></div>
+    <div id="loader"></div>
+</div>
+<header>
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbar1">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="/">GoSyncMyCalendars</a>
+        <div class="collapse navbar-collapse" id="navbar1">
+            <ul class="navbar-nav">
+                <li class="nav-item auth hidden">
+                    <a class="nav-link" href="/accounts">Accounts</a>
+                </li>
+                <li class="nav-item auth hidden">
+                    <a class="nav-link" href="/calendars">Calendars Relation</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li id="google-button" class="nav-item public hidden">
+                    <div id="my-signin2"></div>
+                </li>
+                <li id="dropdown-account" class="dropdown nav-item auth hidden">
+                    <a id="username" href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
+                    </a>
+                    <ul class="dropdown-menu float-right">
+                        <li class="dropdown-item"><a href="#" onclick="signOut();">Log Out</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<main role="main" class="container">
+    <div id="account-error" class="alert alert-danger hidden" role="alert">
+        An error has occurred retrieving your account info. SignIn again, please.
+    </div>
+{{template "content" . }}
+</main>
+<footer class="footer bg-dark">
+    <div class="container">
+        <span class="text-muted">This is an educational project. Keep in mind some errors might occur.</span>
+        <span class="text-muted float-right">Source Code on <a href="https://github.com/TetAlius/GoSyncMyCalendars">GitHub</a></span>
+    </div>
+</footer>
+<script>
+    var auth2; // The Sign-In object.
+    var googleUser; // The current user.
+    function onSignIn(googleUser) {
+        //TODO: send request to register new user
+        var xhr = new XMLHttpRequest();
+        var id_token = googleUser.getAuthResponse().id_token;
+        xhr.open('POST', '/user?idtoken=' + id_token);
+        xhr.onreadystatechange = function () {//Call a function when the state changes.
+            if (xhr.readyState == XMLHttpRequest.DONE && xhr.status != 202) {
+                $("#account-error").removeClass("hidden");
+                auth2.signOut();
+            } else if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 202) {
+                $("#account-error").addClass("hidden");
+            }
+        };
+        xhr.send("idtoken=" + id_token);
+    }
+
+    function onFailure(error) {
+        $("#account-error").removeClass("hidden");
+        auth2.signOut();
+    }
+
+    function signOut() {
+        var auth2 = gapi.auth2.getAuthInstance();
+        auth2.signOut().then(function () {
+            //Remove cookie
+            //No longer needed as this is a session cookie
+            // document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+            //TODO: Remove scopes...
+            auth2.disconnect();
+        });
+
+    }
+
+    var appStart = function () {
+        gapi.load('auth2', initSigninV2);
+        gapi.signin2.render('my-signin2', {
+            'scope': 'profile email',
+            'longtitle': true,
+            'theme': 'light',
+            'onsuccess': onSignIn,
+            'onfailure': onFailure
+        });
+    };
+
+    var initSigninV2 = function () {
+        gapi.auth2.init({
+            client_id: '760248995468-jtpc1e212a02h47b6ml9vmejqrkeh3vf.apps.googleusercontent.com',
+            scope: 'profile email'
+        }).then(function () {
+            // Listen for sign-in state changes.
+            gapi.auth2.getAuthInstance().isSignedIn.listen(signinChanged);
+            // Handle the initial sign-in state.
+            signinChanged(gapi.auth2.getAuthInstance().isSignedIn.get());
+        });
+        // Listen for changes to current user.
+        auth2 = gapi.auth2.getAuthInstance()
+        gapi.auth2.getAuthInstance().currentUser.listen(userChanged);
+        // Start with the current live values.
+        refreshValues();
+    };
+
+    /**
+     * Listener method for sign-out live value.
+     *
+     * @param {boolean} val the updated signed out state.
+     */
+    var signinChanged = function (val) {
+        // Sign in the user if they are currently signed in.
+        if (val) {
+            $('.auth').removeClass("hidden");
+            $('.public').addClass("hidden");
+        } else {
+            $('.auth').addClass("hidden");
+            $('.public').removeClass("hidden");
+            if (window.location.pathname !== '/') {
+                window.location.pathname = '/';
+            }
+        }
+    };
+
+    /**
+     * Listener method for when the user changes.
+     *
+     * @param {GoogleUser} user the updated user.
+     */
+    var userChanged = function (user) {
+        googleUser = user;
+        updateGoogleUser();
+    };
+
+    /**
+     * Updates the properties in the Google User table using the current user.
+     */
+    var updateGoogleUser = function () {
+        var $username = $('#username');
+        if (googleUser && googleUser.getBasicProfile()) {
+            $username.html(googleUser.getBasicProfile().getName());
+        } else {
+            $username.html('');
+        }
+    };
+
+    /**
+     * Retrieves the current user and signed in states from the GoogleAuth
+     * object.
+     */
+    var refreshValues = function () {
+        if (auth2) {
+            googleUser = auth2.currentUser.get();
+            updateGoogleUser();
+        }
+    }
+</script>
+<script src="https://apis.google.com/js/platform.js?onload=appStart" async defer></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+<script>
+    $('[data-toggle="tooltip"]').tooltip()
+</script>
+{{template "javascript" . }}
+</body>
+</html>

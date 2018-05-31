@@ -1,0 +1,197 @@
+package db
+
+import (
+	"errors"
+	"fmt"
+
+	"database/sql"
+
+	"github.com/TetAlius/GoSyncMyCalendars/api"
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
+	log "github.com/TetAlius/GoSyncMyCalendars/logger"
+)
+
+func (data Database) RetrieveSyncedEventsWithSubscription(event api.EventManager, subscriptionID string) (events []api.EventManager, found bool, err error) {
+	var principalEventID int
+	found = true
+	err = data.client.QueryRow("SELECT COALESCE(events.parent_event_internal_id, events.internal_id) from events join calendars c2 on events.calendar_uuid = c2.uuid join subscriptions s2 on c2.uuid = s2.calendar_uuid where events.id = $1 and s2.id=$2", event.GetID(), subscriptionID).Scan(&principalEventID)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Warningf("principal event from event ID: %s and subscription ID: %s not found", event.GetID(), subscriptionID)
+		found = false
+	case err != nil:
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error getting principal event from event id: %s and subscription ID: %s", event.GetID(), subscriptionID)
+		return nil, false, err
+	}
+	if !found {
+		calendars, err := data.getSynchronizedCalendars(event.GetCalendar())
+		if err != nil {
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			log.Errorf("error retrieving synced calendars: %s", event.GetCalendar().GetID())
+			return nil, false, err
+		}
+		for _, calendar := range calendars {
+			event := calendar.CreateEmptyEvent()
+			events = append(events, event)
+		}
+	} else {
+		events, err = data.getSynchronizedEventsFromEvent(principalEventID, event)
+	}
+	return
+}
+
+func (data Database) getSynchronizedEventsFromEvent(principalEventID int, event api.EventManager) (events []api.EventManager, err error) {
+	stmt, err := data.client.Prepare("select events.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, c2.id from events join calendars c2 on events.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email where events.internal_id = $1 or events.parent_event_internal_id=$1 and events.id!=$2")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error getting synced events from principalID: %d", principalEventID)
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(principalEventID, event.GetID())
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error getting synced events from principalID: %d", principalEventID)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		var kind int
+		var tokenType string
+		var refreshToken string
+		var email string
+		var accessToken string
+		var calendarID string
+		err = rows.Scan(&id, &kind, &tokenType, &refreshToken, &email, &accessToken, &calendarID)
+		if err != nil {
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			log.Errorf("error scanning synced events from principalID: %d", principalEventID)
+			return nil, err
+		}
+		var eventSync api.EventManager
+		var calendar api.CalendarManager
+		switch kind {
+		case api.GOOGLE:
+			account := api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken)
+			calendar = api.RetrieveGoogleCalendar(calendarID, account)
+			eventSync = &api.GoogleEvent{ID: id}
+		case api.OUTLOOK:
+			account := api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken)
+			calendar = api.RetrieveOutlookCalendar(calendarID, account)
+			eventSync = &api.OutlookEvent{ID: id}
+		default:
+			err = &customErrors.WrongKindError{Mail: fmt.Sprintf("wrong kind of account for events with parent ID: %d", principalEventID)}
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			return nil, err
+		}
+		err = event.SetCalendar(calendar)
+		if err != nil {
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			log.Errorf("error setting calendar for event ID: %s", event.GetID())
+		}
+		events = append(events, eventSync)
+	}
+	return
+}
+
+func (data Database) prepareEventsToSync(subscriptionID string) (events []api.EventManager, err error) {
+
+	stmt, err := data.client.Prepare("select a.kind, a.token_type, a.refresh_token, a.email, a.access_token, c2.id from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email where subs")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing events to sync from subscriptionID: %s", subscriptionID)
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(subscriptionID)
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing events to sync from subscriptionID: %s", subscriptionID)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+
+	}
+	return
+}
+func (data Database) savePrincipalEvents(transaction *sql.Tx, events []api.EventManager) (err error) {
+	for _, event := range events {
+		lastInsertId := 0
+		err = transaction.QueryRow("INSERT INTO events (calendar_uuid, id) VALUES($1, $2) RETURNING internal_id", event.GetCalendar().GetUUID(), event.GetID()).Scan(&lastInsertId)
+		switch {
+		case err == sql.ErrNoRows:
+			err = fmt.Errorf("could not insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			log.Errorf("could not insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
+			return err
+		case err != nil:
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			log.Errorf("error insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
+			return err
+		}
+		event.SetInternalID(lastInsertId)
+	}
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+	}
+	return
+
+}
+func (data Database) saveEventsRelation(transaction *sql.Tx, from api.EventManager, to api.EventManager) (err error) {
+	stmt, err := transaction.Prepare("insert into events(calendar_uuid, id, parent_event_internal_id) values ($1,$2,$3)")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(to.GetCalendar().GetUUID(), to.GetID(), from.GetInternalID())
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return
+	}
+	//TODO: Change this...
+	if affect != 1 {
+		err = errors.New(fmt.Sprintf("could not update account with id: %s", to.GetID()))
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return
+	}
+	return
+}
+
+func (data Database) deleteEventsFromSubscription(transaction *sql.Tx, subscription api.SubscriptionManager) (err error) {
+	stmt, err := transaction.Prepare("delete from events using subscriptions, calendars where subscriptions.uuid = $1 and subscriptions.calendar_uuid = calendars.uuid and events.calendar_uuid = calendars.uuid")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing statement: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(subscription.GetUUID())
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error getting rows affected: %s", err.Error())
+	}
+	log.Infof("deleted %d events from subscription: %s", rows, subscription.GetUUID())
+
+	return
+
+}
