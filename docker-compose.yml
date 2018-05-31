@@ -19,6 +19,9 @@ services:
       - ENDPOINT=${ENDPOINT}
       - SENTRY_DSN=${SENTRY_DSN}
       - ORIGIN=${ORIGIN}
+      - RELEASE=${RELEASE}
+      - ENVIRONMENT=${ENVIRONMENT}
+      - API_ROOT=${API_ROOT}
 
   postgres:
     volumes:

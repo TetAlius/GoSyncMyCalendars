@@ -5,6 +5,7 @@ COPY . .
 
 RUN go get github.com/lib/pq
 RUN go get github.com/google/uuid
+RUN go get github.com/getsentry/raven-go
 RUN go install -v ./...
 
 CMD ["GoSyncMyCalendars"]
