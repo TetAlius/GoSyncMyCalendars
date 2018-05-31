@@ -75,7 +75,13 @@ func processSynchronization(event api.EventManager) {
 			go func() {
 				for toSync.CanProcessAgain() {
 					toSync.IncrementBackoff()
-					synchronizeEvents(event, toSync)
+					err := synchronizeEvents(event, toSync)
+					if err != nil {
+						continue
+					} else {
+						//Synchronized correctly
+						break
+					}
 				}
 			}()
 		} else if err != nil {

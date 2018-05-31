@@ -20,20 +20,11 @@ const (
 	Updated
 	Deleted
 
-	UpdatedText = "Updated"
-	CreatedText = "Created"
-	DeletedText = "Deleted"
-
 	GOOGLE  = 1
 	OUTLOOK = 2
 
 	maxBackoff = 5
 )
-
-var states = map[string]int{
-	"Created": Created,
-	"Updated": Updated,
-	"Deleted": Deleted}
 
 type AccountManager interface {
 	Refresh() error
@@ -75,6 +66,7 @@ type CalendarManager interface {
 	SetName(string)
 	GetUUID() string
 	SetUUID(string)
+	CreateEmptyEvent() EventManager
 }
 
 type EventManager interface {
@@ -92,7 +84,7 @@ type EventManager interface {
 
 	MarkWrong()
 	GetState() int
-	SetState(string) error
+	SetState(int)
 	PrepareFields()
 	CanProcessAgain() bool
 	IncrementBackoff()
@@ -176,7 +168,7 @@ func setField(obj interface{}, name string, value interface{}) error {
 	}
 	//TODO: error here
 	sentry := sentryClient()
-	sentry.CapturePanic(func() { structFieldValue.Set(val) }, map[string]string{"api": "setField"})
+	sentry.CapturePanicAndWait(func() { structFieldValue.Set(val) }, map[string]string{"api": "setField"})
 
 	return nil
 }
@@ -210,6 +202,17 @@ func PrepareSync(calendar CalendarManager) (err error) {
 		}
 	}
 	return
+}
+
+func GetChangeType(onCloud bool, onDB bool) int {
+	if onCloud && !onDB {
+		return Created
+	} else if onCloud && onDB {
+		return Updated
+	} else if !onCloud && onDB {
+		return Deleted
+	}
+	return 0
 }
 
 func sentryClient() (sentry *raven.Client) {

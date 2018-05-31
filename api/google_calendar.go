@@ -307,3 +307,7 @@ func (calendar *GoogleCalendar) SetCalendars(calendars []CalendarManager) {
 func (calendar *GoogleCalendar) GetCalendars() []CalendarManager {
 	return calendar.calendars
 }
+
+func (calendar *GoogleCalendar) CreateEmptyEvent() EventManager {
+	return &GoogleEvent{calendar: calendar}
+}

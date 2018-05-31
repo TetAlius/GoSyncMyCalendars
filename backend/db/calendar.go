@@ -60,6 +60,40 @@ func (data Database) UpdateAllCalendarsFromUser(userUUID string, userEmail strin
 	return
 }
 
+func (data Database) RetrieveCalendarFromSubscription(subscriptionID string) (calendar api.CalendarManager, err error) {
+	var tokenType string
+	var refreshToken string
+	var email string
+	var kind int
+	var accessToken string
+	var calendarID string
+	err = data.client.QueryRow("SELECT a.token_type, a.refresh_token,a.email,a.kind,a.access_token, calendars.id from calendars join subscriptions s2 on calendars.uuid = s2.calendar_uuid join accounts a on calendars.account_email = a.email where s2.id = $2", subscriptionID).
+		Scan(&tokenType, &refreshToken, &email, &kind, &accessToken, &calendarID)
+	switch {
+	case err == sql.ErrNoRows:
+		err = &customErrors.NotFoundError{Message: fmt.Sprintf("calendar from subscription with ID: %s not found", subscriptionID)}
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Debugf("calendar from subscription with ID: %s not found", subscriptionID)
+		return nil, err
+	case err != nil:
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Debugf("error getting calendar from subscription with ID: %s", subscriptionID)
+		return nil, err
+	}
+	switch kind {
+	case api.OUTLOOK:
+		account := api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken)
+		calendar = api.RetrieveOutlookCalendar(calendarID, account)
+	case api.GOOGLE:
+		account := api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken)
+		calendar = api.RetrieveGoogleCalendar(calendarID, account)
+	default:
+		return nil, &customErrors.WrongKindError{Mail: fmt.Sprintf("error getting calendar with subscription ID: %s", subscriptionID)}
+	}
+
+	return
+}
+
 func (data Database) findCalendarFromUser(userEmail string, userUUID string, calendarUUID string) (calendar api.CalendarManager, err error) {
 	var id string
 	var tokenType string
@@ -67,8 +101,7 @@ func (data Database) findCalendarFromUser(userEmail string, userUUID string, cal
 	var email string
 	var kind int
 	var accessToken string
-	var principal bool
-	err = data.client.QueryRow("SELECT calendars.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, a.principal from calendars join accounts a on calendars.account_email = a.email join users u on a.user_uuid = u.uuid where u.uuid = $1 and u.email=$2 and calendars.uuid =$3", userUUID, userEmail, calendarUUID).Scan(&id, &kind, &tokenType, &refreshToken, &email, &accessToken, &principal)
+	err = data.client.QueryRow("SELECT calendars.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email join users u on a.user_uuid = u.uuid where u.uuid = $1 and u.email=$2 and calendars.uuid =$3", userUUID, userEmail, calendarUUID).Scan(&id, &kind, &tokenType, &refreshToken, &email, &accessToken)
 	switch {
 	case err == sql.ErrNoRows:
 		err = &customErrors.NotFoundError{Message: fmt.Sprintf("No account from user: %s with that uuid: %s.", userUUID, calendarUUID)}
@@ -91,7 +124,7 @@ func (data Database) findCalendarFromUser(userEmail string, userUUID string, cal
 		return nil, &customErrors.WrongKindError{Mail: email}
 	}
 	calendar.SetUUID(calendarUUID)
-	calendars, err := data.getSynchronizedCalendars(calendar, principal)
+	calendars, err := data.getSynchronizedCalendars(calendar)
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error retrieving sync calendars from %s", calendarUUID)
@@ -101,14 +134,14 @@ func (data Database) findCalendarFromUser(userEmail string, userUUID string, cal
 	return
 }
 
-func (data Database) getSynchronizedCalendars(calendar api.CalendarManager, principal bool) (calendars []api.CalendarManager, err error) {
-	var query string
-	if principal {
-		query = "select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = $1"
-	} else {
-		query = "select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1)"
-	}
-	rows, err := data.client.Query(query, calendar.GetUUID())
+func (data Database) getSynchronizedCalendars(calendar api.CalendarManager) (calendars []api.CalendarManager, err error) {
+	//var query string
+	//if principal {
+	//	query = "select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = $1"
+	//} else {
+	//	query = "select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.parent_calendar_uuid = $1"
+	//}
+	rows, err := data.client.Query("select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where (calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.parent_calendar_uuid = $1) AND calendars.uuid != $1", calendar.GetUUID())
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error selecting setSynchronizedCalendars: %s", err.Error())

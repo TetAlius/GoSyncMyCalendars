@@ -110,6 +110,7 @@ func (data Database) GetExpiredSubscriptions() (subscriptions []api.Subscription
 
 func (data Database) UpdateSubscription(subscription api.SubscriptionManager) (err error) {
 	//TODO:
+	panic(subscription)
 	return
 }
 
@@ -140,6 +141,22 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	default:
 		data.sentry.CaptureErrorAndWait(&customErrors.WrongKindError{Mail: subscriptionUUID}, map[string]string{"database": "backend"})
 		return nil, &customErrors.WrongKindError{Mail: subscriptionUUID}
+	}
+	return
+}
+
+func (data Database) ExistsSubscriptionFromID(ID string) (ok bool, err error) {
+	err = data.client.QueryRow("SELECT true FROM subscriptions where subscriptions.id = $1", ID).Scan(&ok)
+	switch {
+	case err == sql.ErrNoRows:
+		err = &customErrors.NotFoundError{Message: fmt.Sprintf("No subscription with id: %s", ID)}
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Debugf("No subscription with id: %s", ID)
+		return true, err
+	case err != nil:
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Debugf("error looking for subscription with id: %s", ID)
+		return false, err
 	}
 	return
 }

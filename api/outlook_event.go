@@ -173,12 +173,8 @@ func (event *OutlookEvent) IncrementBackoff() {
 	event.exponentialBackoff += 1
 }
 
-func (event *OutlookEvent) SetState(stateInformed string) (err error) {
-	state := states[stateInformed]
-	if state == 0 {
-		return errors.New(fmt.Sprintf("state %s not supported", stateInformed))
-	}
-	return
+func (event *OutlookEvent) SetState(stateInformed int) {
+	event.state = stateInformed
 }
 
 func (event *OutlookEvent) SetInternalID(internalID int) {
@@ -197,7 +193,7 @@ func (event *OutlookEvent) extractTime() (err error) {
 	format := "2006-01-02T15:04:05.999999999"
 	var location *time.Location
 	sentry := sentryClient()
-	recoveredPanic, sentryID := sentry.CapturePanic(func() {
+	recoveredPanic, sentryID := sentry.CapturePanicAndWait(func() {
 		location, err = time.LoadLocation(event.Start.TimeZone)
 	}, map[string]string{"api": "outlook"})
 	if recoveredPanic != nil {
@@ -209,7 +205,7 @@ func (event *OutlookEvent) extractTime() (err error) {
 		return err
 	}
 	var date time.Time
-	recoveredPanic, sentryID = sentry.CapturePanic(func() {
+	recoveredPanic, sentryID = sentry.CapturePanicAndWait(func() {
 		date, err = time.ParseInLocation(format, event.Start.DateTime, location)
 	}, map[string]string{"api": "outlook"})
 	if recoveredPanic != nil {
@@ -221,7 +217,7 @@ func (event *OutlookEvent) extractTime() (err error) {
 		return
 	}
 	event.StartsAt = date.UTC()
-	recoveredPanic, sentryID = sentry.CapturePanic(func() {
+	recoveredPanic, sentryID = sentry.CapturePanicAndWait(func() {
 		location, err = time.LoadLocation(event.End.TimeZone)
 	}, map[string]string{"api": "outlook"})
 
@@ -234,7 +230,7 @@ func (event *OutlookEvent) extractTime() (err error) {
 		log.Errorf("error getting end location: %s", event.End.TimeZone)
 		return err
 	}
-	recoveredPanic, sentryID = sentry.CapturePanic(func() {
+	recoveredPanic, sentryID = sentry.CapturePanicAndWait(func() {
 		event.EndsAt, err = time.ParseInLocation(format, event.Start.DateTime, location)
 	}, map[string]string{"api": "outlook"})
 

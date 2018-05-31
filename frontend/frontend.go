@@ -391,12 +391,12 @@ func (s *Server) Stop() (err error) {
 	var returnErr error
 	err = s.server.Shutdown(ctx)
 	if err != nil {
-		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "frontend server"})
+		s.sentry.CaptureErrorAndWait(err, map[string]string{"stopping": "frontend server"})
 		returnErr = err
 	}
 	err = s.database.Close()
 	if err != nil {
-		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "frontend database"})
+		s.sentry.CaptureErrorAndWait(err, map[string]string{"stopping": "frontend database"})
 		returnErr = err
 	}
 	return returnErr

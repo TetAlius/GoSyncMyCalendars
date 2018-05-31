@@ -11,11 +11,11 @@ import (
 )
 
 type Database struct {
-	sentry *raven.Client
+	sentry raven.Client
 	client *sql.DB
 }
 
-func New(client *sql.DB, sentry *raven.Client) Database {
+func New(client *sql.DB, sentry raven.Client) Database {
 	return Database{
 		client: client,
 		sentry: sentry,

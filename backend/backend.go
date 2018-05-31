@@ -34,7 +34,7 @@ type Server struct {
 	worker   *worker.Worker
 	database db.Database
 	ticker   *time.Ticker
-	sentry   *raven.Client
+	sentry   raven.Client
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +49,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //NewBackend creates a backend
-func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry *raven.Client) *Server {
+func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry raven.Client) *Server {
 	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker), database: db.New(database, sentry), sentry: sentry}
 	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
 	server.mux.HandleFunc("/outlook/watcher", server.OutlookWatcherHandler)
@@ -84,18 +84,18 @@ func (s *Server) Stop() (err error) {
 	var returnErr error
 	err = s.server.Shutdown(ctx)
 	if err != nil {
-		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "backend server"})
+		s.sentry.CaptureErrorAndWait(err, map[string]string{"stopping": "backend server"})
 		returnErr = err
 	}
 	err = s.worker.Stop()
 	if err != nil {
-		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "backend worker"})
+		s.sentry.CaptureErrorAndWait(err, map[string]string{"stopping": "backend worker"})
 		returnErr = err
 	}
 	s.ticker.Stop()
 	err = s.database.Close()
 	if err != nil {
-		raven.CaptureErrorAndWait(err, map[string]string{"stopping": "backend database"})
+		s.sentry.CaptureErrorAndWait(err, map[string]string{"stopping": "backend database"})
 		returnErr = err
 	}
 	return returnErr

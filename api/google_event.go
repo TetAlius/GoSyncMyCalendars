@@ -171,12 +171,8 @@ func (event *GoogleEvent) IncrementBackoff() {
 	event.exponentialBackoff += 1
 }
 
-func (event *GoogleEvent) SetState(stateInformed string) (err error) {
-	state := states[stateInformed]
-	if state == 0 {
-		return errors.New(fmt.Sprintf("state %s not supported", stateInformed))
-	}
-	return
+func (event *GoogleEvent) SetState(stateInformed int) {
+	event.state = stateInformed
 }
 
 func (event *GoogleEvent) GetState() int {
@@ -193,7 +189,7 @@ func (event *GoogleEvent) GetInternalID() int {
 func (event *GoogleEvent) extractTime() (err error) {
 	var start, end, format string
 	sentry := sentryClient()
-	recoveredPanic, sentryID := sentry.CapturePanic(func() {
+	recoveredPanic, sentryID := sentry.CapturePanicAndWait(func() {
 		if len(event.Start.Date) != 0 && len(event.End.Date) != 0 {
 			event.IsAllDay = true
 			start = event.Start.Date

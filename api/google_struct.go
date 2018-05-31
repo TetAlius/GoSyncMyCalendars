@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	"github.com/google/uuid"
 )
 
@@ -242,6 +243,9 @@ func createGoogleResponseError(contents []byte) (err error) {
 	err = json.Unmarshal(contents, &e)
 	if err != nil {
 		return err
+	}
+	if e.Code == 404 {
+		return &customErrors.NotFoundError{Message: e.Message}
 	}
 	if e.Code != 0 && len(e.Message) != 0 {
 		return e

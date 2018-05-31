@@ -265,3 +265,7 @@ func (calendar *OutlookCalendar) GetCalendars() []CalendarManager {
 func (calendar *OutlookCalendar) SetName(name string) {
 	calendar.Name = name
 }
+
+func (calendar *OutlookCalendar) CreateEmptyEvent() EventManager {
+	return &OutlookEvent{calendar: calendar}
+}
