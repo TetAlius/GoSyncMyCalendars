@@ -15,33 +15,25 @@ func TestNewOutlookAccount(t *testing.T) {
 	b := []byte(`{"Name":"Bob","Food":"Pickle"}`)
 	_, err := api.NewOutlookAccount(b)
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
-		return
 	}
 
 	//Bad formatted JSON
 	b = []byte(`{"id_token":"ASD.ASD.ASD","Food":"Pickle"`)
 	_, err = api.NewOutlookAccount(b)
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
-		return
 	}
 
 	//Correct information given
 	account, _ := setup()
 	b, err = json.Marshal(account)
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
-		return
 	}
 	_, err = api.NewOutlookAccount(b)
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
-		return
 	}
 }
 
@@ -52,18 +44,14 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 	err := account.Refresh()
 	log.Debugln(err)
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
-		return
 	}
 
 	//Good info account
 	account, _ = setup()
 	err = account.Refresh()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found %s", err.Error())
-		return
 	}
 
 	os.Setenv("API_ROOT", "")
@@ -71,9 +59,7 @@ func TestOutlookAccount_Refresh(t *testing.T) {
 	log.Debugln(err)
 
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
-		return
 	}
 
 }
@@ -86,18 +72,14 @@ func TestOutlookAccount_GetAllCalendars(t *testing.T) {
 
 	_, err := account.GetAllCalendars()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
-		return
 	}
 
 	os.Setenv("API_ROOT", "")
 	// Bad calling to GetPrimaryCalendar
 	_, err = account.GetAllCalendars()
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
-		return
 	}
 
 }
@@ -108,17 +90,13 @@ func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 	//Refresh previous petition in order to have tokens updated
 	err := account.Refresh()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
-		return
 	}
 
 	log.Debugln("Started")
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
-		return
 	}
 
 	os.Setenv("OUTLOOK_CALENDAR_ID", calendar.GetID())
@@ -128,9 +106,7 @@ func TestOutlookAccount_GetPrimaryCalendar(t *testing.T) {
 	// Bad calling to GetPrimaryCalendar
 	_, err = account.GetPrimaryCalendar()
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected an error found nil")
-		return
 	}
 
 }
@@ -147,15 +123,12 @@ func TestOutlookAccount_GetCalendar(t *testing.T) {
 	calendar, err := account.GetCalendar(calendarID)
 
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found: %s", err.Error())
-		return
+
 	}
 
 	if calendarName != calendar.GetName() {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected %s got %s", calendarName, calendar.GetName())
-		return
 	}
 
 }

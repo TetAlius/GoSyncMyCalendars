@@ -25,66 +25,50 @@ func TestOutlookCalendar_CalendarLifeCycle(t *testing.T) {
 	// wrong call to create calendar
 	err := calendarWrong.Create()
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
-		return
 	}
 
 	// good call to create calendar
 	err = calendar.Create()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
 	}
 
 	// wrong call to get calendar
 	_, err = account.GetCalendar("")
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
-		return
 	}
 
 	//	good call to get calendar
 	_, err = account.GetCalendar(calendar.GetID())
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
 	}
 
 	//	wrong call to update calendar
 	calendarWrong.Name = fmt.Sprintf("TravisRenamed%s", calendarWrong.ID)
 	err = calendarWrong.Update()
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
-		return
 	}
 
 	//	good call to update calendar
 	calendar.Name = fmt.Sprintf("TravisRenamed%s", calendar.GetID())
 	err = calendar.Update()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
 	}
 
 	// wrong call to delete calendar
 	err = calendarWrong.Delete()
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
-		return
 	}
 	//	good call to delete calendar
 	err = calendar.Delete()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
 	}
 
 }
@@ -100,25 +84,19 @@ func TestOutlookCalendar_GetAllEvents(t *testing.T) {
 
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
 	}
 
 	// wrong call to get all events from a calendar
 	_, err = calendarWrong.GetAllEvents()
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
-		return
 	}
 
 	// good call to get all events from a calendar
 	_, err = calendar.GetAllEvents()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
 	}
 
 }
@@ -132,18 +110,15 @@ func TestOutlookCalendar_GetEvent(t *testing.T) {
 
 	calendars, err := account.GetAllCalendars()
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
-		return
 	}
 
 	for _, calendar := range calendars {
 		events, err := calendar.GetAllEvents()
 		if err != nil {
-			t.Fail()
 			t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s",
 				calendar.GetName(), err.Error())
-			return
+			break
 		}
 		allEvents = append(allEvents, events...)
 
@@ -154,17 +129,13 @@ func TestOutlookCalendar_GetEvent(t *testing.T) {
 
 	_, err = calendar.GetEvent("")
 	if err == nil {
-		t.Fail()
 		t.Fatal("something went wrong. Expected error found nil")
-		return
 	}
 
 	//good call to get event
 	_, err = calendar.GetEvent(event.ID)
 	if err != nil {
-		t.Fail()
 		t.Fatalf("something went wrong with calendar: %s. Expected nil found error: %s", calendar.GetName(), err.Error())
-		return
 	}
 
 }
