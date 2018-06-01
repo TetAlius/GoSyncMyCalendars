@@ -77,6 +77,9 @@ func (subscription *OutlookSubscription) Subscribe(calendar CalendarManager) (er
 		bytes.NewBuffer(data),
 		headers, nil)
 
+	sentry := sentryClient()
+	sentry.CaptureMessageAndWait(fmt.Sprintf("%s", contents), map[string]string{"api": "outlook"})
+
 	err = createOutlookResponseError(contents)
 	if err != nil {
 		return err
@@ -114,6 +117,8 @@ func (subscription *OutlookSubscription) Renew() (err error) {
 		route,
 		bytes.NewBuffer(data),
 		headers, nil)
+	sentry := sentryClient()
+	sentry.CaptureMessageAndWait(fmt.Sprintf("%s", contents), map[string]string{"api": "outlook"})
 	err = createOutlookResponseError(contents)
 	subscription.setTime()
 
@@ -138,6 +143,8 @@ func (subscription *OutlookSubscription) Delete() (err error) {
 		route,
 		nil,
 		headers, nil)
+	sentry := sentryClient()
+	sentry.CaptureMessageAndWait(fmt.Sprintf("%s", contents), map[string]string{"api": "outlook"})
 	if len(contents) != 0 {
 		err = createOutlookResponseError(contents)
 		return err

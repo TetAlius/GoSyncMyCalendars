@@ -92,7 +92,7 @@ func (data Database) findUserByMail(user *User) (err error) {
 	switch {
 	case err == sql.ErrNoRows:
 		err = &customErrors.NotFoundError{Message: fmt.Sprintf("No user with that email: %s.", user.Email)}
-		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
+		//data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
 		log.Debugf("No user with that email: %s.", user.Email)
 		return err
 	case err != nil:
@@ -100,9 +100,6 @@ func (data Database) findUserByMail(user *User) (err error) {
 		log.Errorf("error looking for user with email: %s", user.Email)
 		return
 	}
-	//user.UUID = uid
-	//user.Name = name
-	//user.Email = mail
 	*user = User{UUID: uid, Name: name, Email: mail}
 	return
 }

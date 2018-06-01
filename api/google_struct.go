@@ -228,12 +228,12 @@ type GoogleAttachment struct {
 type GoogleSubscription struct {
 	calendar        *GoogleCalendar
 	ID              string    `json:"id"`
-	Type            string    `json:"type"`
-	NotificationURL string    `json:"address"`
+	Type            string    `json:"type,omitempty"`
+	NotificationURL string    `json:"address,omitempty"`
 	ResourceID      string    `json:"resourceId,omitempty"`
 	ResourceURI     string    `json:"resourceUri,omitempty"`
 	Token           string    `json:"token,omitempty"`
-	Expiration      int64     `json:"expiration"`
+	Expiration      int64     `json:"expiration,omitempty"`
 	Uuid            uuid.UUID `json:"-"`
 	expirationDate  time.Time
 }
