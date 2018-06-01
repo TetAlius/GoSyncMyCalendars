@@ -43,6 +43,7 @@ func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManag
 //}
 
 // POST https://www.googleapis.com/apiName/apiVersion/resourcePath/watch
+// POST https://www.googleapis.com/calendar/v3/calendars/calendarId/events/watch
 func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err error) {
 	if err = subscription.setCalendar(calendar); err != nil {
 		log.Errorf("kind of subscription and calender differs: %s", calendar.GetName())
@@ -51,7 +52,7 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 	a := calendar.GetAccount()
 	log.Debugln("subscribe calendar google")
 
-	route, err := util.CallAPIRoot("google/subscription")
+	route, err := util.CallAPIRoot("google/calendars/subscription")
 	if err != nil {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
