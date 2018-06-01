@@ -70,9 +70,7 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 		fmt.Sprintf(route, calendar.GetID()),
 		bytes.NewBuffer(data),
 		headers, nil)
-
-	sentry := sentryClient()
-	sentry.CaptureMessageAndWait(fmt.Sprintf("%s", contents), map[string]string{"api": "google"})
+	log.Warningf("RESPONSE: %s", contents)
 
 	err = createGoogleResponseError(contents)
 	if err != nil {
@@ -114,8 +112,7 @@ func (subscription *GoogleSubscription) Delete() (err error) {
 		route,
 		bytes.NewBuffer(data),
 		headers, nil)
-	sentry := sentryClient()
-	sentry.CaptureMessageAndWait(fmt.Sprintf("%s", contents), map[string]string{"api": "google"})
+	log.Warningf("RESPONSE: %s", contents)
 	err = createGoogleResponseError(contents)
 	return
 }
