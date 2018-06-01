@@ -17,11 +17,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewOutlookSubscription(ID string) (subscription *OutlookSubscription) {
+func NewOutlookSubscription() (subscription *OutlookSubscription) {
 	subscription = new(OutlookSubscription)
 	subscription.NotificationURL = fmt.Sprintf("%s:8081/outlook/watcher", os.Getenv("ENDPOINT"))
 	subscription.ChangeType = "Created,Deleted,Updated"
-	subscription.ID = ID
 	subscription.Type = "#Microsoft.OutlookServices.PushSubscription"
 	subscription.Uuid = uuid.New()
 	return
