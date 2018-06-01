@@ -42,7 +42,7 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 	data.UpdateCalendarFromUser(calendar, userUUID)
 	switch calendar.(type) {
 	case *api.GoogleCalendar:
-		subs = api.NewGoogleSubscription(uuid.New().String())
+		subs = api.NewGoogleSubscription()
 		err = subs.Subscribe(calendar)
 	case *api.OutlookCalendar:
 		subs = api.NewOutlookSubscription(uuid.New().String())
