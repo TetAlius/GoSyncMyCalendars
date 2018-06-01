@@ -38,14 +38,7 @@ type Server struct {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cookie, _ := r.Cookie("session")
-	if cookie != nil {
-		log.Debugf("session", cookie.Value)
-		ctx := context.WithValue(r.Context(), "Session", cookie.Value)
-		s.mux.ServeHTTP(w, r.WithContext(ctx))
-	} else {
-		s.mux.ServeHTTP(w, r)
-	}
+	s.mux.ServeHTTP(w, r)
 }
 
 //NewBackend creates a backend
@@ -56,7 +49,7 @@ func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry rave
 	server.mux.HandleFunc("/accounts/", server.retrieveInfoHandler)
 	server.mux.HandleFunc("/subscribe/", server.subscribeCalendarHandler)
 	server.mux.HandleFunc("/refresh/", server.refreshHandler)
-	server.mux.Handle("/", http.FileServer(http.Dir("./backend/layout.html")))
+	server.mux.HandleFunc("/google2eda440d7c0358fb.html", server.googleVerificationHandler)
 	return &server
 }
 
@@ -102,6 +95,10 @@ func (s *Server) Stop() (err error) {
 	return returnErr
 }
 
+func (s *Server) googleVerificationHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debugf("serving")
+	http.ServeFile(w, r, "./backend/google-verification.html")
+}
 func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	ok := manageCORS(w, *r, map[string]bool{"POST": true, "DELETE": true})
 	if !ok {
