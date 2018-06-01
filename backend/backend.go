@@ -56,6 +56,7 @@ func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry rave
 	server.mux.HandleFunc("/accounts/", server.retrieveInfoHandler)
 	server.mux.HandleFunc("/subscribe/", server.subscribeCalendarHandler)
 	server.mux.HandleFunc("/refresh/", server.refreshHandler)
+	server.mux.Handle("/", http.FileServer(http.Dir("./backend/layout.html")))
 	return &server
 }
 
