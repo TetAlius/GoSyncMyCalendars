@@ -4,9 +4,6 @@ services:
     container_name: 'GoSyncMyCalendars-app'
     restart: always
     build: .
-    ports:
-      - "8080:8080"
-      - "8081:8081"
     links:
       - postgres:postgres
     depends_on:
