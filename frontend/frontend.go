@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"crypto/tls"
 	"html/template"
 	"net"
 	"net/http"
@@ -26,6 +27,7 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/getsentry/raven-go"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 //Frontend object
@@ -73,6 +75,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewServer(ip string, port int, dir string, database *sql.DB, sentry *raven.Client) *Server {
 	mux := http.NewServeMux()
 	root = dir
+
 	server := Server{IP: net.ParseIP(ip), Port: port, database: db.New(database, sentry), sentry: sentry}
 	cssFileServer := http.StripPrefix("/css/", http.FileServer(http.Dir(root+"/css/")))
 	jsFileServer := http.StripPrefix("/js/", http.FileServer(http.Dir(root+"/js/")))
@@ -112,16 +115,24 @@ func AddContext(next http.Handler) http.Handler {
 }
 
 //Start the frontend
-func (s *Server) Start() (err error) {
+func (s *Server) Start(certManager autocert.Manager) (err error) {
 	log.Debugln("Start frontend")
 
 	laddr := fmt.Sprintf("%s:%d", s.IP.String(), s.Port)
-	h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
-	s.server = h
+	s.server = &http.Server{
+		Addr:    ":8080",
+		Handler: s.mux,
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+	}
+	go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
+	//h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
+	//s.server = h
 	go func() {
 		log.Infof("Web server listening at %s", laddr)
 
-		if err := s.server.ListenAndServeTLS("server.crt", "server.key"); err != nil && err != http.ErrServerClosed {
+		if err := s.server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
 			log.Errorf("%s", err.Error())
 		}
 	}()

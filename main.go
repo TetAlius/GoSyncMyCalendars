@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"log"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/frontend"
 	"github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/getsentry/raven-go"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var user, password, name, host string
@@ -54,6 +57,7 @@ func init() {
 		os.Exit(1)
 	}
 }
+
 func main() {
 	sentry, err := raven.New(os.Getenv("SENTRY_DSN"))
 	if err != nil {
@@ -88,16 +92,21 @@ func main() {
 		logger.Errorf("error ping backend database: %s", err.Error())
 		os.Exit(1)
 	}
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("ec2-34-245-25-172.eu-west-1.compute.amazonaws.com"), //Your domain here
+		Cache:      autocert.DirCache("certs"),                                                  //Folder for storing certificates
+	}
+
 	f := frontend.NewServer("127.0.0.1", 8080, "./frontend/resources", frontendDB, sentry)
 	maxWorker := 15
 	b := backend.NewServer("127.0.0.1", 8081, maxWorker, backendDB, *sentry)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	//TODO: test this calls....
-	//signal.Notify(c, syscall.SIGKILL)
-	//signal.Notify(c, syscall.SIGINT)
-	//signal.Notify(c, syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGKILL)
+	signal.Notify(c, syscall.SIGINT)
+	signal.Notify(c, syscall.SIGTERM)
 
 	go func() {
 		for range c {
@@ -117,6 +126,6 @@ func main() {
 			os.Exit(exit)
 		}
 	}()
-	f.Start()
-	b.Start()
+	f.Start(certManager)
+	b.Start(certManager)
 }
