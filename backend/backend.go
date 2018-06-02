@@ -18,14 +18,11 @@ import (
 
 	"os"
 
-	"crypto/tls"
-
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/db"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/worker"
 	"github.com/getsentry/raven-go"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 //Backend object
@@ -57,25 +54,19 @@ func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry rave
 }
 
 //Start the backend
-func (s *Server) Start(certManager autocert.Manager) (err error) {
+func (s *Server) Start() (err error) {
 	go s.worker.Start()
 	log.Debugln("Start backend")
 
 	laddr := fmt.Sprintf("%s:%d", s.IP.String(), s.Port)
 	s.server = &http.Server{
-		Addr:    ":8081",
-		Handler: s.mux,
-		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		},
+		Addr:    fmt.Sprintf(":%d", s.Port),
+		Handler: s,
 	}
-	go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
-	//h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
-	//s.server = h
 	log.Infof("Backend server listening at %s", laddr)
 	go func() { s.manageSubscriptions() }()
 
-	err = s.server.ListenAndServeTLS("server.crt", "server.key")
+	err = s.server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		log.Errorf("ListenAndServe: " + err.Error())
 	}

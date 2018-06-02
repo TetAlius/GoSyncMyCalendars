@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"crypto/tls"
 	"html/template"
 	"net"
 	"net/http"
@@ -27,7 +26,6 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/getsentry/raven-go"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 //Frontend object
@@ -115,24 +113,18 @@ func AddContext(next http.Handler) http.Handler {
 }
 
 //Start the frontend
-func (s *Server) Start(certManager autocert.Manager) (err error) {
+func (s *Server) Start() (err error) {
 	log.Debugln("Start frontend")
 
 	laddr := fmt.Sprintf("%s:%d", s.IP.String(), s.Port)
 	s.server = &http.Server{
-		Addr:    ":8080",
-		Handler: s.mux,
-		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		},
+		Addr:    fmt.Sprintf(":%d", s.Port),
+		Handler: s,
 	}
-	go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
-	//h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
-	//s.server = h
 	go func() {
 		log.Infof("Web server listening at %s", laddr)
 
-		if err := s.server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Errorf("%s", err.Error())
 		}
 	}()
