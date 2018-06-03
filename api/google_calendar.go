@@ -261,18 +261,6 @@ func (calendar *GoogleCalendar) SetAccount(a AccountManager) (err error) {
 	return
 }
 
-// There's no explicit way to renew subscription.
-// One new must be created
-func (calendar *GoogleCalendar) RenewSubscription(a AccountManager, subscriptionID string) (err error) {
-	panic("NOT YET IMPLEMENTED")
-	return
-}
-
-func (calendar *GoogleCalendar) DeleteSubscription(a AccountManager, subscriptionID string) (err error) {
-	panic("NOT YET IMPLEMENTED")
-	return
-}
-
 func (calendar *GoogleCalendar) GetQueryID() string {
 	return url.QueryEscape(calendar.GetID())
 }

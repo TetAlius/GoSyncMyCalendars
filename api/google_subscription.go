@@ -114,7 +114,10 @@ func (subscription *GoogleSubscription) Delete() (err error) {
 		bytes.NewBuffer(data),
 		headers, nil)
 	log.Warningf("RESPONSE: %s", contents)
-	err = createGoogleResponseError(contents)
+
+	if len(contents) != 0 {
+		err = createGoogleResponseError(contents)
+	}
 	return
 }
 
@@ -148,4 +151,8 @@ func (subscription *GoogleSubscription) setCalendar(calendar CalendarManager) (e
 
 func (subscription *GoogleSubscription) GetExpirationDate() time.Time {
 	return subscription.expirationDate
+}
+
+func (subscription *GoogleSubscription) GetToken() string {
+	return subscription.Token
 }
