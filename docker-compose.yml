@@ -47,6 +47,7 @@ services:
       - ./.nginx.conf:/etc/nginx/conf.d/default.conf
       - ./server.crt:/etc/nginx/server.crt
       - ./server.key:/etc/nginx/server.key
+      - ../certs/letsencrypt-site:/usr/share/nginx/html
     networks:
       - docker-network
 
