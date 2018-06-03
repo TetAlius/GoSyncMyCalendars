@@ -21,6 +21,12 @@ services:
       - API_ROOT=${API_ROOT}
     networks:
       - docker-network
+    loggin:
+      driver: "awslogs"
+      options:
+        awslogs-region: "eu-west-1"
+        awslogs-group: "GoSyncMyCalendars"
+        awslogs-stream: "app"
 
   postgres:
     volumes:
@@ -33,6 +39,12 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     networks:
       - docker-network
+    loggin:
+      driver: "awslogs"
+      options:
+        awslogs-region: "eu-west-1"
+        awslogs-group: "GoSyncMyCalendars"
+        awslogs-stream: "db"
 
   nginx:
     container_name: 'nginx'
@@ -52,10 +64,16 @@ services:
       - ~/certs/live/gosyncmycalendars.me/chain.pem:/etc/letsencrypt/live/gosyncmycalendars.me/chain.pem
     networks:
       - docker-network
+    loggin:
+      driver: "awslogs"
+      options:
+        awslogs-region: "eu-west-1"
+        awslogs-group: "GoSyncMyCalendars"
+        awslogs-stream: "nginx"
 
 volumes:
   db-data:
 
 networks:
   docker-network:
-      driver: bridge
+    driver: bridge
