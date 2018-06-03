@@ -33,6 +33,7 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 		resourceID := header.Get("X-Goog-Resource-ID")
 		//resourceURI := header.Get("X-Goog-Resource-URI")
 		//messageNumber := header.Get("X-Goog-Message-Number")
+		log.Debugf("GOOGLE SUBSCRIPTION: channelID: %s resourceID: %s ", channelID, resourceID)
 		err := s.manageSynchronizationGoogle(channelID, resourceID)
 		var status int
 		if err != nil {
