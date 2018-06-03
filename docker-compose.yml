@@ -49,6 +49,7 @@ services:
       - ~/certs/dhparam-2048.pem:/etc/ssl/certs/dhparam-2048.pem
       - ~/certs/live/gosyncmycalendars.me/fullchain.pem:/etc/letsencrypt/live/gosyncmycalendars.me/fullchain.pem
       - ~/certs/live/gosyncmycalendars.me/privkey.pem:/etc/letsencrypt/live/gosyncmycalendars.me/privkey.pem
+      - ~/certs/live/gosyncmycalendars.me/chain.pem:/etc/letsencrypt/live/gosyncmycalendars.me/chain.pem
     networks:
       - docker-network
 
