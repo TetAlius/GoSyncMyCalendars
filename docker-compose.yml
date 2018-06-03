@@ -21,7 +21,7 @@ services:
       - API_ROOT=${API_ROOT}
     networks:
       - docker-network
-    loggin:
+    logging:
       driver: "awslogs"
       options:
         awslogs-region: "eu-west-1"
@@ -39,7 +39,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     networks:
       - docker-network
-    loggin:
+    logging:
       driver: "awslogs"
       options:
         awslogs-region: "eu-west-1"
@@ -64,7 +64,7 @@ services:
       - ~/certs/live/gosyncmycalendars.me/chain.pem:/etc/letsencrypt/live/gosyncmycalendars.me/chain.pem
     networks:
       - docker-network
-    loggin:
+    logging:
       driver: "awslogs"
       options:
         awslogs-region: "eu-west-1"
