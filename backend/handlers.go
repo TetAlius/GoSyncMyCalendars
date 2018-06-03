@@ -50,9 +50,9 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 		err := s.manageSynchronizationGoogle(channelID, resourceID)
 		var status int
 		if err != nil {
-			status = http.StatusOK
-		} else {
 			status = http.StatusInternalServerError
+		} else {
+			status = http.StatusOK
 		}
 		w.WriteHeader(status)
 
@@ -87,12 +87,13 @@ func (s *Server) OutlookWatcherHandler(w http.ResponseWriter, r *http.Request) {
 				serverError(w)
 				return
 			}
+			log.Warningf("OUTLOOK SUB: %s", contents)
 			err = s.manageSynchronizationOutlook(notification.Subscriptions)
 			var status int
 			if err != nil {
-				status = http.StatusOK
-			} else {
 				status = http.StatusInternalServerError
+			} else {
+				status = http.StatusOK
 			}
 			w.WriteHeader(status)
 		}

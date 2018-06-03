@@ -87,7 +87,7 @@ func (data Database) getSynchronizedEventsFromEvent(principalEventID int, event 
 			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			return nil, err
 		}
-		err = event.SetCalendar(calendar)
+		err = eventSync.SetCalendar(calendar)
 		if err != nil {
 			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			log.Errorf("error setting calendar for event ID: %s", event.GetID())
