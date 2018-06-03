@@ -197,7 +197,7 @@ func (data Database) PersistSyncToken(subscriptionID string, tokenID string) (er
 }
 
 func (data Database) persistSyncToken(transaction *sql.Tx, subscriptionID string, tokenID string) (err error) {
-	stmt, err := transaction.Prepare("update calendars set calendars.sync_token =$1 from subscriptions where subscriptions.calendar_uuid = calendars.uuid and subscriptions.id = $2")
+	stmt, err := transaction.Prepare("update calendars set sync_token =$1 from subscriptions where subscriptions.calendar_uuid = calendars.uuid and subscriptions.id = $2")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error preparing query: %s", err.Error())
