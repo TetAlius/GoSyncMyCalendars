@@ -233,7 +233,7 @@ type GoogleSubscription struct {
 	ResourceID      string    `json:"resourceId,omitempty"`
 	ResourceURI     string    `json:"resourceUri,omitempty"`
 	Token           string    `json:"token,omitempty"`
-	Expiration      int64     `json:"expiration,omitempty"`
+	Expiration      int64     `json:"expiration,omitempty,string"`
 	Uuid            uuid.UUID `json:"-"`
 	expirationDate  time.Time
 }

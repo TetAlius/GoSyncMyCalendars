@@ -43,11 +43,10 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 	switch calendar.(type) {
 	case *api.GoogleCalendar:
 		subs = api.NewGoogleSubscription(uuid.New().String())
-		err = subs.Subscribe(calendar)
 	case *api.OutlookCalendar:
 		subs = api.NewOutlookSubscription()
-		err = subs.Subscribe(calendar)
 	}
+	err = subs.Subscribe(calendar)
 	if err != nil {
 		data.sentry.CaptureError(err, map[string]string{"database": "backend"})
 		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
@@ -142,7 +141,7 @@ func (data Database) StopSync(principalSubscriptionUUID string, userEmail string
 	subscriptions, err := data.RetrieveAllSubscriptionsFromUser(principalSubscriptionUUID, userEmail, userUUID)
 	transaction, err := data.client.Begin()
 	if err != nil {
-		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		data.sentry.CaptureError(err, map[string]string{"database": "backend"})
 		log.Errorf("error starting transaction: %s", err.Error())
 		return
 	}
@@ -155,7 +154,7 @@ func (data Database) StopSync(principalSubscriptionUUID string, userEmail string
 		go func() { data.UpdateAccountFromUser(acc, userUUID) }()
 		err = subscription.Delete()
 		if err != nil {
-			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			data.sentry.CaptureError(err, map[string]string{"database": "backend"})
 			log.Errorf("error deleting subscription: %s", err.Error())
 		}
 		err = data.deleteEventsFromSubscription(transaction, subscription)
