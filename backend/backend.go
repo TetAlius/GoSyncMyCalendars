@@ -34,7 +34,7 @@ type Server struct {
 	worker   *worker.Worker
 	database db.Database
 	ticker   *time.Ticker
-	sentry   raven.Client
+	sentry   *raven.Client
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +42,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //NewBackend creates a backend
-func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry raven.Client) *Server {
+func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry *raven.Client) *Server {
 	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker), database: db.New(database, sentry), sentry: sentry}
 	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
 	server.mux.HandleFunc("/outlook/watcher", server.OutlookWatcherHandler)

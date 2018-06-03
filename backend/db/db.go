@@ -11,11 +11,11 @@ import (
 )
 
 type Database struct {
-	sentry raven.Client
+	sentry *raven.Client
 	client *sql.DB
 }
 
-func New(client *sql.DB, sentry raven.Client) Database {
+func New(client *sql.DB, sentry *raven.Client) Database {
 	return Database{
 		client: client,
 		sentry: sentry,
@@ -48,7 +48,7 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 	}
 	err = subs.Subscribe(calendar)
 	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
 		goto End
 	}
@@ -56,13 +56,13 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 	data.saveSubscription(transaction, subs, calendar)
 	events, err = calendar.GetAllEvents()
 	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
 		goto End
 	}
 	err = data.savePrincipalEvents(transaction, events)
 	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
 		goto End
 	}
@@ -84,39 +84,39 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 			api.Convert(event, toEvent)
 			err = toEvent.SetCalendar(cal)
 			if err != nil {
-				data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+				data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 				log.Errorf("error converting event for calendar: %s, error: %s", cal.GetUUID(), err.Error())
 				goto End
 			}
 			err = toEvent.Create()
 			if err != nil {
-				data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+				data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 				log.Errorf("error creating event for calendar: %s, error: %s", cal.GetUUID(), err.Error())
 				goto End
 			}
 			eventsCreated = append(eventsCreated, toEvent)
 			err = data.saveEventsRelation(transaction, event, toEvent)
 			if err != nil {
-				data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+				data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 				log.Errorf("error saving relation on database: %s, error: %s", event.GetID(), err.Error())
 				goto End
 			}
 		}
 		if err != nil {
-			data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			log.Errorln("some error saving events")
 			goto End
 		}
 		err := subscript.Subscribe(cal)
 		if err != nil {
-			data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
 			goto End
 		}
 		subscriptions = append(subscriptions, subscript)
 		err = data.saveSubscription(transaction, subscript, cal)
 		if err != nil {
-			data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			log.Errorf("error saving subscription to db: %s", subscript.GetID())
 			goto End
 		}
@@ -141,7 +141,7 @@ func (data Database) StopSync(principalSubscriptionUUID string, userEmail string
 	subscriptions, err := data.RetrieveAllSubscriptionsFromUser(principalSubscriptionUUID, userEmail, userUUID)
 	transaction, err := data.client.Begin()
 	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error starting transaction: %s", err.Error())
 		return
 	}
@@ -154,7 +154,7 @@ func (data Database) StopSync(principalSubscriptionUUID string, userEmail string
 		go func() { data.UpdateAccountFromUser(acc, userUUID) }()
 		err = subscription.Delete()
 		if err != nil {
-			data.sentry.CaptureError(err, map[string]string{"database": "backend"})
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			log.Errorf("error deleting subscription: %s", err.Error())
 		}
 		err = data.deleteEventsFromSubscription(transaction, subscription)
