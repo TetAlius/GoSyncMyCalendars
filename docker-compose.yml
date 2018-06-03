@@ -45,9 +45,10 @@ services:
       - "8081:8081"
     volumes:
       - ./.nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./server.crt:/etc/nginx/server.crt
-      - ./server.key:/etc/nginx/server.key
-      - ../certs/letsencrypt-site:/usr/share/nginx/html
+      - ~/certs/letsencrypt-site:/usr/share/nginx/html
+      - ~/certs/dhparam-2048.pem:/etc/ssl/certs/dhparam-2048.pem
+      - ~/certs/live/gosyncmycalendars.me/fullchain.pem:/etc/letsencrypt/live/gosyncmycalendars.me/fullchain.pem
+      - ~/certs/live/gosyncmycalendars.me/privkey.pem:/etc/letsencrypt/live/gosyncmycalendars.me/privkey.pem
     networks:
       - docker-network
 
