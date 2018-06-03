@@ -67,7 +67,7 @@ func (data Database) RetrieveCalendarFromSubscription(subscriptionID string) (ca
 	var kind int
 	var accessToken string
 	var calendarID string
-	err = data.client.QueryRow("SELECT a.token_type, a.refresh_token,a.email,a.kind,a.access_token, calendars.id from calendars join subscriptions s2 on calendars.uuid = s2.calendar_uuid join accounts a on calendars.account_email = a.email where s2.id = $2", subscriptionID).
+	err = data.client.QueryRow("SELECT a.token_type, a.refresh_token,a.email,a.kind,a.access_token, calendars.id from calendars join subscriptions s2 on calendars.uuid = s2.calendar_uuid join accounts a on calendars.account_email = a.email where s2.id = $1", subscriptionID).
 		Scan(&tokenType, &refreshToken, &email, &kind, &accessToken, &calendarID)
 	switch {
 	case err == sql.ErrNoRows:
