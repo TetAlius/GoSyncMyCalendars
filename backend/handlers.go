@@ -19,11 +19,6 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		header := r.Header
-		resourceState := header.Get("X-Goog-Resource-State")
-		if resourceState == "sync" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
 		//TODO: look here what was the change of the resource
 		//Google does not give the change of resource
 		//Possible changes include the creation of a new resource, or the modification or deletion of an existing resource.
@@ -33,6 +28,7 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 		resourceID := header.Get("X-Goog-Resource-ID")
 		resourceURI := header.Get("X-Goog-Resource-URI")
 		messageNumber := header.Get("X-Goog-Message-Number")
+		resourceState := header.Get("X-Goog-Resource-State")
 		log.Debugf("GOOGLE SUBSCRIPTION: channelID: %s", channelID)
 		log.Debugf("GOOGLE SUBSCRIPTION: token: %s", token)
 		log.Debugf("GOOGLE SUBSCRIPTION: expiration: %s", expiration)
@@ -40,6 +36,12 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 		log.Debugf("GOOGLE SUBSCRIPTION: resourceURI: %s", resourceURI)
 		log.Debugf("GOOGLE SUBSCRIPTION: messageNumber: %s", messageNumber)
 		log.Debugf("GOOGLE SUBSCRIPTION: resourceState: %s", resourceState)
+		if resourceState == "sync" {
+			//s.database.PersistSyncToken()
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
 		err := s.manageSynchronizationGoogle(channelID, resourceID)
 		var status int
 		if err != nil {

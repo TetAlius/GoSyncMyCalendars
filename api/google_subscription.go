@@ -136,7 +136,7 @@ func (subscription *GoogleSubscription) GetType() string {
 }
 
 func (subscription *GoogleSubscription) setTime() {
-	subscription.expirationDate = time.Now().Add(time.Second * time.Duration(subscription.Expiration))
+	subscription.expirationDate = time.Unix(subscription.Expiration/1000, 0)
 }
 func (subscription *GoogleSubscription) setCalendar(calendar CalendarManager) (err error) {
 	switch calendar.(type) {
