@@ -75,7 +75,7 @@ func (data Database) getSynchronizedEventsFromEvent(principalEventID int, event 
 		switch kind {
 		case api.GOOGLE:
 			account := api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken)
-			calendar = api.RetrieveGoogleCalendar(calendarID, account)
+			calendar = api.RetrieveGoogleCalendar(calendarID, "", account)
 			eventSync = &api.GoogleEvent{ID: id}
 		case api.OUTLOOK:
 			account := api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken)

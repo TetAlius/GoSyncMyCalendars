@@ -180,3 +180,34 @@ func (data Database) StopSync(principalSubscriptionUUID string, userEmail string
 	transaction.Commit()
 	return
 }
+func (data Database) PersistSyncToken(subscriptionID string, tokenID string) (err error) {
+	transaction, err := data.client.Begin()
+	if err != nil {
+		return err
+	}
+	err = data.persistSyncToken(transaction, subscriptionID, tokenID)
+
+	if err != nil {
+		err = transaction.Rollback()
+	} else {
+		err = transaction.Commit()
+	}
+	return
+
+}
+
+func (data Database) persistSyncToken(transaction *sql.Tx, subscriptionID string, tokenID string) (err error) {
+	stmt, err := transaction.Prepare("update calendars set calendars.sync_token =$1 from subscriptions where subscriptions.calendar_uuid = calendars.uuid and subscriptions.id = $2")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(tokenID, subscriptionID)
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return
+	}
+	return nil
+}

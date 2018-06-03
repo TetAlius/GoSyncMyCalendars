@@ -67,8 +67,9 @@ func (data Database) RetrieveCalendarFromSubscription(subscriptionID string) (ca
 	var kind int
 	var accessToken string
 	var calendarID string
-	err = data.client.QueryRow("SELECT a.token_type, a.refresh_token,a.email,a.kind,a.access_token, calendars.id from calendars join subscriptions s2 on calendars.uuid = s2.calendar_uuid join accounts a on calendars.account_email = a.email where s2.id = $1", subscriptionID).
-		Scan(&tokenType, &refreshToken, &email, &kind, &accessToken, &calendarID)
+	var syncToken string
+	err = data.client.QueryRow("SELECT a.token_type, a.refresh_token,a.email,a.kind,a.access_token, calendars.id, calendars.sync_token from calendars join subscriptions s2 on calendars.uuid = s2.calendar_uuid join accounts a on calendars.account_email = a.email where s2.id = $1", subscriptionID).
+		Scan(&tokenType, &refreshToken, &email, &kind, &accessToken, &calendarID, &syncToken)
 	switch {
 	case err == sql.ErrNoRows:
 		err = &customErrors.NotFoundError{Message: fmt.Sprintf("calendar from subscription with ID: %s not found", subscriptionID)}
@@ -86,7 +87,7 @@ func (data Database) RetrieveCalendarFromSubscription(subscriptionID string) (ca
 		calendar = api.RetrieveOutlookCalendar(calendarID, account)
 	case api.GOOGLE:
 		account := api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken)
-		calendar = api.RetrieveGoogleCalendar(calendarID, account)
+		calendar = api.RetrieveGoogleCalendar(calendarID, syncToken, account)
 	default:
 		return nil, &customErrors.WrongKindError{Mail: fmt.Sprintf("error getting calendar with subscription ID: %s", subscriptionID)}
 	}
@@ -115,7 +116,7 @@ func (data Database) findCalendarFromUser(userEmail string, userUUID string, cal
 	}
 	switch kind {
 	case api.GOOGLE:
-		calendar = api.RetrieveGoogleCalendar(id, api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
+		calendar = api.RetrieveGoogleCalendar(id, "", api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
 	case api.OUTLOOK:
 		calendar = api.RetrieveOutlookCalendar(id, api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
 	default:
@@ -161,7 +162,7 @@ func (data Database) getSynchronizedCalendars(calendar api.CalendarManager) (cal
 		err = rows.Scan(&id, &uid, &kind, &tokenType, &refreshToken, &email, &accessToken)
 		switch kind {
 		case api.GOOGLE:
-			calendar = api.RetrieveGoogleCalendar(id, api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
+			calendar = api.RetrieveGoogleCalendar(id, "", api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
 		case api.OUTLOOK:
 			calendar = api.RetrieveOutlookCalendar(id, api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
 		default:
@@ -211,14 +212,14 @@ func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUU
 }
 
 func (data Database) saveSubscription(transaction *sql.Tx, subscription api.SubscriptionManager, calendar api.CalendarManager) (err error) {
-	stmt, err := transaction.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration_date, token) values ($1,$2,$3,$4,$5, $6)")
+	stmt, err := transaction.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration_date) values ($1,$2,$3,$4,$5)")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(subscription.GetUUID(), calendar.GetUUID(), subscription.GetID(), subscription.GetType(), subscription.GetExpirationDate(), subscription.GetToken())
+	res, err := stmt.Exec(subscription.GetUUID(), calendar.GetUUID(), subscription.GetID(), subscription.GetType(), subscription.GetExpirationDate())
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error executing query: %s", err.Error())

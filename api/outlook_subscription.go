@@ -190,7 +190,3 @@ func (subscription *OutlookSubscription) setCalendar(calendar CalendarManager) (
 func (subscription *OutlookSubscription) GetExpirationDate() time.Time {
 	return subscription.expirationDate
 }
-
-func (subscription *OutlookSubscription) GetToken() string {
-	return uuid.New().String()
-}

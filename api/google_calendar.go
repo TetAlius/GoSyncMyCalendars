@@ -18,10 +18,11 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func RetrieveGoogleCalendar(ID string, account *GoogleAccount) *GoogleCalendar {
+func RetrieveGoogleCalendar(ID string, syncToken string, account *GoogleAccount) *GoogleCalendar {
 	cal := new(GoogleCalendar)
 	cal.ID = ID
 	cal.account = account
+	cal.syncToken = syncToken
 	return cal
 }
 

@@ -47,6 +47,7 @@ type GoogleCalendar struct {
 	uuid      string
 	account   *GoogleAccount
 	calendars []CalendarManager
+	syncToken string
 	//From CalendarLIST resource
 	ID              string `json:"id"`
 	Name            string `json:"summary" sync:"Name"`
