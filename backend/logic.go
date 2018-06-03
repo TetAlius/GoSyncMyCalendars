@@ -41,6 +41,11 @@ func (s *Server) manageSubscription(subscriptionID string, eventID string, tags 
 	}
 	calendar, err := s.database.RetrieveCalendarFromSubscription(subscriptionID)
 
+	if err != nil {
+		s.sentry.CaptureErrorAndWait(err, tags)
+		log.Errorf("error refreshing outlook account")
+		return err
+	}
 	recoveredPanic, sentryID := s.sentry.CapturePanicAndWait(func() {
 		err = calendar.GetAccount().Refresh()
 	}, tags)

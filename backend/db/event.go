@@ -42,7 +42,7 @@ func (data Database) RetrieveSyncedEventsWithSubscription(event api.EventManager
 }
 
 func (data Database) getSynchronizedEventsFromEvent(principalEventID int, event api.EventManager) (events []api.EventManager, err error) {
-	stmt, err := data.client.Prepare("select events.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, c2.id from events join calendars c2 on events.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email where events.internal_id = $1 or events.parent_event_internal_id=$1 and events.id!=$2")
+	stmt, err := data.client.Prepare("select events.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, c2.id, c2.uuid from events join calendars c2 on events.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email where events.internal_id = $1 or events.parent_event_internal_id=$1 and events.id!=$2")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error getting synced events from principalID: %d", principalEventID)
@@ -64,7 +64,8 @@ func (data Database) getSynchronizedEventsFromEvent(principalEventID int, event 
 		var email string
 		var accessToken string
 		var calendarID string
-		err = rows.Scan(&id, &kind, &tokenType, &refreshToken, &email, &accessToken, &calendarID)
+		var calendarUUID string
+		err = rows.Scan(&id, &kind, &tokenType, &refreshToken, &email, &accessToken, &calendarID, &calendarUUID)
 		if err != nil {
 			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			log.Errorf("error scanning synced events from principalID: %d", principalEventID)
@@ -75,11 +76,11 @@ func (data Database) getSynchronizedEventsFromEvent(principalEventID int, event 
 		switch kind {
 		case api.GOOGLE:
 			account := api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken)
-			calendar = api.RetrieveGoogleCalendar(calendarID, "", account)
+			calendar = api.RetrieveGoogleCalendar(calendarID, calendarUUID, "", account)
 			eventSync = &api.GoogleEvent{ID: id}
 		case api.OUTLOOK:
 			account := api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken)
-			calendar = api.RetrieveOutlookCalendar(calendarID, account)
+			calendar = api.RetrieveOutlookCalendar(calendarID, calendarUUID, account)
 			eventSync = &api.OutlookEvent{ID: id}
 		default:
 			err = &customErrors.WrongKindError{Mail: fmt.Sprintf("wrong kind of account for events with parent ID: %d", principalEventID)}
