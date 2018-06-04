@@ -208,3 +208,60 @@ func (data Database) deleteEventsFromSubscription(transaction *sql.Tx, subscript
 	return
 
 }
+
+func (data Database) EventUpdated(event api.EventManager, subscriptionID string) bool {
+	var exists bool
+	updatedAt, err := event.GetUpdatedAt()
+	if err != nil {
+		log.Errorf("error getting updated at for event: %s", event.GetID())
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return false
+	}
+	err = data.client.QueryRow("select true from events join calendars c2 on events.calendar_uuid = c2.uuid join subscriptions s2 on c2.uuid = s2.calendar_uuid where events.updated_at != $1 and s2.id=$2", updatedAt, subscriptionID).Scan(&exists)
+	switch {
+	case err == sql.ErrNoRows:
+		return true
+	case err != nil:
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error getting synchronized date for event: %s and subscription: %s", event.GetID(), subscriptionID)
+		return false
+	}
+	return false
+}
+
+func (data Database) UpdateModificationDate(event api.EventManager) error {
+	updatedAt, err := event.GetUpdatedAt()
+	if err != nil {
+		log.Errorf("error getting updated at for event: %s", event.GetID())
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return err
+	}
+	stmt, err := data.client.Prepare("update events set updated_at= $1 where events.id=$2")
+
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing query: %s", err.Error())
+		return err
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(updatedAt, event.GetID())
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error executing query: %s", err.Error())
+		return err
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return err
+	}
+	//TODO: Change this...
+	if affect != 1 {
+		err = errors.New(fmt.Sprintf("could not update account with id: %s", event.GetID()))
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return err
+	}
+	return nil
+}

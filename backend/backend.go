@@ -43,7 +43,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 //NewBackend creates a backend
 func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry *raven.Client) *Server {
-	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker), database: db.New(database, sentry), sentry: sentry}
+	data := db.New(database, sentry)
+	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker, data), database: data, sentry: sentry}
 	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
 	server.mux.HandleFunc("/outlook/watcher", server.OutlookWatcherHandler)
 	server.mux.HandleFunc("/accounts/", server.retrieveInfoHandler)

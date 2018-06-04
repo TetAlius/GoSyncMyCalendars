@@ -72,6 +72,9 @@ func (s *Server) manageSubscription(subscriptionID string, eventID string, tags 
 		log.Errorf("error retrieving event from account: %s", err.Error())
 		return err
 	}
+	if onCloud && s.database.EventUpdated(event, subscriptionID) {
+		return nil
+	}
 	//TODO: manage this error, if returns none event maybe because is deleted
 	events, onDB, err := s.database.RetrieveSyncedEventsWithSubscription(event, subscriptionID)
 	if err != nil {
