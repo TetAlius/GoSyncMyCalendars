@@ -88,6 +88,8 @@ func (event *OutlookEvent) Update() (err error) {
 	eventResponse := OutlookEventResponse{OdataContext: "", OutlookEvent: event}
 	err = json.Unmarshal(contents, &eventResponse)
 
+	log.Warningf("OUTLOOK HERE:%s", contents)
+
 	err = event.extractTime()
 	return
 }

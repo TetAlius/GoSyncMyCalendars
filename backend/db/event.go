@@ -217,7 +217,7 @@ func (data Database) EventAlreadyUpdated(event api.EventManager) bool {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		return false
 	}
-	err = data.client.QueryRow("select true from events where events.updated_at != $1", updatedAt).Scan(&exists)
+	err = data.client.QueryRow("select true from events where events.id=$1 and events.updated_at != $2", event.GetID(), updatedAt).Scan(&exists)
 	switch {
 	case err == sql.ErrNoRows:
 		return true
