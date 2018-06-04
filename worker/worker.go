@@ -70,6 +70,9 @@ func (err SynchronizeError) Error() string {
 }
 
 func (worker *Worker) processSynchronization(event api.EventManager) {
+	if worker.database.EventAlreadyUpdated(event) {
+		return
+	}
 	if event.GetState() == api.Updated {
 		worker.database.UpdateModificationDate(event)
 	}
@@ -111,9 +114,6 @@ func (worker *Worker) synchronizeEvents(from api.EventManager, to api.EventManag
 }
 
 func (worker *Worker) updateEvent(from api.EventManager, to api.EventManager) (err error) {
-	if worker.database.EventAlreadyUpdated(from) {
-		return nil
-	}
 	err = to.Update()
 	if err != nil {
 		log.Errorf("error updating event: %s, from event: %s", to.GetID(), from.GetID())
