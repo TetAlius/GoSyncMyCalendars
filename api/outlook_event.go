@@ -246,8 +246,13 @@ func (event *OutlookEvent) extractTime() (err error) {
 	return
 }
 
-func (event *OutlookEvent) GetUpdatedAt() (time.Time, error) {
+func (event *OutlookEvent) GetUpdatedAt() (t time.Time, err error) {
 	//format := time.RFC3339Nano
 	//format := "2006-01-02T15:04:05.999999999"
-	return time.Parse(time.RFC3339Nano, event.LastModifiedDateTime)
+	t, err = time.Parse(time.RFC3339, event.LastModifiedDateTime)
+	if err != nil {
+		sentryClient().CaptureErrorAndWait(err, map[string]string{"api": "outlook"})
+		return
+	}
+	return t.UTC(), nil
 }
