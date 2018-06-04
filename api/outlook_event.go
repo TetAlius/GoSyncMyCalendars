@@ -245,3 +245,9 @@ func (event *OutlookEvent) extractTime() (err error) {
 	event.EndsAt = date.UTC()
 	return
 }
+
+func (event *OutlookEvent) GetUpdatedAt() (time.Time, error) {
+	//format := time.RFC3339Nano
+	//format := "2006-01-02T15:04:05.999999999"
+	return time.Parse(time.RFC3339Nano, event.LastModifiedDateTime)
+}

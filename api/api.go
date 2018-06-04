@@ -82,6 +82,7 @@ type EventManager interface {
 
 	GetRelations() []EventManager
 
+	GetUpdatedAt() (time.Time, error)
 	MarkWrong()
 	GetState() int
 	SetState(int)

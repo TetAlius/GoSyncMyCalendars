@@ -121,7 +121,13 @@ func (data Database) prepareEventsToSync(subscriptionID string) (events []api.Ev
 func (data Database) savePrincipalEvents(transaction *sql.Tx, events []api.EventManager) (err error) {
 	for _, event := range events {
 		lastInsertId := 0
-		err = transaction.QueryRow("INSERT INTO events (calendar_uuid, id) VALUES($1, $2) RETURNING internal_id", event.GetCalendar().GetUUID(), event.GetID()).Scan(&lastInsertId)
+		updatedAt, err := event.GetUpdatedAt()
+		if err != nil {
+			log.Errorf("error getting updated at for event: %s", event.GetID())
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			return err
+		}
+		err = transaction.QueryRow("INSERT INTO events (calendar_uuid, id, updated_at) VALUES($1, $2, $3) RETURNING internal_id", event.GetCalendar().GetUUID(), event.GetID(), updatedAt).Scan(&lastInsertId)
 		switch {
 		case err == sql.ErrNoRows:
 			err = fmt.Errorf("could not insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
@@ -142,14 +148,20 @@ func (data Database) savePrincipalEvents(transaction *sql.Tx, events []api.Event
 
 }
 func (data Database) saveEventsRelation(transaction *sql.Tx, from api.EventManager, to api.EventManager) (err error) {
-	stmt, err := transaction.Prepare("insert into events(calendar_uuid, id, parent_event_internal_id) values ($1,$2,$3)")
+	updatedAt, err := to.GetUpdatedAt()
+	if err != nil {
+		log.Errorf("error getting updated at for event: %s", to.GetID())
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return
+	}
+	stmt, err := transaction.Prepare("insert into events(calendar_uuid, id, parent_event_internal_id, updated_at) values ($1,$2,$3,$4)")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(to.GetCalendar().GetUUID(), to.GetID(), from.GetInternalID())
+	res, err := stmt.Exec(to.GetCalendar().GetUUID(), to.GetID(), from.GetInternalID(), updatedAt)
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error executing query: %s", err.Error())
