@@ -19,12 +19,15 @@ func (data Database) RetrieveSyncedEventsWithSubscription(eventID string, subscr
 	case err == sql.ErrNoRows:
 		log.Warningf("principal event from event ID: %s and subscription ID: %s not found", eventID, subscriptionID)
 		found = false
+		err = nil
 	case err != nil:
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error getting principal event from event id: %s and subscription ID: %s", eventID, subscriptionID)
 		return nil, false, err
 	}
-	if !found {
+	if found {
+		events, err = data.getSynchronizedEventsFromEvent(principalEventID, eventID)
+	} else {
 		calendars, err := data.getSynchronizedCalendars(calendar)
 		if err != nil {
 			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
@@ -35,8 +38,7 @@ func (data Database) RetrieveSyncedEventsWithSubscription(eventID string, subscr
 			event := calendar.CreateEmptyEvent()
 			events = append(events, event)
 		}
-	} else {
-		events, err = data.getSynchronizedEventsFromEvent(principalEventID, eventID)
+
 	}
 	return
 }
