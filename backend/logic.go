@@ -72,16 +72,17 @@ func (s *Server) manageSubscription(subscriptionID string, eventID string, tags 
 		log.Errorf("error retrieving event from account: %s", err.Error())
 		return err
 	}
-	if onCloud && s.database.EventAlreadyUpdated(event) {
-		return nil
-	}
-	//TODO: manage this error, if returns none event maybe because is deleted
-	events, onDB, err := s.database.RetrieveSyncedEventsWithSubscription(event, subscriptionID)
+	events, onDB, err := s.database.RetrieveSyncedEventsWithSubscription(eventID, subscriptionID, calendar)
 	if err != nil {
 		s.sentry.CaptureErrorAndWait(err, tags)
 		log.Errorf("error retrieving events synced: %s", err.Error())
 		return err
 	}
+	if onCloud && onDB && s.database.EventAlreadyUpdated(event) {
+		return nil
+	}
+	//TODO: manage this error, if returns none event maybe because is deleted
+
 	event.SetRelations(events)
 	state := api.GetChangeType(onCloud, onDB)
 	if state == 0 {

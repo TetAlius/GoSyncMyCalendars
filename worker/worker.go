@@ -12,14 +12,6 @@ import (
 
 const (
 	stateInitial = iota
-	stateMain
-	stateExit
-	stateLaunch
-	stateProcessing
-	stateFinish
-	stateSleep
-	stateWait
-	stateTimeout
 	stateQuit
 )
 
@@ -70,11 +62,14 @@ func (err SynchronizeError) Error() string {
 }
 
 func (worker *Worker) processSynchronization(event api.EventManager) {
-	if worker.database.EventAlreadyUpdated(event) {
+	if event.GetState() == api.Updated && worker.database.EventAlreadyUpdated(event) {
 		return
 	}
 	if event.GetState() == api.Updated {
 		worker.database.UpdateModificationDate(event)
+	}
+	if event.GetState() == api.Created {
+		worker.database.SavePrincipalEvent(event)
 	}
 	for _, toSync := range event.GetRelations() {
 		api.Convert(event, toSync)
@@ -102,7 +97,8 @@ func (worker *Worker) processSynchronization(event api.EventManager) {
 func (worker *Worker) synchronizeEvents(from api.EventManager, to api.EventManager) (err error) {
 	switch from.GetState() {
 	case api.Created:
-		err = to.Create()
+		err = worker.createEvent(from, to)
+
 	case api.Updated:
 		err = worker.updateEvent(from, to)
 	case api.Deleted:
@@ -120,5 +116,15 @@ func (worker *Worker) updateEvent(from api.EventManager, to api.EventManager) (e
 		return err
 	}
 	return worker.database.UpdateModificationDate(to)
+
+}
+func (worker *Worker) createEvent(from api.EventManager, to api.EventManager) (err error) {
+	err = to.Create()
+	if err != nil {
+		log.Errorf("error updating event: %s, from event: %s", to.GetID(), from.GetID())
+		return err
+	}
+
+	return worker.database.SaveEventsRelation(from, to)
 
 }

@@ -11,24 +11,24 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
-func (data Database) RetrieveSyncedEventsWithSubscription(event api.EventManager, subscriptionID string) (events []api.EventManager, found bool, err error) {
+func (data Database) RetrieveSyncedEventsWithSubscription(eventID string, subscriptionID string, calendar api.CalendarManager) (events []api.EventManager, found bool, err error) {
 	var principalEventID int
 	found = true
-	err = data.client.QueryRow("SELECT COALESCE(events.parent_event_internal_id, events.internal_id) from events join calendars c2 on events.calendar_uuid = c2.uuid join subscriptions s2 on c2.uuid = s2.calendar_uuid where events.id = $1 and s2.id=$2", event.GetID(), subscriptionID).Scan(&principalEventID)
+	err = data.client.QueryRow("SELECT COALESCE(events.parent_event_internal_id, events.internal_id) from events join calendars c2 on events.calendar_uuid = c2.uuid join subscriptions s2 on c2.uuid = s2.calendar_uuid where events.id = $1 and s2.id=$2", eventID, subscriptionID).Scan(&principalEventID)
 	switch {
 	case err == sql.ErrNoRows:
-		log.Warningf("principal event from event ID: %s and subscription ID: %s not found", event.GetID(), subscriptionID)
+		log.Warningf("principal event from event ID: %s and subscription ID: %s not found", eventID, subscriptionID)
 		found = false
 	case err != nil:
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-		log.Errorf("error getting principal event from event id: %s and subscription ID: %s", event.GetID(), subscriptionID)
+		log.Errorf("error getting principal event from event id: %s and subscription ID: %s", eventID, subscriptionID)
 		return nil, false, err
 	}
 	if !found {
-		calendars, err := data.getSynchronizedCalendars(event.GetCalendar())
+		calendars, err := data.getSynchronizedCalendars(calendar)
 		if err != nil {
 			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-			log.Errorf("error retrieving synced calendars: %s", event.GetCalendar().GetID())
+			log.Errorf("error retrieving synced calendars: %s", calendar.GetID())
 			return nil, false, err
 		}
 		for _, calendar := range calendars {
@@ -36,12 +36,12 @@ func (data Database) RetrieveSyncedEventsWithSubscription(event api.EventManager
 			events = append(events, event)
 		}
 	} else {
-		events, err = data.getSynchronizedEventsFromEvent(principalEventID, event)
+		events, err = data.getSynchronizedEventsFromEvent(principalEventID, eventID)
 	}
 	return
 }
 
-func (data Database) getSynchronizedEventsFromEvent(principalEventID int, event api.EventManager) (events []api.EventManager, err error) {
+func (data Database) getSynchronizedEventsFromEvent(principalEventID int, eventID string) (events []api.EventManager, err error) {
 	stmt, err := data.client.Prepare("select events.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, c2.id, c2.uuid from events join calendars c2 on events.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email where events.internal_id = $1 or events.parent_event_internal_id=$1 and events.id!=$2")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
@@ -49,7 +49,7 @@ func (data Database) getSynchronizedEventsFromEvent(principalEventID int, event 
 		return nil, err
 	}
 	defer stmt.Close()
-	rows, err := stmt.Query(principalEventID, event.GetID())
+	rows, err := stmt.Query(principalEventID, eventID)
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error getting synced events from principalID: %d", principalEventID)
@@ -90,7 +90,7 @@ func (data Database) getSynchronizedEventsFromEvent(principalEventID int, event 
 		err = eventSync.SetCalendar(calendar)
 		if err != nil {
 			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-			log.Errorf("error setting calendar for event ID: %s", event.GetID())
+			log.Errorf("error setting calendar for event ID: %s", eventID)
 		}
 		events = append(events, eventSync)
 	}
@@ -118,31 +118,76 @@ func (data Database) prepareEventsToSync(subscriptionID string) (events []api.Ev
 	}
 	return
 }
+
+func (data Database) SavePrincipalEvent(event api.EventManager) (err error) {
+	transaction, err := data.client.Begin()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error starting transaction: %s", err.Error())
+		return
+	}
+	err = data.savePrincipalEvent(transaction, event)
+	if err != nil {
+		transaction.Rollback()
+		return err
+	} else {
+		transaction.Commit()
+	}
+
+	return
+
+}
+
 func (data Database) savePrincipalEvents(transaction *sql.Tx, events []api.EventManager) (err error) {
 	for _, event := range events {
-		lastInsertId := 0
-		updatedAt, err := event.GetUpdatedAt()
+		err = data.savePrincipalEvent(transaction, event)
 		if err != nil {
-			log.Errorf("error getting updated at for event: %s", event.GetID())
-			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-			return err
+			break
 		}
-		err = transaction.QueryRow("INSERT INTO events (calendar_uuid, id, updated_at) VALUES($1, $2, $3) RETURNING internal_id", event.GetCalendar().GetUUID(), event.GetID(), updatedAt).Scan(&lastInsertId)
-		switch {
-		case err == sql.ErrNoRows:
-			err = fmt.Errorf("could not insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
-			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-			log.Errorf("could not insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
-			return err
-		case err != nil:
-			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-			log.Errorf("error insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
-			return err
-		}
-		event.SetInternalID(lastInsertId)
 	}
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+	}
+	return
+
+}
+func (data Database) savePrincipalEvent(transaction *sql.Tx, event api.EventManager) (err error) {
+	lastInsertId := 0
+	updatedAt, err := event.GetUpdatedAt()
+	if err != nil {
+		log.Errorf("error getting updated at for event: %s", event.GetID())
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return err
+	}
+	err = transaction.QueryRow("INSERT INTO events (calendar_uuid, id, updated_at) VALUES($1, $2, $3) RETURNING internal_id", event.GetCalendar().GetUUID(), event.GetID(), updatedAt).Scan(&lastInsertId)
+	switch {
+	case err == sql.ErrNoRows:
+		err = fmt.Errorf("could not insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("could not insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
+		return err
+	case err != nil:
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error insert event with id: %s and calendar UUID: %s", event.GetID(), event.GetCalendar().GetUUID())
+		return err
+	}
+	event.SetInternalID(lastInsertId)
+	return
+}
+
+func (data Database) SaveEventsRelation(from api.EventManager, to api.EventManager) (err error) {
+	transaction, err := data.client.Begin()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error starting transaction: %s", err.Error())
+		return
+	}
+	err = data.saveEventsRelation(transaction, from, to)
+	if err != nil {
+		transaction.Rollback()
+		return err
+	} else {
+		transaction.Commit()
 	}
 	return
 
