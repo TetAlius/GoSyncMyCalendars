@@ -243,7 +243,6 @@
             signinChanged(gapi.auth2.getAuthInstance().isSignedIn.get());
         });
         // Listen for changes to current user.
-        auth2 = gapi.auth2.getAuthInstance().signOut();
         gapi.auth2.getAuthInstance().currentUser.listen(userChanged);
         // Start with the current live values.
         refreshValues();
