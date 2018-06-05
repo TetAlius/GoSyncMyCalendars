@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
-
 	"os"
+
+	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -88,7 +88,7 @@ func (subscription *GoogleSubscription) Delete() (err error) {
 	a := subscription.calendar.GetAccount()
 	log.Debugln("Delete google subscription")
 	//TODO: this URL
-	route, err := util.CallAPIRoot("google/subscription/stop")
+	route, err := util.CallAPIRoot("google/calendars/subscription/stop")
 	if err != nil {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
@@ -109,6 +109,7 @@ func (subscription *GoogleSubscription) Delete() (err error) {
 
 	if len(contents) != 0 {
 		err = createGoogleResponseError(contents)
+		log.Errorf("error deleting subscription: %s", err.Error())
 	}
 	return
 }
