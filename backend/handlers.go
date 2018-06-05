@@ -37,7 +37,7 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 		log.Debugf("GOOGLE SUBSCRIPTION: messageNumber: %s", messageNumber)
 		log.Debugf("GOOGLE SUBSCRIPTION: resourceState: %s", resourceState)
 		if resourceState == "sync" {
-			err := s.database.PersistSyncToken(channelID, resourceID)
+			err := s.database.PersistSyncToken(channelID, resourceID, token)
 			if err != nil {
 				log.Errorf("error persisting google token: %s", err.Error())
 				w.WriteHeader(http.StatusInternalServerError)

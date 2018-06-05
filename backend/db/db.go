@@ -1,7 +1,9 @@
 package db
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -27,6 +29,12 @@ func (data Database) Close() error {
 	return data.client.Close()
 }
 
+func randToken() string {
+	b := make([]byte, 10)
+	rand.Read(b)
+	return fmt.Sprintf("%x", b)
+}
+
 //TODO: raven this
 func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (err error) {
 	var subscriptions []api.SubscriptionManager
@@ -39,10 +47,18 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 		return
 	}
 	data.UpdateAccountFromUser(calendar.GetAccount(), userUUID)
+	token := randToken()
+	events, err = calendar.GetAllEvents()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
+		goto End
+	}
+	calendar.SetSyncToken(token)
 	data.UpdateCalendarFromUser(calendar, userUUID)
 	switch calendar.(type) {
 	case *api.GoogleCalendar:
-		subs = api.NewGoogleSubscription(uuid.New().String())
+		subs = api.NewGoogleSubscription(uuid.New().String(), token)
 	case *api.OutlookCalendar:
 		subs = api.NewOutlookSubscription()
 	}
@@ -54,12 +70,6 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 	}
 	subscriptions = append(subscriptions, subs)
 	data.saveSubscription(transaction, subs, calendar)
-	events, err = calendar.GetAllEvents()
-	if err != nil {
-		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
-		goto End
-	}
 	err = data.savePrincipalEvents(transaction, events)
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
@@ -69,11 +79,13 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 
 	for _, cal := range calendar.GetCalendars() {
 		data.UpdateAccountFromUser(cal.GetAccount(), userUUID)
+		token := randToken()
+		calendar.SetSyncToken(token)
 		data.UpdateCalendarFromUser(cal, userUUID)
 		var subscript api.SubscriptionManager
 		switch cal.(type) {
 		case *api.GoogleCalendar:
-			subscript = api.NewGoogleSubscription(uuid.New().String())
+			subscript = api.NewGoogleSubscription(uuid.New().String(), token)
 		case *api.OutlookCalendar:
 			subscript = api.NewOutlookSubscription()
 		}
@@ -180,12 +192,12 @@ func (data Database) StopSync(principalSubscriptionUUID string, userEmail string
 	transaction.Commit()
 	return
 }
-func (data Database) PersistSyncToken(subscriptionID string, tokenID string) (err error) {
+func (data Database) PersistSyncToken(subscriptionID string, resourceID string, token string) (err error) {
 	transaction, err := data.client.Begin()
 	if err != nil {
 		return err
 	}
-	err = data.persistSyncToken(transaction, subscriptionID, tokenID)
+	err = data.persistSyncToken(transaction, subscriptionID, resourceID, token)
 
 	if err != nil {
 		err = transaction.Rollback()
@@ -196,15 +208,15 @@ func (data Database) PersistSyncToken(subscriptionID string, tokenID string) (er
 
 }
 
-func (data Database) persistSyncToken(transaction *sql.Tx, subscriptionID string, tokenID string) (err error) {
-	stmt, err := transaction.Prepare("update calendars set sync_token =$1 from subscriptions where subscriptions.calendar_uuid = calendars.uuid and subscriptions.id = $2")
+func (data Database) persistSyncToken(transaction *sql.Tx, subscriptionID string, resourceID string, token string) (err error) {
+	stmt, err := transaction.Prepare("update calendars set sync_token =$1 from subscriptions where subscriptions.calendar_uuid = calendars.uuid and subscriptions.id = $2 and calendars.sync_token=$3")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(tokenID, subscriptionID)
+	_, err = stmt.Exec(resourceID, subscriptionID, token)
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		return

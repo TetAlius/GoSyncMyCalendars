@@ -176,7 +176,7 @@ func (data Database) UpdateCalendarFromUser(calendar api.CalendarManager, userUU
 }
 
 func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUUID string) (err error) {
-	stmt, err := data.client.Prepare("update calendars set name = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid =$2 and calendars.id =$3;")
+	stmt, err := data.client.Prepare("update calendars set name = $1, sync_token=$2 from accounts where calendars.account_email = accounts.email and accounts.user_uuid =$3 and calendars.id =$4;")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error preparing query: %s", err.Error())
@@ -184,7 +184,7 @@ func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUU
 	}
 	defer stmt.Close()
 
-	res, err := stmt.Exec(calendar.GetName(), userUUID, calendar.GetID())
+	res, err := stmt.Exec(calendar.GetName(), calendar.GetSyncToken(), userUUID, calendar.GetID())
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error executing query: %s", err.Error())

@@ -139,6 +139,9 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 	headers["Authorization"] = calendar.GetAccount().AuthorizationRequest()
 
 	queryParams := map[string]string{"timeZone": "UTC"}
+	if len(calendar.syncToken) > 0 {
+		queryParams["syncToken"] = calendar.syncToken
+	}
 
 	contents, err := util.DoRequest(http.MethodGet,
 		fmt.Sprintf(route, calendar.GetQueryID()),
@@ -147,6 +150,9 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("error getting all events of g calendar for email %s. %s", calendar.GetAccount().Mail(), err.Error()))
+	}
+	if len(calendar.syncToken) > 0 {
+		log.Warningf("GOOGLE_CONTENTS: %s", contents)
 	}
 	err = createGoogleResponseError(contents)
 	if err != nil {
@@ -159,7 +165,7 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 	for _, s := range eventList.Events {
 		s.SetCalendar(calendar)
 		// ignore cancelled events
-		if s.Status != "cancelled" {
+		if s.Status != "cancelled" || len(calendar.syncToken) > 0 {
 
 			err := s.extractTime()
 			if err != nil {
@@ -300,4 +306,12 @@ func (calendar *GoogleCalendar) GetCalendars() []CalendarManager {
 
 func (calendar *GoogleCalendar) CreateEmptyEvent(ID string) EventManager {
 	return &GoogleEvent{ID: ID, calendar: calendar}
+}
+
+func (calendar *GoogleCalendar) SetSyncToken(token string) {
+	calendar.syncToken = token
+}
+
+func (calendar *GoogleCalendar) GetSyncToken() string {
+	return calendar.syncToken
 }

@@ -51,6 +51,7 @@ type OutlookCalendar struct {
 	uuid      string
 	account   *OutlookAccount
 	calendars []CalendarManager
+	syncToken string
 	OdataID   string `json:"@odata.id,omitempty"`
 
 	CalendarView        []OutlookEvent       `json:"CalendarView,omitempty"`

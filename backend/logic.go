@@ -9,8 +9,16 @@ import (
 )
 
 func (s *Server) manageSynchronizationOutlook(notifications []api.OutlookSubscriptionNotification) (err error) {
+	tags := map[string]string{"sync": "outlook"}
 	for _, subscription := range notifications {
-		err = s.manageSubscription(subscription.SubscriptionID, subscription.Data.ID, map[string]string{"sync": "outlook"})
+		calendar, err := s.retrieveCalendar(subscription.SubscriptionID, tags)
+		if err != nil {
+			return err
+		}
+		if calendar == nil && err == nil {
+			return nil
+		}
+		err = s.manageSubscription(calendar, subscription.SubscriptionID, subscription.Data.ID, tags)
 		if err != nil {
 			log.Errorf("error managing outlook subscription ID: %s", subscription.SubscriptionID)
 			return err
@@ -19,46 +27,33 @@ func (s *Server) manageSynchronizationOutlook(notifications []api.OutlookSubscri
 	return err
 }
 
-func (s *Server) manageSynchronizationGoogle(subscriptionID string, eventID string) (err error) {
-	err = s.manageSubscription(subscriptionID, eventID, map[string]string{"sync": "google"})
+func (s *Server) manageSynchronizationGoogle(subscriptionID string, syncToken string) (err error) {
+	tags := map[string]string{"sync": "google"}
+	calendar, err := s.retrieveCalendar(subscriptionID, tags)
 	if err != nil {
-		log.Errorf("error managing google subscription ID: %s", subscriptionID)
 		return err
+	}
+	if calendar == nil && err == nil {
+		return nil
+	}
+	oldToken := calendar.GetSyncToken()
+	calendar.SetSyncToken(syncToken)
+	s.database.PersistSyncToken(subscriptionID, syncToken, oldToken)
+	events, err := calendar.GetAllEvents()
+	if err != nil {
+
+	}
+	for _, event := range events {
+		err = s.manageSubscription(calendar, subscriptionID, event.GetID(), tags)
+		if err != nil {
+			log.Errorf("error managing google subscription ID: %s", subscriptionID)
+			return err
+		}
 	}
 	return err
 }
 
-func (s *Server) manageSubscription(subscriptionID string, eventID string, tags map[string]string) (err error) {
-	ok, err := s.database.ExistsSubscriptionFromID(subscriptionID)
-	if err != nil && ok {
-		//Ignore this subscription
-		//Perhaps something went wrong when deleting subscription...
-		//s.sentry.CaptureMessageAndWait(fmt.Sprintf("outlook subscription with id: %s is notifying but not on db", subscriptionID), tags)
-		return nil
-	} else if err != nil {
-		//Sentry already got this error
-		return err
-	}
-	calendar, err := s.database.RetrieveCalendarFromSubscription(subscriptionID)
-
-	if err != nil {
-		s.sentry.CaptureErrorAndWait(err, tags)
-		log.Errorf("error refreshing outlook account")
-		return err
-	}
-	recoveredPanic, sentryID := s.sentry.CapturePanicAndWait(func() {
-		err = calendar.GetAccount().Refresh()
-	}, tags)
-
-	if recoveredPanic != nil {
-		log.Errorf("panic recovered with sentry ID: %s", sentryID)
-		return fmt.Errorf("panic was launched")
-	}
-	if err != nil {
-		s.sentry.CaptureErrorAndWait(err, tags)
-		log.Errorf("error refreshing outlook account")
-		return err
-	}
+func (s *Server) manageSubscription(calendar api.CalendarManager, subscriptionID string, eventID string, tags map[string]string) (err error) {
 	//TODO: update account
 	//go func() { s.database.UpdateAccount(calendar.GetAccount()) }()
 	onCloud := true
@@ -98,4 +93,38 @@ func (s *Server) manageSubscription(subscriptionID string, eventID string, tags 
 	event.SetState(state)
 	s.worker.Events <- event
 	return
+}
+
+func (s *Server) retrieveCalendar(subscriptionID string, tags map[string]string) (calendar api.CalendarManager, err error) {
+	ok, err := s.database.ExistsSubscriptionFromID(subscriptionID)
+	if err != nil && ok {
+		//Ignore this subscription
+		//Perhaps something went wrong when deleting subscription...
+		//s.sentry.CaptureMessageAndWait(fmt.Sprintf("outlook subscription with id: %s is notifying but not on db", subscriptionID), tags)
+		return nil, nil
+	} else if err != nil {
+		//Sentry already got this error
+		return nil, err
+	}
+	calendar, err = s.database.RetrieveCalendarFromSubscription(subscriptionID)
+
+	if err != nil {
+		s.sentry.CaptureErrorAndWait(err, tags)
+		log.Errorf("error refreshing outlook account")
+		return nil, err
+	}
+	recoveredPanic, sentryID := s.sentry.CapturePanicAndWait(func() {
+		err = calendar.GetAccount().Refresh()
+	}, tags)
+
+	if recoveredPanic != nil {
+		log.Errorf("panic recovered with sentry ID: %s", sentryID)
+		return nil, fmt.Errorf("panic was launched")
+	}
+	if err != nil {
+		s.sentry.CaptureErrorAndWait(err, tags)
+		log.Errorf("error refreshing outlook account")
+		return nil, err
+	}
+	return calendar, nil
 }

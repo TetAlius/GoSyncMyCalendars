@@ -16,11 +16,12 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewGoogleSubscription(ID string) (subscription *GoogleSubscription) {
+func NewGoogleSubscription(ID string, token string) (subscription *GoogleSubscription) {
 	subscription = new(GoogleSubscription)
 	subscription.NotificationURL = fmt.Sprintf("%s:8081/google/watcher", os.Getenv("ENDPOINT"))
 	subscription.Type = "web_hook"
 	subscription.ID = ID
+	subscription.Token = token
 	subscription.Uuid = uuid.New()
 	return
 }
@@ -32,15 +33,6 @@ func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManag
 	subscription.calendar = calendar.(*GoogleCalendar)
 	return
 }
-
-//TODO:
-//func manageRenewalData(subscription *GoogleSubscription) (data []byte, err error) {
-//	renewal := new(GoogleSubscription)
-//	renewal.Type = subscription.Type
-//	renewal.ExpirationDateTime = subscription.ExpirationDateTime
-//	data, err = json.Marshal(renewal)
-//	return
-//}
 
 // POST https://www.googleapis.com/apiName/apiVersion/resourcePath/watch
 // POST https://www.googleapis.com/calendar/v3/calendars/calendarId/events/watch
