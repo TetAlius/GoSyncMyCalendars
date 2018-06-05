@@ -33,7 +33,7 @@ func (s *Server) manageSubscription(subscriptionID string, eventID string, tags 
 	if err != nil && ok {
 		//Ignore this subscription
 		//Perhaps something went wrong when deleting subscription...
-		s.sentry.CaptureMessageAndWait(fmt.Sprintf("outlook subscription with id: %s is notifying but not on db", subscriptionID), tags)
+		//s.sentry.CaptureMessageAndWait(fmt.Sprintf("outlook subscription with id: %s is notifying but not on db", subscriptionID), tags)
 		return nil
 	} else if err != nil {
 		//Sentry already got this error
