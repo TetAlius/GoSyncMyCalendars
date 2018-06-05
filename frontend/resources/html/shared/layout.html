@@ -238,13 +238,14 @@
             client_id: '760248995468-jtpc1e212a02h47b6ml9vmejqrkeh3vf.apps.googleusercontent.com',
             scope: 'profile email'
         }).then(function () {
+            gapi.auth2.getAuthInstance().signOut();
             // Listen for sign-in state changes.
             gapi.auth2.getAuthInstance().isSignedIn.listen(signinChanged);
             // Handle the initial sign-in state.
             signinChanged(gapi.auth2.getAuthInstance().isSignedIn.get());
         });
         // Listen for changes to current user.
-        auth2 = gapi.auth2.getAuthInstance()
+        auth2 = gapi.auth2.getAuthInstance().signOut();
         gapi.auth2.getAuthInstance().currentUser.listen(userChanged);
         // Start with the current live values.
         refreshValues();
