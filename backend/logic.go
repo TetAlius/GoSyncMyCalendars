@@ -78,10 +78,13 @@ func (s *Server) manageSubscription(subscriptionID string, eventID string, tags 
 		log.Errorf("error retrieving events synced: %s", err.Error())
 		return err
 	}
+	if !onCloud && !onDB {
+		log.Warningf("event with id: %s already deleted", eventID)
+		return nil
+	}
 	if onCloud && onDB && s.database.EventAlreadyUpdated(event) {
 		return nil
 	}
-	//TODO: manage this error, if returns none event maybe because is deleted
 
 	event.SetRelations(events)
 	state := api.GetChangeType(onCloud, onDB)

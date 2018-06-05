@@ -138,12 +138,6 @@ func (data Database) findCalendarFromUser(userEmail string, userUUID string, cal
 }
 
 func (data Database) getSynchronizedCalendars(calendar api.CalendarManager) (calendars []api.CalendarManager, err error) {
-	//var query string
-	//if principal {
-	//	query = "select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = $1"
-	//} else {
-	//	query = "select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.parent_calendar_uuid = $1"
-	//}
 	rows, err := data.client.Query("select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where (calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.parent_calendar_uuid = $1) AND calendars.uuid != $1", calendar.GetUUID())
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})

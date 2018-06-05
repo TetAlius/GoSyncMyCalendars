@@ -65,11 +65,13 @@ func (worker *Worker) processSynchronization(event api.EventManager) {
 	if event.GetState() == api.Updated && worker.database.EventAlreadyUpdated(event) {
 		return
 	}
-	if event.GetState() == api.Updated {
-		worker.database.UpdateModificationDate(event)
-	}
-	if event.GetState() == api.Created {
+	switch event.GetState() {
+	case api.Created:
 		worker.database.SavePrincipalEvent(event)
+	case api.Updated:
+		worker.database.UpdateModificationDate(event)
+	case api.Deleted:
+		worker.database.DeleteEvent(event)
 	}
 	for _, toSync := range event.GetRelations() {
 		api.Convert(event, toSync)
@@ -90,6 +92,7 @@ func (worker *Worker) processSynchronization(event api.EventManager) {
 		} else if err != nil {
 			event.MarkWrong()
 		}
+
 	}
 	return
 }
@@ -98,11 +101,10 @@ func (worker *Worker) synchronizeEvents(from api.EventManager, to api.EventManag
 	switch from.GetState() {
 	case api.Created:
 		err = worker.createEvent(from, to)
-
 	case api.Updated:
 		err = worker.updateEvent(from, to)
 	case api.Deleted:
-		err = to.Delete()
+		err = worker.deleteEvent(from, to)
 	default:
 		return SynchronizeError{State: from.GetState(), ID: from.GetID()}
 	}
@@ -126,5 +128,16 @@ func (worker *Worker) createEvent(from api.EventManager, to api.EventManager) (e
 	}
 
 	return worker.database.SaveEventsRelation(from, to)
+
+}
+
+func (worker *Worker) deleteEvent(from api.EventManager, to api.EventManager) (err error) {
+	err = to.Delete()
+	if err != nil {
+		log.Errorf("error updating event: %s, from event: %s", to.GetID(), from.GetID())
+		return err
+	}
+
+	return worker.database.DeleteEvent(to)
 
 }

@@ -312,3 +312,34 @@ func (data Database) UpdateModificationDate(event api.EventManager) error {
 	}
 	return nil
 }
+
+func (data Database) DeleteEvent(event api.EventManager) error {
+	stmt, err := data.client.Prepare("delete from events where events.id =$1")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing query: %s", err.Error())
+		return err
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(event.GetID())
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error executing query: %s", err.Error())
+		return err
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return err
+	}
+	//TODO: Change this...
+	if affect != 1 {
+		err = errors.New(fmt.Sprintf("could not delete event with id: %s", event.GetID()))
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return err
+	}
+	return nil
+
+}
