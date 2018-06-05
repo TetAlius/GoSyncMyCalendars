@@ -11,7 +11,6 @@ import (
 
 	"strings"
 
-	"encoding/base64"
 	"encoding/json"
 
 	"database/sql"
@@ -107,23 +106,22 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 	if !ok {
 		return
 	}
-	authorization := r.Header.Get("Authorization")
-	auth, err := base64.StdEncoding.DecodeString(authorization)
-	if err != nil {
+	email, userUUID, ok := r.BasicAuth()
+	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	decoded := strings.Split(string(auth), ":")
-	log.Debugf("email: %s", decoded[0])
-	log.Debugf("user: %s", decoded[1])
-	if len(decoded[0]) == 0 || len(decoded[1]) == 0 {
+	//decoded := strings.Split(string(auth), ":")
+	log.Debugf("email: %s", email)
+	log.Debugf("user: %s", userUUID)
+	if len(email) == 0 || len(userUUID) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	param := r.URL.Path[len("/subscribe/"):]
 	switch r.Method {
 	case http.MethodPost:
-		calendar, err := s.database.RetrieveCalendars(decoded[0], decoded[1], param)
+		calendar, err := s.database.RetrieveCalendars(email, userUUID, param)
 		if err != nil {
 			log.Errorf("error getting calendar")
 			w.WriteHeader(http.StatusNotFound)
@@ -136,14 +134,14 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		err = s.database.StartSync(calendar, decoded[1])
+		err = s.database.StartSync(calendar, userUUID)
 		if err != nil {
 			log.Errorf("error trying to start sync: %s", calendar.GetUUID())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	case http.MethodDelete:
 		log.Debugf("Getting method delete")
-		err := s.database.StopSync(param, decoded[0], decoded[1])
+		err := s.database.StopSync(param, email, userUUID)
 		if err != nil {
 			log.Errorf("error stopping sync: %s", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -157,22 +155,20 @@ func (s *Server) retrieveInfoHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	authorization := r.Header.Get("Authorization")
-	auth, err := base64.StdEncoding.DecodeString(authorization)
-	if err != nil {
+	email, userUUID, ok := r.BasicAuth()
+	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	decoded := strings.Split(string(auth), ":")
-	log.Debugf("email: %s", decoded[0])
-	log.Debugf("user: %s", decoded[1])
-	if len(decoded[0]) == 0 || len(decoded[1]) == 0 {
+	log.Debugf("email: %s", email)
+	log.Debugf("user: %s", userUUID)
+	if len(email) == 0 || len(userUUID) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	param := r.URL.Path[len("/accounts/"):]
 	values := strings.Split(param, "/")
-	account, err := s.database.RetrieveAccount(decoded[1], values[0])
+	account, err := s.database.RetrieveAccount(userUUID, values[0])
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(err.Error()))
@@ -184,7 +180,7 @@ func (s *Server) retrieveInfoHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	err = s.database.UpdateAccountFromUser(account, decoded[1])
+	err = s.database.UpdateAccountFromUser(account, userUUID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -205,22 +201,18 @@ func (s *Server) refreshHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	authorization := r.Header.Get("Authorization")
-	log.Debugf("AUTH %s", authorization)
-	auth, err := base64.StdEncoding.DecodeString(authorization)
-	if err != nil {
+	email, userUUID, ok := r.BasicAuth()
+	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	decoded := strings.Split(string(auth), ":")
-	log.Debugln(decoded)
-	log.Debugf("email: %s", decoded[0])
-	log.Debugf("user: %s", decoded[1])
-	if len(decoded[0]) == 0 || len(decoded[1]) == 0 {
+	log.Debugf("email: %s", email)
+	log.Debugf("user: %s", userUUID)
+	if len(email) == 0 || len(userUUID) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	err = s.database.UpdateAllCalendarsFromUser(decoded[1], decoded[0])
+	err := s.database.UpdateAllCalendarsFromUser(userUUID, email)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
