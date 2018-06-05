@@ -343,3 +343,19 @@ func (data Database) DeleteEvent(event api.EventManager) error {
 	return nil
 
 }
+
+func (data Database) ExistsEvent(event api.EventManager) bool {
+	var exists bool
+	err := data.client.QueryRow("select true from events join calendars c2 on events.calendar_uuid = c2.uuid where events.id = $1 and c2.id=$2", event.GetID(), event.GetCalendar().GetID()).Scan(&exists)
+
+	switch {
+	case err == sql.ErrNoRows:
+		log.Warningf("event ID: %s not found", event.GetID())
+		exists = false
+	case err != nil:
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error querying event id: %s ", event.GetID())
+		return false
+	}
+	return exists
+}

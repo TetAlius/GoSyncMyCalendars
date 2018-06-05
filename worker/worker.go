@@ -65,6 +65,9 @@ func (worker *Worker) processSynchronization(event api.EventManager) {
 	if event.GetState() == api.Updated && worker.database.EventAlreadyUpdated(event) {
 		return
 	}
+	if event.GetState() == api.Deleted && !worker.database.ExistsEvent(event) {
+		return
+	}
 	switch event.GetState() {
 	case api.Created:
 		worker.database.SavePrincipalEvent(event)
