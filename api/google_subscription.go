@@ -83,6 +83,26 @@ func (subscription *GoogleSubscription) Renew() (err error) {
 	return subscription.Subscribe(subscription.calendar)
 }
 
+/*
+GOOGLE_CONTENTS: {
+GoSyncMyCalendars-app |  "error": {
+GoSyncMyCalendars-app |   "errors": [
+GoSyncMyCalendars-app |    {
+GoSyncMyCalendars-app |     "domain": "calendar",
+GoSyncMyCalendars-app |     "reason": "fullSyncRequired",
+GoSyncMyCalendars-app |     "message": "Sync token is no longer valid, a full sync is required.",
+GoSyncMyCalendars-app |     "locationType": "parameter",
+GoSyncMyCalendars-app |     "location": "syncToken"
+GoSyncMyCalendars-app |    }
+GoSyncMyCalendars-app |   ],
+GoSyncMyCalendars-app |   "code": 410,
+GoSyncMyCalendars-app |   "message": "Sync token is no longer valid, a full sync is required."
+GoSyncMyCalendars-app |  }
+GoSyncMyCalendars-app | }
+
+
+*/
+
 //POST https://www.googleapis.com/calendar/v3/channels/stop
 func (subscription *GoogleSubscription) Delete() (err error) {
 	a := subscription.calendar.GetAccount()

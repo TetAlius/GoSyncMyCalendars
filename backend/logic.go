@@ -36,15 +36,22 @@ func (s *Server) manageSynchronizationGoogle(subscriptionID string, syncToken st
 	if calendar == nil && err == nil {
 		return nil
 	}
-	oldToken := calendar.GetSyncToken()
-	calendar.SetSyncToken(syncToken)
-	s.database.PersistSyncToken(subscriptionID, syncToken, oldToken)
+	eventIDs := make(map[string]string)
+	calendar.GetAccount().Refresh()
 	events, err := calendar.GetAllEvents()
 	if err != nil {
-
+		s.sentry.CaptureErrorAndWait(err, tags)
+		return err
 	}
 	for _, event := range events {
-		err = s.manageSubscription(calendar, subscriptionID, event.GetID(), tags)
+		eventIDs[event.GetID()] = event.GetID()
+	}
+	eventsID, err := s.database.GetGoogleEventIDs(subscriptionID)
+	for _, eventID := range eventsID {
+		eventIDs[eventID] = eventID
+	}
+	for eventID := range eventIDs {
+		err = s.manageSubscription(calendar, subscriptionID, eventID, tags)
 		if err != nil {
 			log.Errorf("error managing google subscription ID: %s", subscriptionID)
 			return err
