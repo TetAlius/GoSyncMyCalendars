@@ -135,6 +135,9 @@ func (worker *Worker) createEvent(from api.EventManager, to api.EventManager) (e
 }
 
 func (worker *Worker) deleteEvent(from api.EventManager, to api.EventManager) (err error) {
+	if !worker.database.ExistsEvent(to) {
+		return nil
+	}
 	err = to.Delete()
 	if err != nil {
 		log.Errorf("error updating event: %s, from event: %s", to.GetID(), from.GetID())
