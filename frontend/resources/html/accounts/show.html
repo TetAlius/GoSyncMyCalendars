@@ -45,7 +45,7 @@
                 url: {{endpoint}}+":8081/accounts/"+id+"/calendars/",
                 // withCredentials:true,
                 headers: {
-                    "Authorization": btoa({{.User.Email}} + ":" + {{.User.UUID}})
+                    "Authorization": "Basic " +btoa({{.User.Email}} + ":" + {{.User.UUID}})
                 },
                 success: function(data){
                     var obj = JSON.parse(data);
