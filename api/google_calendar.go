@@ -298,6 +298,6 @@ func (calendar *GoogleCalendar) GetCalendars() []CalendarManager {
 	return calendar.calendars
 }
 
-func (calendar *GoogleCalendar) CreateEmptyEvent() EventManager {
-	return &GoogleEvent{calendar: calendar}
+func (calendar *GoogleCalendar) CreateEmptyEvent(ID string) EventManager {
+	return &GoogleEvent{ID: ID, calendar: calendar}
 }

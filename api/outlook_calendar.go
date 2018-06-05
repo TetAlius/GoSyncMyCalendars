@@ -267,6 +267,6 @@ func (calendar *OutlookCalendar) SetName(name string) {
 	calendar.Name = name
 }
 
-func (calendar *OutlookCalendar) CreateEmptyEvent() EventManager {
-	return &OutlookEvent{calendar: calendar}
+func (calendar *OutlookCalendar) CreateEmptyEvent(ID string) EventManager {
+	return &OutlookEvent{ID: ID, calendar: calendar}
 }

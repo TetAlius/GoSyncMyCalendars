@@ -66,6 +66,7 @@ func (s *Server) manageSubscription(subscriptionID string, eventID string, tags 
 	if _, ok := err.(*customErrors.NotFoundError); ok {
 		onCloud = false
 		err = nil
+		event = calendar.CreateEmptyEvent(eventID)
 	}
 	if err != nil {
 		s.sentry.CaptureErrorAndWait(err, tags)

@@ -35,7 +35,7 @@ func (data Database) RetrieveSyncedEventsWithSubscription(eventID string, subscr
 			return nil, false, err
 		}
 		for _, calendar := range calendars {
-			event := calendar.CreateEmptyEvent()
+			event := calendar.CreateEmptyEvent("")
 			events = append(events, event)
 		}
 
