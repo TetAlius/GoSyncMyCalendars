@@ -361,13 +361,29 @@ func (data Database) ExistsEvent(event api.EventManager) bool {
 }
 
 func (data Database) GetGoogleEventIDs(subscriptionID string) (eventIDs []string, err error) {
-	stmt, err := data.client.Prepare("select events.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, c2.id, c2.uuid from events join calendars c2 on events.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email where events.internal_id = $1 or events.parent_event_internal_id=$1 and events.id!=$2")
+	stmt, err := data.client.Prepare("select events.id from events join calendars c2 on events.calendar_uuid = c2.uuid join subscriptions s2 on c2.uuid = s2.calendar_uuid where c2.id=$1")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-		log.Errorf("error getting synced events from principalID: %d", principalEventID)
+		log.Errorf("error getting stored events from subscriptionID: %s", subscriptionID)
 		return nil, err
 	}
 	defer stmt.Close()
-	rows, err := stmt.Query(principalEventID, eventID)
-
+	rows, err := stmt.Query(subscriptionID)
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error getting stored events from subscriptionID: %s", subscriptionID)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		err = rows.Scan(&id)
+		if err != nil {
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			log.Errorf("error scanning stored events from subscriptionID: %s", subscriptionID)
+			return nil, err
+		}
+		eventIDs = append(eventIDs, id)
+	}
+	return
 }
