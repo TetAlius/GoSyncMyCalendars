@@ -106,6 +106,7 @@ type SubscriptionManager interface {
 	GetType() string
 	setTime()
 	GetExpirationDate() time.Time
+	GetResourceID() string
 }
 
 type RefreshError struct {

@@ -120,7 +120,8 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	var calendarUUID string
 	var kind int
 	var typ string
-	err = data.client.QueryRow("select subscriptions.id,subscriptions.uuid,subscriptions.calendar_uuid, a.kind, subscriptions.type from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where subscriptions.uuid = $1 and u.uuid = $2 and u.email = $3", subscriptionUUID, userUUID, userEmail).Scan(&id, &uid, &calendarUUID, &kind, &typ)
+	var resourceID string
+	err = data.client.QueryRow("select subscriptions.id,subscriptions.uuid,subscriptions.calendar_uuid, a.kind, subscriptions.type, subscriptions.resource_id from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where subscriptions.uuid = $1 and u.uuid = $2 and u.email = $3", subscriptionUUID, userUUID, userEmail).Scan(&id, &uid, &calendarUUID, &kind, &typ, &resourceID)
 	switch {
 	case err == sql.ErrNoRows:
 		err = &customErrors.NotFoundError{Message: fmt.Sprintf("no subscription with that uuid: %s.", subscriptionUUID)}
@@ -135,7 +136,7 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	calendar, _ := data.findCalendarFromUser(userEmail, userUUID, calendarUUID)
 	switch kind {
 	case api.GOOGLE:
-		subscription = api.RetrieveGoogleSubscription(id, uid, calendar)
+		subscription = api.RetrieveGoogleSubscription(id, uid, calendar, resourceID)
 	case api.OUTLOOK:
 		subscription = api.RetrieveOutlookSubscription(id, uid, calendar, typ)
 	default:

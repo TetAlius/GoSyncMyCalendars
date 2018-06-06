@@ -26,11 +26,12 @@ func NewGoogleSubscription(ID string, token string) (subscription *GoogleSubscri
 	return
 }
 
-func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManager) (subscription *GoogleSubscription) {
+func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManager, resourceID string) (subscription *GoogleSubscription) {
 	subscription = new(GoogleSubscription)
 	subscription.ID = ID
 	subscription.Uuid = uid
 	subscription.calendar = calendar.(*GoogleCalendar)
+	subscription.ResourceID = resourceID
 	return
 }
 
@@ -82,26 +83,6 @@ func (subscription *GoogleSubscription) Renew() (err error) {
 	log.Debugln("Renew google subscription")
 	return subscription.Subscribe(subscription.calendar)
 }
-
-/*
-GOOGLE_CONTENTS: {
-GoSyncMyCalendars-app |  "error": {
-GoSyncMyCalendars-app |   "errors": [
-GoSyncMyCalendars-app |    {
-GoSyncMyCalendars-app |     "domain": "calendar",
-GoSyncMyCalendars-app |     "reason": "fullSyncRequired",
-GoSyncMyCalendars-app |     "message": "Sync token is no longer valid, a full sync is required.",
-GoSyncMyCalendars-app |     "locationType": "parameter",
-GoSyncMyCalendars-app |     "location": "syncToken"
-GoSyncMyCalendars-app |    }
-GoSyncMyCalendars-app |   ],
-GoSyncMyCalendars-app |   "code": 410,
-GoSyncMyCalendars-app |   "message": "Sync token is no longer valid, a full sync is required."
-GoSyncMyCalendars-app |  }
-GoSyncMyCalendars-app | }
-
-
-*/
 
 //POST https://www.googleapis.com/calendar/v3/channels/stop
 func (subscription *GoogleSubscription) Delete() (err error) {
@@ -164,4 +145,8 @@ func (subscription *GoogleSubscription) setCalendar(calendar CalendarManager) (e
 
 func (subscription *GoogleSubscription) GetExpirationDate() time.Time {
 	return subscription.expirationDate
+}
+
+func (subscription *GoogleSubscription) GetResourceID() string {
+	return subscription.ResourceID
 }

@@ -207,14 +207,14 @@ func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUU
 }
 
 func (data Database) saveSubscription(transaction *sql.Tx, subscription api.SubscriptionManager, calendar api.CalendarManager) (err error) {
-	stmt, err := transaction.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration_date) values ($1,$2,$3,$4,$5)")
+	stmt, err := transaction.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration_date, resource_id) values ($1,$2,$3,$4,$5,$6)")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(subscription.GetUUID(), calendar.GetUUID(), subscription.GetID(), subscription.GetType(), subscription.GetExpirationDate())
+	res, err := stmt.Exec(subscription.GetUUID(), calendar.GetUUID(), subscription.GetID(), subscription.GetType(), subscription.GetExpirationDate(), subscription.GetResourceID())
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error executing query: %s", err.Error())
