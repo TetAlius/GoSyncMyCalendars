@@ -67,9 +67,6 @@ type CalendarManager interface {
 	GetUUID() string
 	SetUUID(string)
 	CreateEmptyEvent(string) EventManager
-
-	SetSyncToken(string)
-	GetSyncToken() string
 }
 
 type EventManager interface {

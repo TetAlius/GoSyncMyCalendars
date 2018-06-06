@@ -270,11 +270,3 @@ func (calendar *OutlookCalendar) SetName(name string) {
 func (calendar *OutlookCalendar) CreateEmptyEvent(ID string) EventManager {
 	return &OutlookEvent{ID: ID, calendar: calendar}
 }
-
-func (calendar *OutlookCalendar) SetSyncToken(token string) {
-	calendar.syncToken = token
-}
-
-func (calendar *OutlookCalendar) GetSyncToken() string {
-	return calendar.syncToken
-}

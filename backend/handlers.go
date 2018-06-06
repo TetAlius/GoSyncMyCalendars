@@ -25,12 +25,13 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 		channelID := header.Get("X-Goog-Channel-ID")
 		resourceID := header.Get("X-Goog-Resource-ID")
 		resourceState := header.Get("X-Goog-Resource-State")
+		log.Debugf("resourceID: %s from channelID: %s", resourceID, channelID)
 		if resourceState == "sync" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
-		err := s.manageSynchronizationGoogle(channelID, resourceID)
+		err := s.manageSynchronizationGoogle(channelID)
 		var status int
 		if err != nil {
 			status = http.StatusInternalServerError

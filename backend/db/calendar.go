@@ -67,10 +67,9 @@ func (data Database) RetrieveCalendarFromSubscription(subscriptionID string) (ca
 	var kind int
 	var accessToken string
 	var calendarID string
-	var syncToken string
 	var uid string
-	err = data.client.QueryRow("SELECT a.token_type, a.refresh_token,a.email,a.kind,a.access_token, calendars.id, calendars.sync_token, calendars.uuid from calendars join subscriptions s2 on calendars.uuid = s2.calendar_uuid join accounts a on calendars.account_email = a.email where s2.id = $1", subscriptionID).
-		Scan(&tokenType, &refreshToken, &email, &kind, &accessToken, &calendarID, &syncToken, &uid)
+	err = data.client.QueryRow("SELECT a.token_type, a.refresh_token,a.email,a.kind,a.access_token, calendars.id, calendars.uuid from calendars join subscriptions s2 on calendars.uuid = s2.calendar_uuid join accounts a on calendars.account_email = a.email where s2.id = $1", subscriptionID).
+		Scan(&tokenType, &refreshToken, &email, &kind, &accessToken, &calendarID, &uid)
 	switch {
 	case err == sql.ErrNoRows:
 		err = &customErrors.NotFoundError{Message: fmt.Sprintf("calendar from subscription with ID: %s not found", subscriptionID)}
@@ -88,7 +87,7 @@ func (data Database) RetrieveCalendarFromSubscription(subscriptionID string) (ca
 		calendar = api.RetrieveOutlookCalendar(calendarID, uid, account)
 	case api.GOOGLE:
 		account := api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken)
-		calendar = api.RetrieveGoogleCalendar(calendarID, uid, syncToken, account)
+		calendar = api.RetrieveGoogleCalendar(calendarID, uid, account)
 	default:
 		return nil, &customErrors.WrongKindError{Mail: fmt.Sprintf("error getting calendar with subscription ID: %s", subscriptionID)}
 	}
@@ -118,7 +117,7 @@ func (data Database) findCalendarFromUser(userEmail string, userUUID string, cal
 	}
 	switch kind {
 	case api.GOOGLE:
-		calendar = api.RetrieveGoogleCalendar(id, uid, "", api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
+		calendar = api.RetrieveGoogleCalendar(id, uid, api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
 	case api.OUTLOOK:
 		calendar = api.RetrieveOutlookCalendar(id, uid, api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
 	default:
@@ -158,7 +157,7 @@ func (data Database) getSynchronizedCalendars(calendar api.CalendarManager) (cal
 		err = rows.Scan(&id, &uid, &kind, &tokenType, &refreshToken, &email, &accessToken)
 		switch kind {
 		case api.GOOGLE:
-			calendar = api.RetrieveGoogleCalendar(id, uid, "", api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
+			calendar = api.RetrieveGoogleCalendar(id, uid, api.RetrieveGoogleAccount(tokenType, refreshToken, email, kind, accessToken))
 		case api.OUTLOOK:
 			calendar = api.RetrieveOutlookCalendar(id, uid, api.RetrieveOutlookAccount(tokenType, refreshToken, email, kind, accessToken))
 		default:
@@ -176,7 +175,7 @@ func (data Database) UpdateCalendarFromUser(calendar api.CalendarManager, userUU
 }
 
 func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUUID string) (err error) {
-	stmt, err := data.client.Prepare("update calendars set name = $1, sync_token=$2 from accounts where calendars.account_email = accounts.email and accounts.user_uuid =$3 and calendars.id =$4;")
+	stmt, err := data.client.Prepare("update calendars set name = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid =$3 and calendars.id =$4;")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error preparing query: %s", err.Error())
@@ -184,7 +183,7 @@ func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUU
 	}
 	defer stmt.Close()
 
-	res, err := stmt.Exec(calendar.GetName(), calendar.GetSyncToken(), userUUID, calendar.GetID())
+	res, err := stmt.Exec(calendar.GetName(), userUUID, calendar.GetID())
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error executing query: %s", err.Error())

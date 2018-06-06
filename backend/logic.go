@@ -27,7 +27,7 @@ func (s *Server) manageSynchronizationOutlook(notifications []api.OutlookSubscri
 	return err
 }
 
-func (s *Server) manageSynchronizationGoogle(subscriptionID string, syncToken string) (err error) {
+func (s *Server) manageSynchronizationGoogle(subscriptionID string) (err error) {
 	tags := map[string]string{"sync": "google"}
 	calendar, err := s.retrieveCalendar(subscriptionID, tags)
 	if err != nil {
