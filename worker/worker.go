@@ -77,8 +77,10 @@ func (worker *Worker) processSynchronization(event api.EventManager) {
 		worker.database.DeleteEvent(event)
 	}
 	for _, toSync := range event.GetRelations() {
+		err := toSync.GetCalendar().GetAccount().Refresh()
+		go worker.database.UpdateAccount(toSync.GetCalendar().GetAccount())
 		api.Convert(event, toSync)
-		err := worker.synchronizeEvents(event, toSync)
+		err = worker.synchronizeEvents(event, toSync)
 		if err != nil && reflect.TypeOf(err).Kind() != reflect.TypeOf(SynchronizeError{}).Kind() {
 			go func() {
 				for toSync.CanProcessAgain() {

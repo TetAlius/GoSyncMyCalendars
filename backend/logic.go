@@ -38,6 +38,7 @@ func (s *Server) manageSynchronizationGoogle(subscriptionID string, syncToken st
 	}
 	eventIDs := make(map[string]string)
 	calendar.GetAccount().Refresh()
+	go s.database.UpdateAccount(calendar.GetAccount())
 	events, err := calendar.GetAllEvents()
 	if err != nil {
 		log.Errorf("error getting all events from cloud: %s", err.Error())
@@ -67,6 +68,7 @@ func (s *Server) manageSynchronizationGoogle(subscriptionID string, syncToken st
 }
 
 func (s *Server) manageSubscription(calendar api.CalendarManager, subscriptionID string, eventID string, tags map[string]string) (err error) {
+
 	//TODO: update account
 	//go func() { s.database.UpdateAccount(calendar.GetAccount()) }()
 	onCloud := true
@@ -120,7 +122,6 @@ func (s *Server) retrieveCalendar(subscriptionID string, tags map[string]string)
 		return nil, err
 	}
 	calendar, err = s.database.RetrieveCalendarFromSubscription(subscriptionID)
-
 	if err != nil {
 		s.sentry.CaptureErrorAndWait(err, tags)
 		log.Errorf("error refreshing outlook account")

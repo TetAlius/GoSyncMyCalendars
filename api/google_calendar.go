@@ -211,6 +211,7 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 	if err != nil {
 		return
 	}
+	log.Warningf("GOOGLE EVENT: %s", contents)
 	//TODO: this part
 	if eventResponse.Status != "cancelled" {
 		err = eventResponse.extractTime()
