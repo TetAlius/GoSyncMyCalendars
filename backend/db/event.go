@@ -361,7 +361,7 @@ func (data Database) ExistsEvent(event api.EventManager) bool {
 }
 
 func (data Database) GetGoogleEventIDs(subscriptionID string) (eventIDs []string, err error) {
-	stmt, err := data.client.Prepare("select events.id from events join calendars c2 on events.calendar_uuid = c2.uuid join subscriptions s2 on c2.uuid = s2.calendar_uuid where c2.id=$1")
+	stmt, err := data.client.Prepare("select events.id from events join calendars c2 on events.calendar_uuid = c2.uuid join subscriptions s2 on c2.uuid = s2.calendar_uuid where s2.id=$1")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error getting stored events from subscriptionID: %s", subscriptionID)

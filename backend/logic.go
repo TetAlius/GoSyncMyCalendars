@@ -48,15 +48,16 @@ func (s *Server) manageSynchronizationGoogle(subscriptionID string, syncToken st
 	for _, event := range events {
 		eventIDs[event.GetID()] = event.GetID()
 	}
-	eventsID, err := s.database.GetGoogleEventIDs(subscriptionID)
+	IDs, err := s.database.GetGoogleEventIDs(subscriptionID)
 	if err != nil {
 		log.Errorf("error getting all events from db: %s", err.Error())
 		s.sentry.CaptureErrorAndWait(err, tags)
 		return err
 	}
-	for _, eventID := range eventsID {
+	for _, eventID := range IDs {
 		eventIDs[eventID] = eventID
 	}
+	log.Warningf("EVENTIDS GOOGLE: %s", eventIDs)
 	for eventID := range eventIDs {
 		err = s.manageSubscription(calendar, subscriptionID, eventID, tags)
 		if err != nil {
