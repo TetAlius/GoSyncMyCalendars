@@ -47,7 +47,6 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 		return
 	}
 	data.UpdateAccountFromUser(calendar.GetAccount(), userUUID)
-	token := randToken()
 	events, err = calendar.GetAllEvents()
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
@@ -57,7 +56,7 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 	data.UpdateCalendarFromUser(calendar, userUUID)
 	switch calendar.(type) {
 	case *api.GoogleCalendar:
-		subs = api.NewGoogleSubscription(uuid.New().String(), token)
+		subs = api.NewGoogleSubscription(uuid.New().String())
 	case *api.OutlookCalendar:
 		subs = api.NewOutlookSubscription()
 	}
@@ -78,12 +77,11 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 
 	for _, cal := range calendar.GetCalendars() {
 		data.UpdateAccountFromUser(cal.GetAccount(), userUUID)
-		token := randToken()
 		data.UpdateCalendarFromUser(cal, userUUID)
 		var subscript api.SubscriptionManager
 		switch cal.(type) {
 		case *api.GoogleCalendar:
-			subscript = api.NewGoogleSubscription(uuid.New().String(), token)
+			subscript = api.NewGoogleSubscription(uuid.New().String())
 		case *api.OutlookCalendar:
 			subscript = api.NewOutlookSubscription()
 		}
