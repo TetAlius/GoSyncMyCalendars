@@ -258,7 +258,10 @@ func (s *Server) manageSubscriptions() {
 			if err = s.database.UpdateAccountFromSubscription(acc, subscription); err != nil {
 				log.Errorf("error updating account: %s", err.Error())
 			}
-			//subscription.Renew()
+			err = subscription.Renew()
+			if err != nil {
+				continue
+			}
 			err := s.database.UpdateSubscription(subscription)
 			if err != nil {
 				log.Errorf("error updating subscription: %s", err.Error())

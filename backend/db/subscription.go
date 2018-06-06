@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 
 	"fmt"
 
@@ -109,8 +110,31 @@ func (data Database) GetExpiredSubscriptions() (subscriptions []api.Subscription
 }
 
 func (data Database) UpdateSubscription(subscription api.SubscriptionManager) (err error) {
-	//TODO:
-	panic(subscription)
+	stmt, err := data.client.Prepare("update subscriptions set id = $1, type = $2, expiration_date = $3, resource_id = $4 where uuid = $5")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(subscription.GetID(), subscription.GetType(), subscription.GetExpirationDate(), subscription.GetResourceID(), subscription.GetUUID())
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return
+	}
+	if affect != 1 {
+		err = errors.New(fmt.Sprintf("could not update subscription with uuid: %s", subscription.GetUUID()))
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return
+	}
 	return
 }
 

@@ -81,6 +81,7 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 //A new subscription must be request
 func (subscription *GoogleSubscription) Renew() (err error) {
 	log.Debugln("Renew google subscription")
+	subscription.ID = uuid.New().String()
 	return subscription.Subscribe(subscription.calendar)
 }
 
