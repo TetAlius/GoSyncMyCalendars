@@ -242,7 +242,3 @@ func (a *OutlookAccount) SetCalendars(calendars []CalendarManager) {
 func (a *OutlookAccount) GetSyncCalendars() []CalendarManager {
 	return a.calendars
 }
-
-func (a *OutlookAccount) Principal() bool {
-	return a.principal
-}

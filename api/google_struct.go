@@ -32,7 +32,6 @@ type GoogleAccount struct {
 	Kind         int               `json:"-"`
 	InternID     int               `json:"-"`
 	calendars    []CalendarManager `json:"-"`
-	principal    bool              `json:"-"`
 }
 
 type GoogleCalendarListResponse struct {

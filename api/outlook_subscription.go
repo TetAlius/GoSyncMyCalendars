@@ -167,6 +167,7 @@ func (subscription *OutlookSubscription) SetCalendar(calendar *OutlookCalendar) 
 	subscription.calendar = calendar
 }
 
+//TODO improve this
 func (subscription *OutlookSubscription) setTime() {
 	expiration, err := time.Parse(time.RFC3339Nano, subscription.ExpirationDateTime)
 	if err != nil {

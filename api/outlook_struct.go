@@ -33,7 +33,6 @@ type OutlookAccount struct {
 	Kind              int               `json:"-"`
 	InternID          int               `json:"-"`
 	calendars         []CalendarManager `json:"-"`
-	principal         bool              `json:"-"`
 }
 
 type OutlookCalendarResponse struct {

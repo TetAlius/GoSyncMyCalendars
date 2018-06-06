@@ -44,7 +44,6 @@ type AccountManager interface {
 	GetInternalID() int
 	SetCalendars([]CalendarManager)
 	GetSyncCalendars() []CalendarManager
-	Principal() bool
 }
 
 type CalendarManager interface {
@@ -101,7 +100,6 @@ type SubscriptionManager interface {
 	GetUUID() uuid.UUID
 	GetAccount() AccountManager
 	GetType() string
-	setTime()
 	GetExpirationDate() time.Time
 	GetResourceID() string
 }
