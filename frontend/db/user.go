@@ -104,7 +104,7 @@ func (data Database) findUserByMail(user *User) (err error) {
 	return
 }
 
-func (data Database) AddAccount(user *User, account Account) (err error) {
+func (data Database) AddAccount(user *User, account Account) (id int, err error) {
 	var accounts int
 	err = data.client.QueryRow("SELECT count(accounts.id) FROM accounts where accounts.user_uuid = $1", user.UUID).Scan(&accounts)
 	if err != nil {
@@ -114,10 +114,10 @@ func (data Database) AddAccount(user *User, account Account) (err error) {
 	}
 	principal := accounts < 1
 	account.Principal = principal
-	err = data.save(account)
+	id, err = data.save(account)
 	if _, ok := err.(*customErrors.AccountAlreadyUsed); ok {
 		//TODO:
-		err = data.updateAccountFromUser(account, user)
+		id, err = data.updateAccountFromUser(account, user)
 	}
 	if err != nil {
 		log.Errorf("could not save account: %s", err.Error())

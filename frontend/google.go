@@ -111,12 +111,12 @@ func (s *Server) googleTokenHandler(w http.ResponseWriter, r *http.Request) {
 		AccessToken:  objmap["access_token"].(string),
 		Kind:         api.GOOGLE,
 	}
-	err = s.database.AddAccount(currentUser, acc)
+	id, err := s.database.AddAccount(currentUser, acc)
 	if err != nil {
 		serverError(w, err)
 		return
 	}
 
 	//This is so that users cannot read the response
-	http.Redirect(w, r, "/accounts", http.StatusPermanentRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/accounts/%d", id), http.StatusPermanentRedirect)
 }
