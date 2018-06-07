@@ -90,7 +90,7 @@ func (data Database) save(account Account) (id int, err error) {
 		return
 	}
 
-	return id
+	return
 
 }
 
