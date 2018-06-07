@@ -1,13 +1,13 @@
 {{define "content"}}
-<div id="sync-error" class="alert alert-danger hidden" role="alert">
-    An error has occurred subscribing to your calendars. Try again in a few minutes.
-</div>
 {{$lenAccounts:= len .User.Accounts}}
 <h1 style="display: inline-block">List of all calendars</h1> <a class="btn btn-dark" href="/accounts"><span data-toggle="tooltip" data-placement="top" title="You currently have {{inc $lenAccounts}} accounts">Add more Accounts</span> <span class="badge badge-light">+</span></a>
 <p>Every calendar that is added to sync inside the primary account will generate a new calendar in the other accounts if no calendar is given to sync.</p>
 <p>All calendars will have the same name as the one inside principal.</p>
 <div id="account-error" class="alert alert-info" role="alert">
     Keep in mind the default outlook calendar cannot be renamed, so it won't have the same name as principal.
+</div>
+<div id="sync-error" class="alert alert-danger hidden" role="alert">
+    An error has occurred subscribing to your calendars. Try again in a few minutes.
 </div>
 {{if not .User.Accounts }}
 <p>You have no calendars right now. Try adding some accounts to sync:</p>
@@ -30,19 +30,24 @@
         <tr>
             <td rowspan="2">
             {{$calendarName}} ({{.Account.Email}})
-            <th colspan={{$lenAccounts}}>Linked:
+            <th colspan={{$lenAccounts}}>
+                {{ if ne (len .Calendars) 0 }}
+                    Linked:
+                {{end}}
                 {{ if and (lt (len .Calendars) ($lenAccounts)) (not $subscription)}}
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#{{.UUID}}">
+                    <button type="button" class="btn btn-primary float-right " data-toggle="modal" data-target="#{{.UUID}}">
                         <span data-toggle="tooltip" data-placement="top" title="Link more calendars to {{$calendarName}}">Link Calendars</span>
                     </button>
                 {{end}}
             </th>
             <td rowspan="2">
-                    {{if $subscription}}
-                        <input type="submit" class="btn btn-warning" value="Stop synchronization" data-toggle="tooltip" data-placement="top" title="Stop Synchronizing {{$calendarName}}" onclick="stopSync({{.SubscriptionUUID.String}});"/>
-                    {{else}}
+                {{if $subscription}}
+                    <input type="submit" class="btn btn-warning" value="Stop synchronization" data-toggle="tooltip" data-placement="top" title="Stop Synchronizing {{$calendarName}}" onclick="stopSync({{.SubscriptionUUID.String}});"/>
+                {{else}}
+                    {{ if ne (len .Calendars) 0 }}
                         <input type="submit" class="btn btn-success" value="Start synchronization" data-toggle="tooltip" data-placement="top" title="Start Synchronizing {{$calendarName}}" onclick="startSync({{.UUID}});"/>
                     {{end}}
+                {{end}}
             </td>
 
         <tr>
@@ -66,23 +71,25 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form action="/calendars/{{.UUID}}" method="post">
-                    {{range $.User.Accounts}}
-                    {{if not .Principal}}
-                        <div class="form-group">
-                            <label for="calendars">{{.Email}}</label>
-                            <select class="form-control" name="calendars" id="calendars">
-                                <option>Select</option>
-                            {{range .Calendars}}
-                                    {{if eq (len .Calendars) 0}}
-                                <option value={{.UUID}}>{{.Name}}</option>
-                                            {{end}}
-                            {{end}}
-                            </select>
-                        </div>
-                    {{end}}
-                    {{end}}
 
+                    <form action="/calendars/{{.UUID}}" method="post">
+                        <div class="modal-body">
+                            {{range $.User.Accounts}}
+                                {{if not .Principal}}
+                                    <div class="form-group">
+                                        <label for="calendars">{{.Email}}</label>
+                                        <select class="form-control" name="calendars" id="calendars">
+                                            <option>Select</option>
+                                            {{range .Calendars}}
+                                                {{if eq (len .Calendars) 0}}
+                                                    <option value={{.UUID}}>{{.Name}}</option>
+                                                {{end}}
+                                            {{end}}
+                                        </select>
+                                    </div>
+                                {{end}}
+                            {{end}}
+                        </div>
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-primary">Save changes</button>
                         </div>
