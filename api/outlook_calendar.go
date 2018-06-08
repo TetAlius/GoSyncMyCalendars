@@ -166,7 +166,6 @@ func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err erro
 
 	for _, s := range eventListResponse.Events {
 		s.SetCalendar(calendar)
-		err = s.extractTime()
 		if err != nil {
 			return
 		}
@@ -211,8 +210,7 @@ func (calendar *OutlookCalendar) GetEvent(ID string) (event EventManager, err er
 		return
 	}
 
-	eventResponse.SetCalendar(calendar)
-	err = eventResponse.OutlookEvent.extractTime()
+	err = eventResponse.SetCalendar(calendar)
 	if err != nil {
 		return
 	}

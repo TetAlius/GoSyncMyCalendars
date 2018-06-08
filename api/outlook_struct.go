@@ -174,8 +174,9 @@ type OutlookItemBody struct {
 }
 
 type OutlookDateTimeTimeZone struct {
-	DateTime string `json:"DateTime,omitempty"`
-	TimeZone string `json:"TimeZone,omitempty"`
+	DateTime time.Time      `json:"DateTime,omitempty"`
+	TimeZone *time.Location `json:"TimeZone,omitempty"`
+	IsAllDay bool           `json:"-"`
 }
 
 // The importance of the event: Low, Normal, High.
