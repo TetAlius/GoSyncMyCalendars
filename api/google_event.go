@@ -220,6 +220,9 @@ func (date *GoogleTime) UnmarshalJSON(b []byte) error {
 }
 
 func (date *GoogleTime) MarshalJSON() ([]byte, error) {
+	if date.DateTime.IsZero() && date.Date.IsZero() {
+		return bytes.NewBufferString("{}").Bytes(), nil
+	}
 	var jsonValue string
 	var name string
 	if date.IsAllDay {

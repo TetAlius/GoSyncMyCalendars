@@ -223,7 +223,7 @@ func (date *OutlookDateTimeTimeZone) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("could not retrieve field DateTime")
 	}
 	tag, _ = parseTag(field.Tag.Get("json"))
-	t, err := time.ParseInLocation(time.RFC3339Nano, s[tag], location)
+	t, err := time.ParseInLocation("2006-01-02T15:04:05.999999999", s[tag], location)
 	if err != nil {
 		log.Errorf("error parsing time: %s", err.Error())
 	}
@@ -231,14 +231,18 @@ func (date *OutlookDateTimeTimeZone) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (date *OutlookDateTimeTimeZone) MarshalJSON() ([]byte, error) {
+func (date *OutlookDateTimeTimeZone) MarshalJSON() (b []byte, err error) {
+	if date.DateTime.IsZero() {
+		return bytes.NewBufferString("{}").Bytes(), nil
+	}
 	field, ok := reflect.TypeOf(date).Elem().FieldByName("DateTime")
 	if !ok {
 		return nil, fmt.Errorf("could not retrieve field DateTime")
 	}
 	tag, _ := parseTag(field.Tag.Get("json"))
 	buffer := bytes.NewBufferString("{")
-	_, err := buffer.WriteString(fmt.Sprintf(`"%s":"%s"`, tag, date.DateTime.UTC().Format(time.RFC3339Nano)))
+	//RFC3339Nano = "2006-01-02T15:04:05.999999999Z07:00"
+	_, err = buffer.WriteString(fmt.Sprintf(`"%s":"%s"`, tag, date.DateTime.UTC().Format("2006-01-02T15:04:05.999999999")))
 	if err != nil {
 		return nil, err
 	}

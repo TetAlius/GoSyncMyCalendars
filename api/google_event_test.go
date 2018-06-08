@@ -79,10 +79,14 @@ func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 
 	var event api.GoogleEvent
 	event.Subject = "Discuss the GoogleCalendar REST API"
-	event.Start = new(api.GoogleTime)
-	event.Start.DateTime = time.Now()
-	event.End = new(api.GoogleTime)
-	event.End.DateTime = time.Now().Add(time.Hour * time.Duration(2))
+	start := new(api.GoogleTime)
+	end := new(api.GoogleTime)
+	now := time.Now()
+	more := now.Add(time.Hour * 2)
+	start.DateTime = now
+	end.DateTime = more
+	event.Start = start
+	event.End = end
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())

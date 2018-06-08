@@ -41,7 +41,10 @@ func TestOutlookTime_JSON(t *testing.T) {
 	event = *new(api.OutlookEvent)
 	event.Start = new(api.OutlookDateTimeTimeZone)
 	event.End = new(api.OutlookDateTimeTimeZone)
-
+	contents, err = json.Marshal(event)
+	if err != nil {
+		t.Fatalf("error marshaling empty dates: %s", err.Error())
+	}
 }
 
 func TestOutlookEventCalendar_EventLifeCycle(t *testing.T) {
@@ -52,6 +55,14 @@ func TestOutlookEventCalendar_EventLifeCycle(t *testing.T) {
 
 	var event api.OutlookEvent
 	event.Subject = "Discuss the OutlookCalendar REST API"
+	start := new(api.OutlookDateTimeTimeZone)
+	end := new(api.OutlookDateTimeTimeZone)
+	now := time.Now()
+	more := now.Add(time.Hour * 2)
+	start.DateTime = now
+	end.DateTime = more
+	event.Start = start
+	event.End = end
 
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
