@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
-
 	"os"
+
+	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/customErrors"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -25,24 +25,23 @@ func NewGoogleSubscription(ID string) (subscription *GoogleSubscription) {
 	return
 }
 
-func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManager) (subscription *GoogleSubscription) {
+func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManager, resourceID string) (subscription *GoogleSubscription) {
 	subscription = new(GoogleSubscription)
 	subscription.ID = ID
 	subscription.Uuid = uid
 	subscription.calendar = calendar.(*GoogleCalendar)
+	subscription.ResourceID = resourceID
 	return
 }
 
-//TODO:
-//func manageRenewalData(subscription *GoogleSubscription) (data []byte, err error) {
-//	renewal := new(GoogleSubscription)
-//	renewal.Type = subscription.Type
-//	renewal.ExpirationDateTime = subscription.ExpirationDateTime
-//	data, err = json.Marshal(renewal)
-//	return
-//}
+func (subscription *GoogleSubscription) manageRenewalData() {
+	subscription.ID = uuid.New().String()
+	subscription.NotificationURL = fmt.Sprintf("%s:8081/google/watcher", os.Getenv("ENDPOINT"))
+	subscription.Type = "web_hook"
+}
 
 // POST https://www.googleapis.com/apiName/apiVersion/resourcePath/watch
+// POST https://www.googleapis.com/calendar/v3/calendars/calendarId/events/watch
 func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err error) {
 	if err = subscription.setCalendar(calendar); err != nil {
 		log.Errorf("kind of subscription and calender differs: %s", calendar.GetName())
@@ -51,7 +50,7 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 	a := calendar.GetAccount()
 	log.Debugln("subscribe calendar google")
 
-	route, err := util.CallAPIRoot("google/subscription")
+	route, err := util.CallAPIRoot("google/calendars/subscription")
 	if err != nil {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
@@ -70,6 +69,7 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 		fmt.Sprintf(route, calendar.GetID()),
 		bytes.NewBuffer(data),
 		headers, nil)
+	log.Warningf("RESPONSE: %s", contents)
 
 	err = createGoogleResponseError(contents)
 	if err != nil {
@@ -86,6 +86,7 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 //A new subscription must be request
 func (subscription *GoogleSubscription) Renew() (err error) {
 	log.Debugln("Renew google subscription")
+	subscription.manageRenewalData()
 	return subscription.Subscribe(subscription.calendar)
 }
 
@@ -94,7 +95,7 @@ func (subscription *GoogleSubscription) Delete() (err error) {
 	a := subscription.calendar.GetAccount()
 	log.Debugln("Delete google subscription")
 	//TODO: this URL
-	route, err := util.CallAPIRoot("google/subscription/stop")
+	route, err := util.CallAPIRoot("google/calendars/subscription/stop")
 	if err != nil {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
 	}
@@ -111,7 +112,12 @@ func (subscription *GoogleSubscription) Delete() (err error) {
 		route,
 		bytes.NewBuffer(data),
 		headers, nil)
-	err = createGoogleResponseError(contents)
+	log.Warningf("RESPONSE: %s", contents)
+
+	if len(contents) != 0 {
+		err = createGoogleResponseError(contents)
+		log.Errorf("error deleting subscription: %s", err.Error())
+	}
 	return
 }
 
@@ -129,9 +135,11 @@ func (subscription *GoogleSubscription) GetType() string {
 	return subscription.Type
 }
 
+//TODO improve this
 func (subscription *GoogleSubscription) setTime() {
-	subscription.expirationDate = time.Now().Add(time.Second * time.Duration(subscription.Expiration))
+	subscription.expirationDate = time.Unix(subscription.Expiration/1000, 0)
 }
+
 func (subscription *GoogleSubscription) setCalendar(calendar CalendarManager) (err error) {
 	switch calendar.(type) {
 	case *GoogleCalendar:
@@ -145,4 +153,8 @@ func (subscription *GoogleSubscription) setCalendar(calendar CalendarManager) (e
 
 func (subscription *GoogleSubscription) GetExpirationDate() time.Time {
 	return subscription.expirationDate
+}
+
+func (subscription *GoogleSubscription) GetResourceID() string {
+	return subscription.ResourceID
 }

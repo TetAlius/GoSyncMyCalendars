@@ -7,15 +7,15 @@
         <h1>Added Accounts</h1>
         {{$principalAccount:= .User.PrincipalAccount}}
         {{if $principalAccount}}
-            <a href="/accounts/{{$principalAccount.ID}}">{{$principalAccount.Email}}</a>
-            <span class="badge badge-secondary">({{len $principalAccount.Calendars}})</span>
-            <span>(principal)</span>
-            <br/>
+            <p class="row">
+                <a class="btn btn-success" href="/accounts/{{$principalAccount.ID}}"><span class="badge badge-light">({{len $principalAccount.Calendars}})</span> {{$principalAccount.Email}} <span>(principal)</span></a>
+            </p>
         {{end}}
         {{range .User.Accounts}}
-            <a href="/accounts/{{.ID}}">{{.Email}}</a>
-            <span class="badge badge-secondary">({{len .Calendars}})</span>
-           <br/>
+            <p class="row">
+
+                <a class="btn btn-success" href="/accounts/{{.ID}}"><span class="badge badge-light">({{len .Calendars}})</span> {{.Email}}</a>
+            </p>
         {{end}}
     {{end}}
     <br/>

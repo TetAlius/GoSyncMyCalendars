@@ -186,6 +186,16 @@ func (event *GoogleEvent) GetInternalID() int {
 	return event.internalID
 }
 
+func (event *GoogleEvent) GetUpdatedAt() (t time.Time, err error) {
+	t, err = time.Parse(time.RFC3339, event.Updated)
+	if err != nil {
+		sentryClient().CaptureErrorAndWait(err, map[string]string{"api": "google"})
+		return
+	}
+
+	return t.UTC(), nil
+}
+
 func (event *GoogleEvent) extractTime() (err error) {
 	var start, end, format string
 	sentry := sentryClient()

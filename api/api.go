@@ -44,7 +44,6 @@ type AccountManager interface {
 	GetInternalID() int
 	SetCalendars([]CalendarManager)
 	GetSyncCalendars() []CalendarManager
-	Principal() bool
 }
 
 type CalendarManager interface {
@@ -66,7 +65,7 @@ type CalendarManager interface {
 	SetName(string)
 	GetUUID() string
 	SetUUID(string)
-	CreateEmptyEvent() EventManager
+	CreateEmptyEvent(string) EventManager
 }
 
 type EventManager interface {
@@ -82,6 +81,7 @@ type EventManager interface {
 
 	GetRelations() []EventManager
 
+	GetUpdatedAt() (time.Time, error)
 	MarkWrong()
 	GetState() int
 	SetState(int)
@@ -100,8 +100,8 @@ type SubscriptionManager interface {
 	GetUUID() uuid.UUID
 	GetAccount() AccountManager
 	GetType() string
-	setTime()
 	GetExpirationDate() time.Time
+	GetResourceID() string
 }
 
 type RefreshError struct {

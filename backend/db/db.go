@@ -1,7 +1,9 @@
 package db
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -11,11 +13,11 @@ import (
 )
 
 type Database struct {
-	sentry raven.Client
+	sentry *raven.Client
 	client *sql.DB
 }
 
-func New(client *sql.DB, sentry raven.Client) Database {
+func New(client *sql.DB, sentry *raven.Client) Database {
 	return Database{
 		client: client,
 		sentry: sentry,
@@ -25,6 +27,12 @@ func New(client *sql.DB, sentry raven.Client) Database {
 
 func (data Database) Close() error {
 	return data.client.Close()
+}
+
+func randToken() string {
+	b := make([]byte, 10)
+	rand.Read(b)
+	return fmt.Sprintf("%x", b)
 }
 
 //TODO: raven this
@@ -39,15 +47,20 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 		return
 	}
 	data.UpdateAccountFromUser(calendar.GetAccount(), userUUID)
+	events, err = calendar.GetAllEvents()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
+		goto End
+	}
 	data.UpdateCalendarFromUser(calendar, userUUID)
 	switch calendar.(type) {
 	case *api.GoogleCalendar:
 		subs = api.NewGoogleSubscription(uuid.New().String())
-		err = subs.Subscribe(calendar)
 	case *api.OutlookCalendar:
-		subs = api.NewOutlookSubscription(uuid.New().String())
-		err = subs.Subscribe(calendar)
+		subs = api.NewOutlookSubscription()
 	}
+	err = subs.Subscribe(calendar)
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
@@ -55,12 +68,6 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 	}
 	subscriptions = append(subscriptions, subs)
 	data.saveSubscription(transaction, subs, calendar)
-	events, err = calendar.GetAllEvents()
-	if err != nil {
-		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
-		goto End
-	}
 	err = data.savePrincipalEvents(transaction, events)
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
@@ -72,16 +79,20 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 		data.UpdateAccountFromUser(cal.GetAccount(), userUUID)
 		data.UpdateCalendarFromUser(cal, userUUID)
 		var subscript api.SubscriptionManager
-		var toEvent api.EventManager
 		switch cal.(type) {
 		case *api.GoogleCalendar:
-			toEvent = &api.GoogleEvent{}
 			subscript = api.NewGoogleSubscription(uuid.New().String())
 		case *api.OutlookCalendar:
-			toEvent = &api.OutlookEvent{}
-			subscript = api.NewOutlookSubscription(uuid.New().String())
+			subscript = api.NewOutlookSubscription()
 		}
 		for _, event := range events {
+			var toEvent api.EventManager
+			switch cal.(type) {
+			case *api.GoogleCalendar:
+				toEvent = &api.GoogleEvent{}
+			case *api.OutlookCalendar:
+				toEvent = &api.OutlookEvent{}
+			}
 			api.Convert(event, toEvent)
 			err = toEvent.SetCalendar(cal)
 			if err != nil {

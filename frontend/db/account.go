@@ -27,7 +27,7 @@ type Account struct {
 func (data Database) getAccountsByUser(userUUID uuid.UUID) (principalAccount Account, accounts []Account, err error) {
 	rows, err := data.client.Query("SELECT accounts.token_type, accounts.refresh_token,accounts.email,accounts.kind,accounts.access_token,accounts.id, accounts.principal FROM accounts where user_uuid = $1 order by accounts.principal DESC, lower(accounts.email) ASC", userUUID)
 	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
 		log.Errorf("could not query select: %s", err.Error())
 		return
 	}
@@ -44,7 +44,7 @@ func (data Database) getAccountsByUser(userUUID uuid.UUID) (principalAccount Acc
 		var account Account
 		err = rows.Scan(&tokenType, &refreshToken, &email, &kind, &accessToken, &id, &principal)
 		if err != nil {
-			data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
 			log.Errorf("error retrieving accounts for user: %s", userUUID)
 			return account, nil, err
 		}
@@ -76,36 +76,20 @@ func (data Database) FindCalendars(account *Account) (err error) {
 
 }
 
-func (data Database) save(account Account) (err error) {
-	stmt, err := data.client.Prepare("insert into accounts(user_uuid,token_type,refresh_token,email,kind,access_token, principal) values ($1,$2,$3,$4,$5,$6,$7)")
-	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
-		log.Errorf("error preparing query: %s", err.Error())
-		return
-	}
-
-	defer stmt.Close()
-	res, err := stmt.Exec(account.User.UUID, account.TokenType, account.RefreshToken, account.Email, account.Kind, account.AccessToken, account.Principal)
+func (data Database) save(account Account) (id int, err error) {
+	err = data.client.QueryRow("insert into accounts(user_uuid,token_type,refresh_token,email,kind,access_token, principal) values ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+		account.User.UUID, account.TokenType, account.RefreshToken, account.Email, account.Kind, account.AccessToken, account.Principal).Scan(&id)
 	if pgerr, ok := err.(*pq.Error); ok && pgerr.Code == uniqueViolationError {
 		log.Warningf("account already used: %s", account.Email)
-		return &customErrors.AccountAlreadyUsed{Mail: account.Email}
+		return 0, &customErrors.AccountAlreadyUsed{Mail: account.Email}
 	}
 
 	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
 		log.Errorf("error executing query: %s", err.Error())
 		return
 	}
-	affect, err := res.RowsAffected()
-	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
-		log.Errorf("error retrieving rows affected: %s", err.Error())
-		return
-	}
-	if affect != 1 {
-		data.sentry.CaptureError(errors.New(fmt.Sprintf("could not create new account for user %s with name: %s", account.User.Email, account.Email)), map[string]string{"database": "frontend"})
-		return errors.New(fmt.Sprintf("could not create new account for user %s with name: %s", account.User.Email, account.Email))
-	}
+
 	return
 
 }
@@ -121,7 +105,7 @@ func (data Database) findAccount(account *Account) (err error) {
 		log.Debugf("No account with that id: %d.", id)
 		return &customErrors.NotFoundError{Message: fmt.Sprintf("No account with that id: %d.", id)}
 	case err != nil:
-		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
 		log.Errorf("error looking for account with id: %d", id)
 		return
 	}
@@ -136,7 +120,7 @@ func (data Database) findAccount(account *Account) (err error) {
 func (data Database) addCalendar(account Account, calendar Calendar) (err error) {
 	stmt, err := data.client.Prepare("insert into calendars(uuid, account_email, name, id) values ($1,$2,$3,$4);")
 	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
 		log.Errorf("error preparing query: %s", err.Error())
 		return
 	}
@@ -144,25 +128,25 @@ func (data Database) addCalendar(account Account, calendar Calendar) (err error)
 	calendar.UUID = uuid.New()
 	res, err := stmt.Exec(calendar.UUID, account.Email, calendar.Name, calendar.ID)
 	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
 		log.Errorf("error executing query: %s", err.Error())
 		return
 	}
 	affect, err := res.RowsAffected()
 	if err != nil {
-		data.sentry.CaptureError(err, map[string]string{"database": "frontend"})
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
 		log.Errorf("error retrieving rows affected: %s", err.Error())
 		return
 	}
 	if affect != 1 {
-		data.sentry.CaptureError(errors.New(fmt.Sprintf("could not create new calendar with id: %s and name: %s", calendar.ID, calendar.Name)), map[string]string{"database": "frontend"})
+		data.sentry.CaptureErrorAndWait(errors.New(fmt.Sprintf("could not create new calendar with id: %s and name: %s", calendar.ID, calendar.Name)), map[string]string{"database": "frontend"})
 		return errors.New(fmt.Sprintf("could not create new calendar with id: %s and name: %s", calendar.ID, calendar.Name))
 	}
 
 	return
 }
 
-func (data Database) updateAccountFromUser(account Account, user *User) (err error) {
+func (data Database) updateAccountFromUser(account Account, user *User) (id int, err error) {
 	stmt, err := data.client.Prepare("update accounts set (token_type,refresh_token,access_token) = ($1,$2,$3) where accounts.email = $4 and accounts.user_uuid =$5;")
 	if err != nil {
 		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
@@ -184,9 +168,12 @@ func (data Database) updateAccountFromUser(account Account, user *User) (err err
 		return
 	}
 	if affect != 1 {
-		data.sentry.CaptureErrorAndWait(errors.New(fmt.Sprintf("could not update account with mail: %s for user: %s", account.Email, user.UUID)), map[string]string{"database": "frontend"})
-		return errors.New(fmt.Sprintf("could not associate the account with mail: %s", account.Email))
+		err = fmt.Errorf("could not associate the account with mail: %s", account.Email)
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "frontend"})
+		return
 	}
+	data.client.QueryRow("select id from accounts where accounts.email = $1 and accounts.user_uuid =$2").Scan(&id)
+
 	return
 
 }

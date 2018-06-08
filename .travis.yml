@@ -1,9 +1,9 @@
 language: go
 
-notifications:
-  email:
-    on_success: always
-    on_failure: always
+#notifications:
+#  email:
+#    on_success: always
+#    on_failure: always
 
 go:
   - 1.x

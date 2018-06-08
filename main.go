@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"log"
 
@@ -54,6 +55,7 @@ func init() {
 		os.Exit(1)
 	}
 }
+
 func main() {
 	sentry, err := raven.New(os.Getenv("SENTRY_DSN"))
 	if err != nil {
@@ -88,16 +90,16 @@ func main() {
 		logger.Errorf("error ping backend database: %s", err.Error())
 		os.Exit(1)
 	}
+
 	f := frontend.NewServer("127.0.0.1", 8080, "./frontend/resources", frontendDB, sentry)
 	maxWorker := 15
-	b := backend.NewServer("127.0.0.1", 8081, maxWorker, backendDB, *sentry)
+	b := backend.NewServer("127.0.0.1", 8081, maxWorker, backendDB, sentry)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	//TODO: test this calls....
-	//signal.Notify(c, syscall.SIGKILL)
-	//signal.Notify(c, syscall.SIGINT)
-	//signal.Notify(c, syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGKILL)
+	signal.Notify(c, syscall.SIGINT)
+	signal.Notify(c, syscall.SIGTERM)
 
 	go func() {
 		for range c {

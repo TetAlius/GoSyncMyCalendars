@@ -16,15 +16,20 @@
                 <p>Select all that you want to start syncing</p>
                 <p>Calendars that are already syncing will be ignored</p>
                 <p>If you want to remove them, click on the "Remove from sync" button, please</p>
-                <label for="calendars">Calendars</label> <button type="button" onclick="retrieveAllCalendars({{.Account.ID}})">Refresh</button>
+                <label for="calendars">Available Calendars</label>
                 <select multiple class="form-control" name="calendars" id="calendars">
                 </select>
             </div>
-            <input type="submit" value="Send"/>
+                <input type="submit" class="btn btn-success" value="Add selected calendars"/>
+                <button type="button" class="btn btn-info float-right" onclick="retrieveAllCalendars({{.Account.ID}})">Retrieve Available Calendars</button>
+
         </form>
 {{end}}
 {{define "javascript"}}
     <script>
+        $(function() {
+            retrieveAllCalendars({{.Account.ID}})
+        });
         function deleteCalendar(id){
             $.ajax({
                 type: "DELETE",
@@ -45,7 +50,7 @@
                 url: {{endpoint}}+":8081/accounts/"+id+"/calendars/",
                 // withCredentials:true,
                 headers: {
-                    "Authorization": btoa({{.User.Email}} + ":" + {{.User.UUID}})
+                    "Authorization": "Basic " +btoa({{.User.Email}} + ":" + {{.User.UUID}})
                 },
                 success: function(data){
                     var obj = JSON.parse(data);

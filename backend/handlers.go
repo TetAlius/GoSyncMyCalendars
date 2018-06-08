@@ -19,26 +19,24 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		header := r.Header
-		resourceState := header.Get("X-Goog-Resource-State")
-		if resourceState == "sync" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
 		//TODO: look here what was the change of the resource
 		//Google does not give the change of resource
 		//Possible changes include the creation of a new resource, or the modification or deletion of an existing resource.
 		channelID := header.Get("X-Goog-Channel-ID")
-		//token := header.Get("X-Goog-Channel-Token")
-		//expiration := header.Get("X-Goog-Channel-Expiration")
 		resourceID := header.Get("X-Goog-Resource-ID")
-		//resourceURI := header.Get("X-Goog-Resource-URI")
-		//messageNumber := header.Get("X-Goog-Message-Number")
-		err := s.manageSynchronizationGoogle(channelID, resourceID)
+		resourceState := header.Get("X-Goog-Resource-State")
+		log.Debugf("resourceID: %s from channelID: %s", resourceID, channelID)
+		if resourceState == "sync" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		err := s.manageSynchronizationGoogle(channelID)
 		var status int
 		if err != nil {
-			status = http.StatusOK
-		} else {
 			status = http.StatusInternalServerError
+		} else {
+			status = http.StatusOK
 		}
 		w.WriteHeader(status)
 
@@ -73,12 +71,13 @@ func (s *Server) OutlookWatcherHandler(w http.ResponseWriter, r *http.Request) {
 				serverError(w)
 				return
 			}
+			log.Warningf("OUTLOOK SUB: %s", contents)
 			err = s.manageSynchronizationOutlook(notification.Subscriptions)
 			var status int
 			if err != nil {
-				status = http.StatusOK
-			} else {
 				status = http.StatusInternalServerError
+			} else {
+				status = http.StatusOK
 			}
 			w.WriteHeader(status)
 		}

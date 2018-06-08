@@ -241,6 +241,3 @@ func (a *GoogleAccount) SetCalendars(calendars []CalendarManager) {
 func (a *GoogleAccount) GetSyncCalendars() []CalendarManager {
 	return a.calendars
 }
-func (a *GoogleAccount) Principal() bool {
-	return a.principal
-}
