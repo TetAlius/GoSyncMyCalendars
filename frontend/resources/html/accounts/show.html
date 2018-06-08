@@ -20,8 +20,9 @@
                 <select multiple class="form-control" name="calendars" id="calendars">
                 </select>
             </div>
-                <button type="button" class="btn btn-info" onclick="retrieveAllCalendars({{.Account.ID}})">Retrieve Available Calendars</button>
-                <input type="submit" class="btn btn-success float-right " value="Add selected calendars"/>
+                <input type="submit" class="btn btn-success" value="Add selected calendars"/>
+                <button type="button" class="btn btn-info float-right" onclick="retrieveAllCalendars({{.Account.ID}})">Retrieve Available Calendars</button>
+
         </form>
 {{end}}
 {{define "javascript"}}
