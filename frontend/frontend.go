@@ -239,6 +239,8 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		calendarIDs := r.Form["calendars"]
 		log.Debugf("IDs: %s", calendarIDs)
 		s.database.AddCalendarsToAccount(currentUser, account, calendarIDs)
+		http.Redirect(w, r, "/accounts", http.StatusPermanentRedirect)
+		return
 	default:
 		serverError(w, err)
 		return

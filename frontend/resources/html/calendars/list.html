@@ -1,6 +1,6 @@
 {{define "content"}}
 {{$lenAccounts:= len .User.Accounts}}
-<h1 style="display: inline-block">List of all calendars</h1> <a class="btn btn-dark" href="/accounts"><span data-toggle="tooltip" data-placement="top" title="You currently have {{inc $lenAccounts}} accounts">Add more Accounts</span> <span class="badge badge-light">+</span></a>
+<h1 style="display: inline-block">List of all calendars <a class="btn btn-dark" href="/accounts"><span data-toggle="tooltip" data-placement="top" title="You currently have {{inc $lenAccounts}} accounts">Add more Accounts</span> <span class="badge badge-light">+</span></a></h1>
 <p>Every calendar that is added to sync inside the primary account will generate a new calendar in the other accounts if no calendar is given to sync.</p>
 <p>All calendars will have the same name as the one inside principal.</p>
 <div id="account-error" class="alert alert-info" role="alert">
@@ -49,7 +49,6 @@
                     {{end}}
                 {{end}}
             </td>
-
         <tr>
         {{range .Calendars}}
             <td id="td-{{.UUID}}">
