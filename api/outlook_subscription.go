@@ -17,11 +17,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewOutlookSubscription(ID string) (subscription *OutlookSubscription) {
+func NewOutlookSubscription() (subscription *OutlookSubscription) {
 	subscription = new(OutlookSubscription)
 	subscription.NotificationURL = fmt.Sprintf("%s:8081/outlook/watcher", os.Getenv("ENDPOINT"))
 	subscription.ChangeType = "Created,Deleted,Updated"
-	subscription.ID = ID
 	subscription.Type = "#Microsoft.OutlookServices.PushSubscription"
 	subscription.Uuid = uuid.New()
 	return
@@ -77,6 +76,8 @@ func (subscription *OutlookSubscription) Subscribe(calendar CalendarManager) (er
 		bytes.NewBuffer(data),
 		headers, nil)
 
+	log.Warningf("RESPONSE: %s", contents)
+
 	err = createOutlookResponseError(contents)
 	if err != nil {
 		return err
@@ -114,6 +115,7 @@ func (subscription *OutlookSubscription) Renew() (err error) {
 		route,
 		bytes.NewBuffer(data),
 		headers, nil)
+	log.Warningf("RESPONSE: %s", contents)
 	err = createOutlookResponseError(contents)
 	subscription.setTime()
 
@@ -138,6 +140,7 @@ func (subscription *OutlookSubscription) Delete() (err error) {
 		route,
 		nil,
 		headers, nil)
+	log.Warningf("RESPONSE: %s", contents)
 	if len(contents) != 0 {
 		err = createOutlookResponseError(contents)
 		return err
@@ -164,6 +167,7 @@ func (subscription *OutlookSubscription) SetCalendar(calendar *OutlookCalendar) 
 	subscription.calendar = calendar
 }
 
+//TODO improve this
 func (subscription *OutlookSubscription) setTime() {
 	expiration, err := time.Parse(time.RFC3339Nano, subscription.ExpirationDateTime)
 	if err != nil {
@@ -186,4 +190,8 @@ func (subscription *OutlookSubscription) setCalendar(calendar CalendarManager) (
 
 func (subscription *OutlookSubscription) GetExpirationDate() time.Time {
 	return subscription.expirationDate
+}
+
+func (subscription *OutlookSubscription) GetResourceID() string {
+	return ""
 }

@@ -33,7 +33,6 @@ type OutlookAccount struct {
 	Kind              int               `json:"-"`
 	InternID          int               `json:"-"`
 	calendars         []CalendarManager `json:"-"`
-	principal         bool              `json:"-"`
 }
 
 type OutlookCalendarResponse struct {
@@ -298,7 +297,7 @@ func createOutlookResponseError(contents []byte) (err error) {
 		return err
 	}
 	if len(e.Code) != 0 && len(e.Message) != 0 {
-		if e.Message == "ErrorItemNotFound" {
+		if e.Code == "ErrorItemNotFound" {
 			return &customErrors.NotFoundError{Message: e.Message}
 		}
 		return e

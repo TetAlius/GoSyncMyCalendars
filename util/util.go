@@ -126,6 +126,7 @@ func DoRequest(method string, url string, body io.Reader, headers map[string]str
 		return contents, errors.New(fmt.Sprintf("error doing request: %s", err.Error()))
 	}
 
+	log.Warningf("RESPONSE CODE: %s", resp.StatusCode)
 	defer resp.Body.Close()
 	//TODO parse errors and content
 	contents, err = ioutil.ReadAll(resp.Body)

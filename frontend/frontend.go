@@ -73,6 +73,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewServer(ip string, port int, dir string, database *sql.DB, sentry *raven.Client) *Server {
 	mux := http.NewServeMux()
 	root = dir
+
 	server := Server{IP: net.ParseIP(ip), Port: port, database: db.New(database, sentry), sentry: sentry}
 	cssFileServer := http.StripPrefix("/css/", http.FileServer(http.Dir(root+"/css/")))
 	jsFileServer := http.StripPrefix("/js/", http.FileServer(http.Dir(root+"/js/")))
@@ -116,12 +117,14 @@ func (s *Server) Start() (err error) {
 	log.Debugln("Start frontend")
 
 	laddr := fmt.Sprintf("%s:%d", s.IP.String(), s.Port)
-	h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
-	s.server = h
+	s.server = &http.Server{
+		Addr:    fmt.Sprintf(":%d", s.Port),
+		Handler: s,
+	}
 	go func() {
 		log.Infof("Web server listening at %s", laddr)
 
-		if err := s.server.ListenAndServeTLS("server.crt", "server.key"); err != nil && err != http.ErrServerClosed {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Errorf("%s", err.Error())
 		}
 	}()
@@ -236,6 +239,8 @@ func (s *Server) accountHandler(w http.ResponseWriter, r *http.Request) {
 		calendarIDs := r.Form["calendars"]
 		log.Debugf("IDs: %s", calendarIDs)
 		s.database.AddCalendarsToAccount(currentUser, account, calendarIDs)
+		http.Redirect(w, r, "/accounts", http.StatusPermanentRedirect)
+		return
 	default:
 		serverError(w, err)
 		return

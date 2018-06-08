@@ -11,7 +11,6 @@ import (
 
 	"strings"
 
-	"encoding/base64"
 	"encoding/json"
 
 	"database/sql"
@@ -34,23 +33,17 @@ type Server struct {
 	worker   *worker.Worker
 	database db.Database
 	ticker   *time.Ticker
-	sentry   raven.Client
+	sentry   *raven.Client
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cookie, _ := r.Cookie("session")
-	if cookie != nil {
-		log.Debugf("session", cookie.Value)
-		ctx := context.WithValue(r.Context(), "Session", cookie.Value)
-		s.mux.ServeHTTP(w, r.WithContext(ctx))
-	} else {
-		s.mux.ServeHTTP(w, r)
-	}
+	s.mux.ServeHTTP(w, r)
 }
 
 //NewBackend creates a backend
-func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry raven.Client) *Server {
-	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker), database: db.New(database, sentry), sentry: sentry}
+func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry *raven.Client) *Server {
+	data := db.New(database, sentry)
+	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker, data), database: data, sentry: sentry}
 	server.mux.HandleFunc("/google/watcher", server.GoogleWatcherHandler)
 	server.mux.HandleFunc("/outlook/watcher", server.OutlookWatcherHandler)
 	server.mux.HandleFunc("/accounts/", server.retrieveInfoHandler)
@@ -65,12 +58,14 @@ func (s *Server) Start() (err error) {
 	log.Debugln("Start backend")
 
 	laddr := fmt.Sprintf("%s:%d", s.IP.String(), s.Port)
-	h := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s}
-	s.server = h
+	s.server = &http.Server{
+		Addr:    fmt.Sprintf(":%d", s.Port),
+		Handler: s,
+	}
 	log.Infof("Backend server listening at %s", laddr)
 	go func() { s.manageSubscriptions() }()
 
-	err = s.server.ListenAndServeTLS("server.crt", "server.key")
+	err = s.server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		log.Errorf("ListenAndServe: " + err.Error())
 	}
@@ -106,23 +101,22 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 	if !ok {
 		return
 	}
-	authorization := r.Header.Get("Authorization")
-	auth, err := base64.StdEncoding.DecodeString(authorization)
-	if err != nil {
+	email, userUUID, ok := r.BasicAuth()
+	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	decoded := strings.Split(string(auth), ":")
-	log.Debugf("email: %s", decoded[0])
-	log.Debugf("user: %s", decoded[1])
-	if len(decoded[0]) == 0 || len(decoded[1]) == 0 {
+	//decoded := strings.Split(string(auth), ":")
+	log.Debugf("email: %s", email)
+	log.Debugf("user: %s", userUUID)
+	if len(email) == 0 || len(userUUID) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	param := r.URL.Path[len("/subscribe/"):]
 	switch r.Method {
 	case http.MethodPost:
-		calendar, err := s.database.RetrieveCalendars(decoded[0], decoded[1], param)
+		calendar, err := s.database.RetrieveCalendars(email, userUUID, param)
 		if err != nil {
 			log.Errorf("error getting calendar")
 			w.WriteHeader(http.StatusNotFound)
@@ -135,14 +129,14 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		err = s.database.StartSync(calendar, decoded[1])
+		err = s.database.StartSync(calendar, userUUID)
 		if err != nil {
 			log.Errorf("error trying to start sync: %s", calendar.GetUUID())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	case http.MethodDelete:
 		log.Debugf("Getting method delete")
-		err := s.database.StopSync(param, decoded[0], decoded[1])
+		err := s.database.StopSync(param, email, userUUID)
 		if err != nil {
 			log.Errorf("error stopping sync: %s", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -156,22 +150,20 @@ func (s *Server) retrieveInfoHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	authorization := r.Header.Get("Authorization")
-	auth, err := base64.StdEncoding.DecodeString(authorization)
-	if err != nil {
+	email, userUUID, ok := r.BasicAuth()
+	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	decoded := strings.Split(string(auth), ":")
-	log.Debugf("email: %s", decoded[0])
-	log.Debugf("user: %s", decoded[1])
-	if len(decoded[0]) == 0 || len(decoded[1]) == 0 {
+	log.Debugf("email: %s", email)
+	log.Debugf("user: %s", userUUID)
+	if len(email) == 0 || len(userUUID) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	param := r.URL.Path[len("/accounts/"):]
 	values := strings.Split(param, "/")
-	account, err := s.database.RetrieveAccount(decoded[1], values[0])
+	account, err := s.database.RetrieveAccount(userUUID, values[0])
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(err.Error()))
@@ -183,7 +175,7 @@ func (s *Server) retrieveInfoHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	err = s.database.UpdateAccountFromUser(account, decoded[1])
+	err = s.database.UpdateAccountFromUser(account, userUUID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -204,22 +196,18 @@ func (s *Server) refreshHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	authorization := r.Header.Get("Authorization")
-	log.Debugf("AUTH %s", authorization)
-	auth, err := base64.StdEncoding.DecodeString(authorization)
-	if err != nil {
+	email, userUUID, ok := r.BasicAuth()
+	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	decoded := strings.Split(string(auth), ":")
-	log.Debugln(decoded)
-	log.Debugf("email: %s", decoded[0])
-	log.Debugf("user: %s", decoded[1])
-	if len(decoded[0]) == 0 || len(decoded[1]) == 0 {
+	log.Debugf("email: %s", email)
+	log.Debugf("user: %s", userUUID)
+	if len(email) == 0 || len(userUUID) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	err = s.database.UpdateAllCalendarsFromUser(decoded[1], decoded[0])
+	err := s.database.UpdateAllCalendarsFromUser(userUUID, email)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -270,7 +258,10 @@ func (s *Server) manageSubscriptions() {
 			if err = s.database.UpdateAccountFromSubscription(acc, subscription); err != nil {
 				log.Errorf("error updating account: %s", err.Error())
 			}
-			//subscription.Renew()
+			err = subscription.Renew()
+			if err != nil {
+				continue
+			}
 			err := s.database.UpdateSubscription(subscription)
 			if err != nil {
 				log.Errorf("error updating subscription: %s", err.Error())

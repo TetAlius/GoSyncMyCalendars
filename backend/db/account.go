@@ -111,3 +111,33 @@ func (data Database) UpdateAccountFromUser(account api.AccountManager, userUUID 
 	return
 
 }
+
+func (data Database) UpdateAccount(account api.AccountManager) {
+	stmt, err := data.client.Prepare("update accounts set (token_type,refresh_token,access_token) = ($1,$2,$3) where accounts.email = $4;")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(account.GetTokenType(), account.GetRefreshToken(), account.GetAccessToken(), account.Mail())
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return
+	}
+	if affect != 1 {
+		err = errors.New(fmt.Sprintf("could not update account with mail: %s", account.Mail()))
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return
+	}
+	return
+
+}

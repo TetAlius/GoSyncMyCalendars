@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 
 	"fmt"
 
@@ -109,8 +110,31 @@ func (data Database) GetExpiredSubscriptions() (subscriptions []api.Subscription
 }
 
 func (data Database) UpdateSubscription(subscription api.SubscriptionManager) (err error) {
-	//TODO:
-	panic(subscription)
+	stmt, err := data.client.Prepare("update subscriptions set id = $1, type = $2, expiration_date = $3, resource_id = $4 where uuid = $5")
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error preparing query: %s", err.Error())
+		return
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(subscription.GetID(), subscription.GetType(), subscription.GetExpirationDate(), subscription.GetResourceID(), subscription.GetUUID())
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error executing query: %s", err.Error())
+		return
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error retrieving rows affected: %s", err.Error())
+		return
+	}
+	if affect != 1 {
+		err = errors.New(fmt.Sprintf("could not update subscription with uuid: %s", subscription.GetUUID()))
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		return
+	}
 	return
 }
 
@@ -120,7 +144,8 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	var calendarUUID string
 	var kind int
 	var typ string
-	err = data.client.QueryRow("select subscriptions.id,subscriptions.uuid,subscriptions.calendar_uuid, a.kind, subscriptions.type from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where subscriptions.uuid = $1 and u.uuid = $2 and u.email = $3", subscriptionUUID, userUUID, userEmail).Scan(&id, &uid, &calendarUUID, &kind, &typ)
+	var resourceID string
+	err = data.client.QueryRow("select subscriptions.id,subscriptions.uuid,subscriptions.calendar_uuid, a.kind, subscriptions.type, subscriptions.resource_id from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where subscriptions.uuid = $1 and u.uuid = $2 and u.email = $3", subscriptionUUID, userUUID, userEmail).Scan(&id, &uid, &calendarUUID, &kind, &typ, &resourceID)
 	switch {
 	case err == sql.ErrNoRows:
 		err = &customErrors.NotFoundError{Message: fmt.Sprintf("no subscription with that uuid: %s.", subscriptionUUID)}
@@ -135,7 +160,7 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	calendar, _ := data.findCalendarFromUser(userEmail, userUUID, calendarUUID)
 	switch kind {
 	case api.GOOGLE:
-		subscription = api.RetrieveGoogleSubscription(id, uid, calendar)
+		subscription = api.RetrieveGoogleSubscription(id, uid, calendar, resourceID)
 	case api.OUTLOOK:
 		subscription = api.RetrieveOutlookSubscription(id, uid, calendar, typ)
 	default:

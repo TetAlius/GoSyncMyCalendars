@@ -18,10 +18,11 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
-func RetrieveGoogleCalendar(ID string, account *GoogleAccount) *GoogleCalendar {
+func RetrieveGoogleCalendar(ID string, uid string, account *GoogleAccount) *GoogleCalendar {
 	cal := new(GoogleCalendar)
 	cal.ID = ID
 	cal.account = account
+	cal.uuid = uid
 	return cal
 }
 
@@ -203,6 +204,7 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 	if err != nil {
 		return
 	}
+	log.Warningf("GOOGLE EVENT: %s", contents)
 	//TODO: this part
 	if eventResponse.Status != "cancelled" {
 		err = eventResponse.extractTime()
@@ -261,18 +263,6 @@ func (calendar *GoogleCalendar) SetAccount(a AccountManager) (err error) {
 	return
 }
 
-// There's no explicit way to renew subscription.
-// One new must be created
-func (calendar *GoogleCalendar) RenewSubscription(a AccountManager, subscriptionID string) (err error) {
-	panic("NOT YET IMPLEMENTED")
-	return
-}
-
-func (calendar *GoogleCalendar) DeleteSubscription(a AccountManager, subscriptionID string) (err error) {
-	panic("NOT YET IMPLEMENTED")
-	return
-}
-
 func (calendar *GoogleCalendar) GetQueryID() string {
 	return url.QueryEscape(calendar.GetID())
 }
@@ -308,6 +298,6 @@ func (calendar *GoogleCalendar) GetCalendars() []CalendarManager {
 	return calendar.calendars
 }
 
-func (calendar *GoogleCalendar) CreateEmptyEvent() EventManager {
-	return &GoogleEvent{calendar: calendar}
+func (calendar *GoogleCalendar) CreateEmptyEvent(ID string) EventManager {
+	return &GoogleEvent{ID: ID, calendar: calendar}
 }

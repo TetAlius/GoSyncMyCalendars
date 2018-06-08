@@ -1,7 +1,9 @@
 package db
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
@@ -11,11 +13,11 @@ import (
 )
 
 type Database struct {
-	sentry raven.Client
+	sentry *raven.Client
 	client *sql.DB
 }
 
-func New(client *sql.DB, sentry raven.Client) Database {
+func New(client *sql.DB, sentry *raven.Client) Database {
 	return Database{
 		client: client,
 		sentry: sentry,
@@ -27,101 +29,122 @@ func (data Database) Close() error {
 	return data.client.Close()
 }
 
+func randToken() string {
+	b := make([]byte, 10)
+	rand.Read(b)
+	return fmt.Sprintf("%x", b)
+}
+
 //TODO: raven this
 func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (err error) {
+	var subscriptions []api.SubscriptionManager
+	var subs api.SubscriptionManager
+	var eventsCreated []api.EventManager
+	var events []api.EventManager
 	transaction, err := data.client.Begin()
 	if err != nil {
 		log.Errorf("error creating transaction: %s", err.Error())
 		return
 	}
 	data.UpdateAccountFromUser(calendar.GetAccount(), userUUID)
+	events, err = calendar.GetAllEvents()
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
+		goto End
+	}
 	data.UpdateCalendarFromUser(calendar, userUUID)
-	var subscriptions []api.SubscriptionManager
-	var subs api.SubscriptionManager
 	switch calendar.(type) {
 	case *api.GoogleCalendar:
 		subs = api.NewGoogleSubscription(uuid.New().String())
-		err = subs.Subscribe(calendar)
 	case *api.OutlookCalendar:
-		subs = api.NewOutlookSubscription(uuid.New().String())
-		err = subs.Subscribe(calendar)
+		subs = api.NewOutlookSubscription()
 	}
-	//TODO:
-	//if err != nil {
-	//	log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
-	//	return
-	//}
+	err = subs.Subscribe(calendar)
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
+		goto End
+	}
 	subscriptions = append(subscriptions, subs)
 	data.saveSubscription(transaction, subs, calendar)
-	events, err := calendar.GetAllEvents()
-	//TODO:
-	//if err != nil {
-	//	log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
-	//	return
-	//}
 	err = data.savePrincipalEvents(transaction, events)
-	//TODO:
-	//if err != nil {
-	//	log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
-	//	return
-	//}
+	if err != nil {
+		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+		log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
+		goto End
+	}
 
-	var eventsCreated []api.EventManager
 	for _, cal := range calendar.GetCalendars() {
 		data.UpdateAccountFromUser(cal.GetAccount(), userUUID)
 		data.UpdateCalendarFromUser(cal, userUUID)
 		var subscript api.SubscriptionManager
-		var toEvent api.EventManager
 		switch cal.(type) {
 		case *api.GoogleCalendar:
-			toEvent = &api.GoogleEvent{}
 			subscript = api.NewGoogleSubscription(uuid.New().String())
 		case *api.OutlookCalendar:
-			toEvent = &api.OutlookEvent{}
-			subscript = api.NewOutlookSubscription(uuid.New().String())
+			subscript = api.NewOutlookSubscription()
 		}
 		for _, event := range events {
+			var toEvent api.EventManager
+			switch cal.(type) {
+			case *api.GoogleCalendar:
+				toEvent = &api.GoogleEvent{}
+			case *api.OutlookCalendar:
+				toEvent = &api.OutlookEvent{}
+			}
 			api.Convert(event, toEvent)
 			err = toEvent.SetCalendar(cal)
 			if err != nil {
+				data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 				log.Errorf("error converting event for calendar: %s, error: %s", cal.GetUUID(), err.Error())
-				break
+				goto End
 			}
-			toEvent.Create()
+			err = toEvent.Create()
 			if err != nil {
+				data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 				log.Errorf("error creating event for calendar: %s, error: %s", cal.GetUUID(), err.Error())
-				break
+				goto End
 			}
 			eventsCreated = append(eventsCreated, toEvent)
 			err = data.saveEventsRelation(transaction, event, toEvent)
 			if err != nil {
-
+				data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+				log.Errorf("error saving relation on database: %s, error: %s", event.GetID(), err.Error())
+				goto End
 			}
 		}
 		if err != nil {
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			log.Errorln("some error saving events")
-			break
+			goto End
 		}
-		subscript.Subscribe(cal)
+		err := subscript.Subscribe(cal)
 		if err != nil {
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			log.Errorf("error creating subscription for calendar: %s, error: %s", calendar.GetUUID(), err.Error())
-			break
+			goto End
 		}
 		subscriptions = append(subscriptions, subscript)
-		data.saveSubscription(transaction, subscript, cal)
+		err = data.saveSubscription(transaction, subscript, cal)
+		if err != nil {
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
+			log.Errorf("error saving subscription to db: %s", subscript.GetID())
+			goto End
+		}
 	}
-	//TODO:
-	//if err != nil {
-	//	transaction.Rollback()
-	//	for _, subscription := range subscriptions {
-	//		subscription.Delete()
-	//	}
-	//
-	//	for _, event := range eventsCreated {
-	//		event.Delete()
-	//	}
-	//	return
-	//}
+End:
+	if err != nil {
+		transaction.Rollback()
+		for _, subscription := range subscriptions {
+			subscription.Delete()
+		}
+
+		for _, event := range eventsCreated {
+			event.Delete()
+		}
+		return
+	}
 	transaction.Commit()
 	return
 }
@@ -141,8 +164,9 @@ func (data Database) StopSync(principalSubscriptionUUID string, userEmail string
 			continue
 		}
 		go func() { data.UpdateAccountFromUser(acc, userUUID) }()
-		//err := subscription.Delete()
+		err = subscription.Delete()
 		if err != nil {
+			data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 			log.Errorf("error deleting subscription: %s", err.Error())
 		}
 		err = data.deleteEventsFromSubscription(transaction, subscription)

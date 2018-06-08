@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="google-site-verification" content="A2EeYzoCfgArz74-P6yZNKE2SNnMKz-NpiN5S-GFK0I" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
     <style>
@@ -244,7 +243,6 @@
             signinChanged(gapi.auth2.getAuthInstance().isSignedIn.get());
         });
         // Listen for changes to current user.
-        auth2 = gapi.auth2.getAuthInstance()
         gapi.auth2.getAuthInstance().currentUser.listen(userChanged);
         // Start with the current live values.
         refreshValues();
