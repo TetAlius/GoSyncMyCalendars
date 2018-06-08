@@ -63,7 +63,7 @@ func (s *Server) Start() (err error) {
 		Handler: s,
 	}
 	log.Infof("Backend server listening at %s", laddr)
-	go func() { s.manageSubscriptions() }()
+	go s.manageSubscriptions()
 
 	err = s.server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
