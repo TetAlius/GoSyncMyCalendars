@@ -10,6 +10,8 @@ import (
 
 	"time"
 
+	"reflect"
+
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -47,7 +49,6 @@ func (event *GoogleEvent) Create() (err error) {
 	}
 
 	err = json.Unmarshal(contents, &event)
-	err = event.extractTime()
 	return
 }
 
@@ -84,7 +85,6 @@ func (event *GoogleEvent) Update() (err error) {
 	}
 
 	err = json.Unmarshal(contents, &event)
-	err = event.extractTime()
 	return
 }
 
@@ -132,15 +132,10 @@ func (event *GoogleEvent) GetRelations() []EventManager {
 	return event.relations
 }
 
+//TODO: try to change this call
 func (event *GoogleEvent) PrepareFields() {
-	var startDate, endDate string
-	if event.IsAllDay {
-		startDate = event.StartsAt.Format("2006-01-02")
-		endDate = event.EndsAt.Format("2006-01-02")
-	}
-
-	event.Start = &GoogleTime{startDate, event.StartsAt.Format(time.RFC3339), "UTC"}
-	event.End = &GoogleTime{endDate, event.EndsAt.Format(time.RFC3339), "UTC"}
+	event.Start = &GoogleTime{Date: event.StartsAt, DateTime: event.StartsAt, TimeZone: time.UTC}
+	event.End = &GoogleTime{Date: event.EndsAt, DateTime: event.EndsAt, TimeZone: time.UTC}
 	return
 }
 
@@ -196,35 +191,53 @@ func (event *GoogleEvent) GetUpdatedAt() (t time.Time, err error) {
 	return t.UTC(), nil
 }
 
-func (event *GoogleEvent) extractTime() (err error) {
-	var start, end, format string
-	sentry := sentryClient()
-	recoveredPanic, sentryID := sentry.CapturePanicAndWait(func() {
-		if len(event.Start.Date) != 0 && len(event.End.Date) != 0 {
-			event.IsAllDay = true
-			start = event.Start.Date
-			end = event.End.Date
-			format = "2006-01-02"
-
-		} else {
-			event.IsAllDay = false
-			start = event.Start.DateTime
-			end = event.End.DateTime
-			format = time.RFC3339
+func (date *GoogleTime) UnmarshalJSON(b []byte) error {
+	var s map[string]string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	for key, value := range s {
+		switch key {
+		case "date":
+			date.IsAllDay = true
+			t, err := time.Parse("2006-01-02", value)
+			if err != nil {
+				return err
+			}
+			date.Date = t.UTC()
+		case "dateTime":
+			date.IsAllDay = false
+			t, err := time.Parse(time.RFC3339, value)
+			if err != nil {
+				return err
+			}
+			date.DateTime = t.UTC()
 		}
-	}, map[string]string{"api": "google"})
-	if recoveredPanic != nil {
-		log.Errorf("panic recovered with sentry ID: %s", sentryID)
-		return fmt.Errorf("panic was launched")
 	}
+	date.TimeZone = time.UTC
 
-	event.StartsAt, err = time.Parse(format, start)
-	if err != nil {
-		return errors.New(fmt.Sprintf("error parsing start time: %s %s", start, err.Error()))
+	return nil
+}
+
+func (date *GoogleTime) MarshalJSON() ([]byte, error) {
+	var jsonValue string
+	var name string
+	if date.IsAllDay {
+		name = "Date"
+		jsonValue = date.Date.Format("2006-01-02")
+	} else {
+		name = "DateTime"
+		jsonValue = date.DateTime.UTC().Format(time.RFC3339)
 	}
-	event.EndsAt, err = time.Parse(format, end)
-	if err != nil {
-		return errors.New(fmt.Sprintf("error parsing end time: %s %s", end, err.Error()))
+	field, ok := reflect.TypeOf(date).Elem().FieldByName(name)
+	if !ok {
+		return nil, fmt.Errorf("could not retrieve field %s", name)
 	}
-	return
+	tag, _ := parseTag(field.Tag.Get("json"))
+	buffer := bytes.NewBufferString("{")
+	_, err := buffer.WriteString(fmt.Sprintf(`"%s":"%s"}`, tag, jsonValue))
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }

@@ -159,11 +159,7 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 		s.SetCalendar(calendar)
 		// ignore cancelled events
 		if s.Status != "cancelled" {
-
-			err := s.extractTime()
-			if err != nil {
-				return nil, err
-			}
+			//TODO: this status
 			events = append(events, s)
 		}
 	}
@@ -207,11 +203,6 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 	log.Warningf("GOOGLE EVENT: %s", contents)
 	//TODO: this part
 	if eventResponse.Status != "cancelled" {
-		err = eventResponse.extractTime()
-		if err != nil {
-			return
-		}
-
 		eventResponse.SetCalendar(calendar)
 		event = eventResponse
 	} else {

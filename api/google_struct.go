@@ -98,13 +98,13 @@ type GoogleEvent struct {
 
 	ID string `json:"id"`
 
-	Subject     string      `json:"summary,omitempty" sync:"Subject"`
-	Description string      `json:"description,omitempty" sync:"Description"`
-	StartsAt    time.Time   `json:"-" sync:"StartsAt"`
-	EndsAt      time.Time   `json:"-" sync:"EndsAt"`
-	IsAllDay    bool        `json:"-" sync:"IsAllDay"`
-	Start       *GoogleTime `json:"start,omitempty"`
-	End         *GoogleTime `json:"end,omitempty"`
+	Subject     string    `json:"summary,omitempty" sync:"Subject"`
+	Description string    `json:"description,omitempty" sync:"Description"`
+	StartsAt    time.Time `json:"-" sync:"StartsAt"`
+	EndsAt      time.Time `json:"-" sync:"EndsAt"`
+	//IsAllDay    bool        `json:"-" sync:"IsAllDay"`
+	Start *GoogleTime `json:"start,omitempty"`
+	End   *GoogleTime `json:"end,omitempty"`
 
 	Status             string   `json:"status,omitempty"`
 	ColorID            string   `json:"colorId,omitempty"`
@@ -154,12 +154,13 @@ type GooglePerson struct {
 }
 
 type GoogleTime struct {
-	Date string `json:"date,omitempty"`
+	Date time.Time `json:"date,omitempty"`
 	//time.RFC3339 gives TimeZone inside string
-	DateTime string `json:"dateTime,omitempty"`
+	DateTime time.Time `json:"dateTime,omitempty"`
 	//Ignore TimeZone as the json returns the original TimeZon
 	//Although it is always asked in UTC it may cause confusion
-	TimeZone string `json:"-"` //`json:"timeZone,omitempty"`
+	TimeZone *time.Location `json:"-"` //`json:"timeZone,omitempty"`
+	IsAllDay bool           `json:"-" sync:"IsAllDay"`
 }
 
 type GoogleConferenceData struct {

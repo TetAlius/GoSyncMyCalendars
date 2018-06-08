@@ -5,8 +5,71 @@ import (
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 
+	"encoding/json"
+
 	"time"
 )
+
+func TestGoogleTime_JSON(t *testing.T) {
+	var event api.GoogleEvent
+	start := new(api.GoogleTime)
+	end := new(api.GoogleTime)
+	now := time.Now()
+	more := now.Add(time.Hour * 2)
+	start.DateTime = now
+	end.DateTime = more
+	event.Start = start
+	event.End = end
+	contents, err := json.Marshal(event)
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+	event = *new(api.GoogleEvent)
+	err = json.Unmarshal(contents, &event)
+	if err != nil {
+		t.Fatalf("error unmarshalling json to event: %s", err.Error())
+	}
+	if event.Start.IsAllDay || event.End.IsAllDay {
+		t.Fatalf("all day true when should be false")
+	}
+	if event.Start.DateTime.UTC().Format(time.RFC3339) != start.DateTime.UTC().Format(time.RFC3339) {
+		t.Fatalf("start times does not match: %s vs json %s", start.DateTime.UTC().Format(time.RFC3339), event.Start.DateTime.UTC().Format(time.RFC3339))
+	}
+	if event.End.DateTime.UTC().Format(time.RFC3339) != end.DateTime.UTC().Format(time.RFC3339) {
+		t.Fatalf("end times does not match: %s vs json %s", end.DateTime.UTC().Format(time.RFC3339), event.End.DateTime.UTC().Format(time.RFC3339))
+	}
+
+	event = *new(api.GoogleEvent)
+	start = new(api.GoogleTime)
+	end = new(api.GoogleTime)
+	now = time.Now()
+	more = now.Add(time.Hour * 2)
+	start.Date = now
+	start.IsAllDay = true
+	end.Date = more
+	end.IsAllDay = true
+	event.Start = start
+	event.End = end
+	contents, err = json.Marshal(event)
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+	event = *new(api.GoogleEvent)
+	err = json.Unmarshal(contents, &event)
+	if err != nil {
+		t.Fatalf("error unmarshalling json to event: %s", err.Error())
+	}
+	if !event.Start.IsAllDay || !event.End.IsAllDay {
+		t.Fatalf("all day false when should be true")
+	}
+	if event.Start.Date.UTC().Format("2006-01-02") != start.Date.UTC().Format("2006-01-02") {
+		t.Fatalf("start times does not match: %s vs json %s", start.Date.UTC().Format("2006-01-02"), event.Start.Date.UTC().Format("2006-01-02"))
+	}
+	if event.End.Date.UTC().Format("2006-01-02") != end.Date.UTC().Format("2006-01-02") {
+		t.Fatalf("end times does not match: %s vs json %s", end.Date.UTC().Format("2006-01-02"), event.End.Date.UTC().Format("2006-01-02"))
+	}
+
+}
 
 func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 	setupApiRoot()
@@ -17,10 +80,9 @@ func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 	var event api.GoogleEvent
 	event.Subject = "Discuss the GoogleCalendar REST API"
 	event.Start = new(api.GoogleTime)
-	event.Start.DateTime = time.Now().Format(time.RFC3339)
+	event.Start.DateTime = time.Now()
 	event.End = new(api.GoogleTime)
-	event.End.DateTime = time.Now().Add(time.Hour * time.Duration(2)).Format(time.RFC3339)
-
+	event.End.DateTime = time.Now().Add(time.Hour * time.Duration(2))
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -51,5 +113,4 @@ func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
 	}
-
 }
