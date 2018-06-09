@@ -98,8 +98,8 @@ type GoogleEvent struct {
 
 	ID string `json:"id"`
 
-	Subject     string      `json:"summary,omitempty" sync:"Subject"`
-	Description string      `json:"description,omitempty" sync:"Description"`
+	Subject     string      `json:"summary,omitempty" convert:"Subject"`
+	Description string      `json:"description,omitempty" convert:"Description"`
 	Start       *GoogleTime `json:"start,omitempty"convert:"start"`
 	End         *GoogleTime `json:"end,omitempty"convert:"end"`
 
@@ -157,7 +157,7 @@ type GoogleTime struct {
 	//Ignore TimeZone as the json returns the original TimeZon
 	//Although it is always asked in UTC it may cause confusion
 	TimeZone *time.Location `json:"-"convert:"timeZone"`
-	IsAllDay bool           `json:"-" sync:"IsAllDay"convert:"isAllDay"`
+	IsAllDay bool           `json:"-" convert:"isAllDay"`
 }
 
 type GoogleConferenceData struct {
