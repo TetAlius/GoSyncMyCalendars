@@ -18,6 +18,16 @@ func (s *Server) manageSynchronizationOutlook(notifications []api.OutlookSubscri
 		if calendar == nil && err == nil {
 			return nil
 		}
+		calendar.GetAccount().Refresh()
+		go s.database.UpdateAccount(calendar.GetAccount())
+		tags["event"] = subscription.ChangeType
+		if subscription.ChangeType == "missed" {
+			err = s.manageByCalendar(calendar, subscription.SubscriptionID, tags)
+			if err != nil {
+				return err
+			}
+			continue
+		}
 		err = s.manageSubscription(calendar, subscription.SubscriptionID, subscription.Data.ID, tags)
 		if err != nil {
 			log.Errorf("error managing outlook subscription ID: %s", subscription.SubscriptionID)
@@ -25,6 +35,36 @@ func (s *Server) manageSynchronizationOutlook(notifications []api.OutlookSubscri
 		}
 	}
 	return err
+}
+
+func (s *Server) manageByCalendar(calendar api.CalendarManager, subscriptionID string, tags map[string]string) (err error) {
+	eventIDs := make(map[string]string)
+	events, err := calendar.GetAllEvents()
+	if err != nil {
+		log.Errorf("error getting all events from cloud: %s", err.Error())
+		s.sentry.CaptureErrorAndWait(err, tags)
+		return err
+	}
+	for _, event := range events {
+		eventIDs[event.GetID()] = event.GetID()
+	}
+	IDs, err := s.database.GetEventIDs(subscriptionID)
+	if err != nil {
+		log.Errorf("error getting all events from db: %s", err.Error())
+		s.sentry.CaptureErrorAndWait(err, tags)
+		return err
+	}
+	for _, eventID := range IDs {
+		eventIDs[eventID] = eventID
+	}
+	for eventID := range eventIDs {
+		err = s.manageSubscription(calendar, subscriptionID, eventID, tags)
+		if err != nil {
+			log.Errorf("error managing subscription ID: %s", subscriptionID)
+			return err
+		}
+	}
+	return
 }
 
 func (s *Server) manageSynchronizationGoogle(subscriptionID string) (err error) {
@@ -36,42 +76,12 @@ func (s *Server) manageSynchronizationGoogle(subscriptionID string) (err error) 
 	if calendar == nil && err == nil {
 		return nil
 	}
-	eventIDs := make(map[string]string)
 	calendar.GetAccount().Refresh()
 	go s.database.UpdateAccount(calendar.GetAccount())
-	events, err := calendar.GetAllEvents()
-	if err != nil {
-		log.Errorf("error getting all events from cloud: %s", err.Error())
-		s.sentry.CaptureErrorAndWait(err, tags)
-		return err
-	}
-	for _, event := range events {
-		eventIDs[event.GetID()] = event.GetID()
-	}
-	IDs, err := s.database.GetGoogleEventIDs(subscriptionID)
-	if err != nil {
-		log.Errorf("error getting all events from db: %s", err.Error())
-		s.sentry.CaptureErrorAndWait(err, tags)
-		return err
-	}
-	for _, eventID := range IDs {
-		eventIDs[eventID] = eventID
-	}
-	log.Warningf("EVENTIDS GOOGLE: %s", eventIDs)
-	for eventID := range eventIDs {
-		err = s.manageSubscription(calendar, subscriptionID, eventID, tags)
-		if err != nil {
-			log.Errorf("error managing google subscription ID: %s", subscriptionID)
-			return err
-		}
-	}
-	return err
+	return s.manageByCalendar(calendar, subscriptionID, tags)
 }
 
 func (s *Server) manageSubscription(calendar api.CalendarManager, subscriptionID string, eventID string, tags map[string]string) (err error) {
-
-	//TODO: update account
-	//go func() { s.database.UpdateAccount(calendar.GetAccount()) }()
 	onCloud := true
 	event, err := calendar.GetEvent(eventID)
 	if _, ok := err.(*customErrors.NotFoundError); ok {
