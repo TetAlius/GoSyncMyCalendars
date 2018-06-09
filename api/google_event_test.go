@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 
 	"time"
+
+	"github.com/TetAlius/GoSyncMyCalendars/convert"
 )
 
 func TestGoogleTime_JSON(t *testing.T) {
@@ -87,6 +89,7 @@ func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 	end.DateTime = more
 	event.Start = start
 	event.End = end
+	event.Description = "This is a description"
 	calendar, err := account.GetPrimaryCalendar()
 	if err != nil {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
@@ -116,5 +119,16 @@ func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
 	err = event.Delete()
 	if err != nil {
 		t.Fatalf("something went wrong. Expected nil found error: %s", err.Error())
+	}
+
+	outlook := new(api.OutlookEvent)
+	err = convert.Convert(ev, outlook)
+	if err != nil {
+		t.Fatalf("error converting from google to outlook: %s", err.Error())
+	}
+	google := new(api.GoogleEvent)
+	err = convert.Convert(outlook, google)
+	if err != nil {
+		t.Fatalf("error converting from outlook to google: %s", err.Error())
 	}
 }

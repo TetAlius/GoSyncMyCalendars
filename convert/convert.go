@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 type Converter interface {
@@ -22,15 +20,12 @@ func parseTag(tag string) (string, string) {
 }
 
 func Convert(from interface{}, to interface{}) error {
-	log.Debugln("Converting...")
-
 	v := reflect.ValueOf(to)
 	if v.Kind() == reflect.Ptr && v.IsNil() {
 		return fmt.Errorf("nil struct sended")
 	}
 
 	m := deconvert(from)
-	log.Debugf("%s", m)
 	return conversion(v, m)
 }
 
@@ -42,11 +37,11 @@ func conversion(val reflect.Value, from map[string]interface{}) (err error) {
 	for i := 0; i < val.NumField(); i++ {
 		field := typ.Field(i)
 		tag, opts := parseTag(field.Tag.Get("convert"))
+		rv := reflect.ValueOf(field)
+		v := field.Type
 		if tag == "" || tag == "-" {
 			continue
 		}
-		rv := reflect.ValueOf(field)
-		v := field.Type
 		m, ok := val.Field(i).Interface().(Converter)
 		if ok {
 			f, err := m.Convert(from[tag], tag, opts)
@@ -69,55 +64,8 @@ func conversion(val reflect.Value, from map[string]interface{}) (err error) {
 			}
 			continue
 		}
+
 		val.Field(i).Set(reflect.ValueOf(from[tag]))
 	}
 	return nil
 }
-
-//
-//func structToMap(i interface{}) (values map[string]interface{}) {
-//	values = make(map[string]interface{})
-//	iVal := reflect.ValueOf(i)
-//	if iVal.Kind() == reflect.Ptr {
-//		iVal = iVal.Elem()
-//	}
-//	typ := iVal.Type()
-//	for i := 0; i < iVal.NumField(); i++ {
-//		f := iVal.Field(i)
-//		tag, _ := parseTag(typ.Field(i).Tag.Get("convert"))
-//		if tag == "" || tag == "-" {
-//			continue
-//		}
-//		if f.Kind() == reflect.Ptr && f.IsNil() {
-//			log.Debugf("nil: %s", tag)
-//			continue
-//		}
-//
-//		if f.Kind() == reflect.Ptr {
-//			values[tag] = structToMap(f.Interface())
-//			continue
-//		}
-//		if f.Kind() == reflect.Struct {
-//			values[tag] = structToMap(f.Interface())
-//			continue
-//		}
-//
-//		var v interface{}
-//		switch f.Interface().(type) {
-//		case int, int8, int16, int32, int64:
-//			v = int(f.Int())
-//		case uint, uint8, uint16, uint32, uint64:
-//			v = uint(f.Uint())
-//		case float32, float64:
-//			v = f.Float()
-//		case []byte:
-//			v = f.Bytes()
-//		case string, time.Time, time.Location, *time.Time, *time.Location:
-//			v = f.String()
-//		case bool:
-//			v = f.Bool()
-//		}
-//		values[tag] = v
-//	}
-//	return
-//}

@@ -99,9 +99,10 @@ type OutlookEvent struct {
 
 	ID string `json:"Id"`
 
-	Subject     string `json:"Subject,omitempty" convert:"Subject"`
-	Description string `json:"BodyPreview,omitempty" convert:"Description"`
-	IsAllDay    bool   `json:"IsAllDay,omitempty"`
+	Subject     string           `json:"Subject,omitempty" convert:"Subject"`
+	Description string           `json:"BodyPreview,omitempty"`
+	IsAllDay    bool             `json:"IsAllDay,omitempty"`
+	Body        *OutlookItemBody `json:"Body,omitempty"convert:"Description"`
 
 	Start                      *OutlookDateTimeTimeZone `json:"Start,omitempty" convert:"start"`
 	End                        *OutlookDateTimeTimeZone `json:"End,omitempty" convert:"end"`
@@ -119,7 +120,6 @@ type OutlookEvent struct {
 	//Don't update
 	//This will go to Body to have a list
 	Attendees []OutlookAttendee `json:"Attendees,omitempty"`
-	Body      *OutlookItemBody  `json:"Body,omitempty"`
 	Instances []OutlookEvent    `json:"Instances,omitempty"`
 
 	Importance OutlookImportance `json:"Importance,omitempty"`
@@ -168,7 +168,7 @@ type OutlookStatus struct {
 
 type OutlookItemBody struct {
 	ContentType string `json:"ContentType,omitempty"`
-	Description string `json:"Content,omitempty" convert:"Description"`
+	Description string `json:"Content,omitempty"`
 }
 
 type OutlookDateTimeTimeZone struct {

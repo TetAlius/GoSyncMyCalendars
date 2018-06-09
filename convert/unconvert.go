@@ -3,8 +3,6 @@ package convert
 import (
 	"reflect"
 	"time"
-
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
 type Deconverter interface {
@@ -21,11 +19,10 @@ func deconvert(i interface{}) (values map[string]interface{}) {
 	for i := 0; i < iVal.NumField(); i++ {
 		f := iVal.Field(i)
 		tag, _ := parseTag(typ.Field(i).Tag.Get("convert"))
-		if tag == "" || tag == "-" {
+		if f.Kind() == reflect.Ptr && f.IsNil() {
 			continue
 		}
-		if f.Kind() == reflect.Ptr && f.IsNil() {
-			log.Debugf("nil: %s", tag)
+		if tag == "" || tag == "-" {
 			continue
 		}
 		m, ok := iVal.Field(i).Interface().(Deconverter)

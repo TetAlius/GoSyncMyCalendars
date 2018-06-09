@@ -275,14 +275,34 @@ func (date *OutlookDateTimeTimeZone) Deconvert() interface{} {
 		return nil
 	}
 	tag, _ := parseTag(field.Tag.Get("convert"))
-	m[tag] = date.DateTime.UTC().Format(time.RFC3339)
+	m[tag] = date.DateTime.UTC()
+
 	field, ok = reflect.TypeOf(date).Elem().FieldByName("IsAllDay")
 	if !ok {
 		return nil
 	}
 	tag, _ = parseTag(field.Tag.Get("convert"))
 	m[tag] = date.IsAllDay
+
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("TimeZone")
+	if !ok {
+		return nil
+	}
+	tag, _ = parseTag(field.Tag.Get("convert"))
+	m[tag] = date.TimeZone
 	return m
+}
+
+func (body *OutlookItemBody) Deconvert() interface{} {
+	return body.Description
+}
+
+func (*OutlookItemBody) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
+	desc, ok := m.(string)
+	if !ok {
+		return nil, errors.New("incorrect type of field description")
+	}
+	return &OutlookItemBody{Description: desc}, nil
 }
 
 func (*OutlookDateTimeTimeZone) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
