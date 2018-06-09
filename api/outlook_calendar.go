@@ -169,6 +169,7 @@ func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err erro
 		if err != nil {
 			return
 		}
+		s.setAllDay()
 		events = append(events, s)
 	}
 	return
@@ -214,9 +215,9 @@ func (calendar *OutlookCalendar) GetEvent(ID string) (event EventManager, err er
 	if err != nil {
 		return
 	}
-	event = eventResponse.OutlookEvent
-
-	return
+	e := eventResponse.OutlookEvent
+	e.setAllDay()
+	return e, nil
 }
 
 func (calendar *OutlookCalendar) SetAccount(a AccountManager) (err error) {

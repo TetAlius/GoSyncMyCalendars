@@ -12,6 +12,7 @@ import (
 
 	"reflect"
 
+	conv "github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -49,6 +50,10 @@ func (event *OutlookEvent) Create() (err error) {
 
 	eventResponse := OutlookEventResponse{OdataContext: "", OutlookEvent: event}
 	err = json.Unmarshal(contents, &eventResponse)
+	if err != nil {
+		return err
+	}
+	event.setAllDay()
 	return
 }
 
@@ -87,8 +92,10 @@ func (event *OutlookEvent) Update() (err error) {
 
 	eventResponse := OutlookEventResponse{OdataContext: "", OutlookEvent: event}
 	err = json.Unmarshal(contents, &eventResponse)
-
-	log.Warningf("OUTLOOK HERE:%s", contents)
+	if err != nil {
+		return err
+	}
+	event.setAllDay()
 	return
 }
 
@@ -137,13 +144,6 @@ func (event *OutlookEvent) GetCalendar() CalendarManager {
 
 func (event *OutlookEvent) GetRelations() []EventManager {
 	return event.relations
-}
-
-func (event *OutlookEvent) PrepareFields() {
-	event.Start = &OutlookDateTimeTimeZone{DateTime: event.StartsAt, TimeZone: time.UTC}
-	event.End = &OutlookDateTimeTimeZone{DateTime: event.EndsAt, TimeZone: time.UTC}
-	event.Body = &OutlookItemBody{"Text", event.Description}
-	return
 }
 
 func (event *OutlookEvent) SetCalendar(calendar CalendarManager) (err error) {
@@ -266,4 +266,45 @@ func (date *OutlookDateTimeTimeZone) MarshalJSON() (b []byte, err error) {
 		return nil, err
 	}
 	return buffer.Bytes(), nil
+}
+
+func (date *OutlookDateTimeTimeZone) Deconvert() interface{} {
+	m := make(map[string]interface{})
+	field, ok := reflect.TypeOf(date).Elem().FieldByName("DateTime")
+	if !ok {
+		return nil
+	}
+	tag, _ := parseTag(field.Tag.Get("convert"))
+	m[tag] = date.DateTime.UTC().Format(time.RFC3339)
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("IsAllDay")
+	if !ok {
+		return nil
+	}
+	tag, _ = parseTag(field.Tag.Get("convert"))
+	m[tag] = date.IsAllDay
+	return m
+}
+
+func (*OutlookDateTimeTimeZone) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
+	d := m.(map[string]interface{})
+
+	dateTime, ok := d["dateTime"].(time.Time)
+	if !ok {
+		return nil, errors.New("incorrect type of field dateTime")
+	}
+	isAllDay, ok := d["isAllDay"].(bool)
+	if !ok {
+		return nil, errors.New("incorrect type of field isAllDay")
+	}
+	timeZone, ok := d["timeZone"].(*time.Location)
+	if !ok {
+		return nil, errors.New("incorrect type of field timeZone")
+	}
+
+	return &OutlookDateTimeTimeZone{DateTime: dateTime, TimeZone: timeZone, IsAllDay: isAllDay}, nil
+}
+
+func (event *OutlookEvent) setAllDay() {
+	event.Start.IsAllDay = event.IsAllDay
+	event.End.IsAllDay = event.IsAllDay
 }

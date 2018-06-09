@@ -99,7 +99,6 @@ type EventManager interface {
 	MarkWrong()
 	GetState() int
 	SetState(int)
-	PrepareFields()
 	CanProcessAgain() bool
 	IncrementBackoff()
 	SetInternalID(int)
@@ -132,7 +131,6 @@ func Convert(from EventManager, to EventManager) (err error) {
 	if err != nil {
 		return errors.New(fmt.Sprintf("could not convert events: %s", err.Error()))
 	}
-	to.PrepareFields()
 	return
 }
 

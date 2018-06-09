@@ -12,6 +12,7 @@ import (
 
 	"reflect"
 
+	conv "github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -132,13 +133,6 @@ func (event *GoogleEvent) GetRelations() []EventManager {
 	return event.relations
 }
 
-//TODO: try to change this call
-func (event *GoogleEvent) PrepareFields() {
-	event.Start = &GoogleTime{Date: event.StartsAt, DateTime: event.StartsAt, TimeZone: time.UTC}
-	event.End = &GoogleTime{Date: event.EndsAt, DateTime: event.EndsAt, TimeZone: time.UTC}
-	return
-}
-
 func (event *GoogleEvent) CanProcessAgain() bool {
 	return event.exponentialBackoff < maxBackoff
 }
@@ -227,7 +221,7 @@ func (date *GoogleTime) MarshalJSON() ([]byte, error) {
 	var name string
 	if date.IsAllDay {
 		name = "Date"
-		jsonValue = date.Date.Format("2006-01-02")
+		jsonValue = date.Date.UTC().Format("2006-01-02")
 	} else {
 		name = "DateTime"
 		jsonValue = date.DateTime.UTC().Format(time.RFC3339)
@@ -243,4 +237,53 @@ func (date *GoogleTime) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return buffer.Bytes(), nil
+}
+
+func (date *GoogleTime) Deconvert() interface{} {
+	m := make(map[string]interface{})
+	var value time.Time
+	if date.IsAllDay {
+		value = date.Date.UTC()
+	} else {
+		value = date.DateTime.UTC()
+	}
+	field, ok := reflect.TypeOf(date).Elem().FieldByName("DateTime")
+	if !ok {
+		return nil
+	}
+	tag, _ := parseTag(field.Tag.Get("convert"))
+	m[tag] = value
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("IsAllDay")
+	if !ok {
+		return nil
+	}
+	tag, _ = parseTag(field.Tag.Get("convert"))
+	m[tag] = date.IsAllDay
+
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("TimeZone")
+	if !ok {
+		return nil
+	}
+	tag, _ = parseTag(field.Tag.Get("convert"))
+	m[tag] = date.TimeZone
+	return m
+}
+
+func (*GoogleTime) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
+	d := m.(map[string]interface{})
+
+	dateTime, ok := d["dateTime"].(time.Time)
+	if !ok {
+		return nil, errors.New("incorrect type of field dateTime")
+	}
+	isAllDay, ok := d["isAllDay"].(bool)
+	if !ok {
+		return nil, errors.New("incorrect type of field isAllDay")
+	}
+	timeZone, ok := d["timeZone"].(*time.Location)
+	if !ok {
+		return nil, errors.New("incorrect type of field timeZone")
+	}
+
+	return &GoogleTime{DateTime: dateTime, Date: dateTime, TimeZone: timeZone, IsAllDay: isAllDay}, nil
 }
