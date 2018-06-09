@@ -19,6 +19,7 @@ import (
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/db"
+	"github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/worker"
 	"github.com/getsentry/raven-go"
@@ -123,7 +124,7 @@ func (s *Server) subscribeCalendarHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 		log.Debugf("%s", calendar)
-		err = api.PrepareSync(calendar)
+		err = prepareSync(calendar)
 		if err != nil {
 			log.Errorf("error starting sync")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -280,4 +281,35 @@ func updateTicker() *time.Ticker {
 	diff := nextTick.Sub(time.Now())
 	log.Debugf("next tick: %s", nextTick)
 	return time.NewTicker(diff)
+}
+
+func prepareSync(calendar api.CalendarManager) (err error) {
+	err = calendar.GetAccount().Refresh()
+	if err != nil {
+		log.Errorf("error refreshing account: %s", err.Error())
+		return
+	}
+
+	cal, err := calendar.GetAccount().GetCalendar(calendar.GetID())
+	convert.Convert(cal, calendar)
+	for _, calen := range calendar.GetCalendars() {
+		err := convert.Convert(calendar, calen)
+		if err != nil {
+			log.Errorf("error converting info: %s", err.Error())
+			return err
+		}
+		log.Debugf("Name1: %s Name2: %s", calendar.GetName(), calen.GetName())
+		err = calen.GetAccount().Refresh()
+		if err != nil {
+			log.Errorf("error refreshing account calendar: %s error: %s", calen.GetID(), err.Error())
+			return err
+		}
+		err = calen.Update()
+
+		if err != nil {
+			log.Errorf("error updating calendar: %s error: %s", calen.GetID(), err.Error())
+			return err
+		}
+	}
+	return
 }

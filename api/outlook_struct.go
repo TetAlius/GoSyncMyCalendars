@@ -60,7 +60,7 @@ type OutlookCalendar struct {
 	Color               OutlookCalendarColor `json:"Color,omitempty"`
 	Events              []OutlookEvent       `json:"-"`
 	ID                  string               `json:"Id"`
-	Name                string               `json:"Name,omitempty" sync:"Name"`
+	Name                string               `json:"Name,omitempty" convert:"Name"`
 	Owner               OutlookEmailAddress  `json:"Owner,omitempty"`
 
 	//	IsDefaultCalendar             bool         `json:"IsDefaultCalendar,omitempty"`

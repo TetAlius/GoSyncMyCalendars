@@ -10,6 +10,7 @@ import (
 
 	"strings"
 
+	"github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -93,7 +94,7 @@ func (calendar *OutlookCalendar) Update() error {
 		if err != nil {
 			return err
 		}
-		convert(cal, calendar)
+		convert.Convert(cal, calendar)
 	}
 
 	calendarResponse := OutlookCalendarResponse{OdataContext: "", OutlookCalendar: calendar}

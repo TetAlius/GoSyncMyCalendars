@@ -48,7 +48,7 @@ type GoogleCalendar struct {
 	calendars []CalendarManager
 	//From CalendarLIST resource
 	ID              string `json:"id"`
-	Name            string `json:"summary" sync:"Name"`
+	Name            string `json:"summary" convert:"Name"`
 	Description     string `json:"description,omitempty"`
 	Location        string `json:"location,omitempty"`
 	TmeZone         string `json:"timeZone,omitempty"`
