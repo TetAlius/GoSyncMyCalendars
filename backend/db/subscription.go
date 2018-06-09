@@ -149,7 +149,6 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	switch {
 	case err == sql.ErrNoRows:
 		err = &customErrors.NotFoundError{Message: fmt.Sprintf("no subscription with that uuid: %s.", subscriptionUUID)}
-		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Debugf("no subscription with that uuid: %s.", subscriptionUUID)
 		return nil, err
 	case err != nil:
