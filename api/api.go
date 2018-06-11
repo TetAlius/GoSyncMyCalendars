@@ -1,15 +1,13 @@
 package api
 
 import (
-	"errors"
 	"fmt"
-	"reflect"
+	"strings"
 
 	"time"
 
 	"os"
 
-	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/getsentry/raven-go"
 	"github.com/google/uuid"
 )
@@ -25,6 +23,19 @@ const (
 
 	maxBackoff = 5
 )
+
+// tagOptions is the string following a comma in a struct field's
+// tag, or the empty string. It does not include the leading comma.
+type tagOptions string
+
+// parseTag splits a struct field's tag into its name and
+// comma-separated options.
+func parseTag(tag string) (string, tagOptions) {
+	if idx := strings.Index(tag, ","); idx != -1 {
+		return tag[:idx], tagOptions(tag[idx+1:])
+	}
+	return tag, tagOptions("")
+}
 
 type AccountManager interface {
 	Refresh() error
@@ -85,11 +96,12 @@ type EventManager interface {
 	MarkWrong()
 	GetState() int
 	SetState(int)
-	PrepareFields()
 	CanProcessAgain() bool
 	IncrementBackoff()
 	SetInternalID(int)
 	GetInternalID() int
+
+	setAllDay()
 }
 
 type SubscriptionManager interface {
@@ -111,97 +123,6 @@ type RefreshError struct {
 
 func (err RefreshError) Error() string {
 	return fmt.Sprintf("code: %s. message: %s", err.Code, err.Message)
-}
-
-func Convert(from EventManager, to EventManager) (err error) {
-	err = convert(from, to)
-	if err != nil {
-		return errors.New(fmt.Sprintf("could not convert events: %s", err.Error()))
-	}
-	to.PrepareFields()
-	return
-}
-
-func convert(in interface{}, out interface{}) (err error) {
-	log.Debugln("Converting...")
-	tag := "sync"
-
-	v := reflect.ValueOf(in)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	// we only accept structs
-	if v.Kind() != reflect.Struct {
-		return errors.New(fmt.Sprintf("conver only accepts structs, got %T", v))
-	}
-
-	typ := v.Type()
-	for i := 0; i < v.NumField(); i++ {
-		fi := typ.Field(i)
-		if tagv := fi.Tag.Get(tag); tagv != "" && tagv != "-" {
-			err := setField(out, tagv, v.Field(i).Interface())
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return
-}
-
-func setField(obj interface{}, name string, value interface{}) error {
-	structValue := reflect.ValueOf(obj).Elem()
-	structFieldValue := structValue.FieldByName(name)
-
-	if !structFieldValue.IsValid() {
-		return errors.New(fmt.Sprintf("no such field: %s in obj", name))
-	}
-
-	if !structFieldValue.CanSet() {
-		return errors.New(fmt.Sprintf("cannot set %s field value", name))
-	}
-
-	structFieldType := structFieldValue.Type()
-	val := reflect.ValueOf(value)
-	if structFieldType != val.Type() {
-		return errors.New(fmt.Sprintf("provided value type didn't match obj field type"))
-	}
-	//TODO: error here
-	sentry := sentryClient()
-	sentry.CapturePanicAndWait(func() { structFieldValue.Set(val) }, map[string]string{"api": "setField"})
-
-	return nil
-}
-
-func PrepareSync(calendar CalendarManager) (err error) {
-	err = calendar.GetAccount().Refresh()
-	if err != nil {
-		log.Errorf("error refreshing account: %s", err.Error())
-		return
-	}
-
-	cal, err := calendar.GetAccount().GetCalendar(calendar.GetID())
-	convert(cal, calendar)
-	for _, calen := range calendar.GetCalendars() {
-		err := convert(calendar, calen)
-		if err != nil {
-			log.Errorf("error converting info: %s", err.Error())
-			return err
-		}
-		log.Debugf("Name1: %s Name2: %s", calendar.GetName(), calen.GetName())
-		err = calen.GetAccount().Refresh()
-		if err != nil {
-			log.Errorf("error refreshing account calendar: %s error: %s", calen.GetID(), err.Error())
-			return err
-		}
-		err = calen.Update()
-
-		if err != nil {
-			log.Errorf("error updating calendar: %s error: %s", calen.GetID(), err.Error())
-			return err
-		}
-	}
-	return
 }
 
 func GetChangeType(onCloud bool, onDB bool) int {

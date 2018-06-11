@@ -174,7 +174,6 @@ func (data Database) ExistsSubscriptionFromID(ID string) (ok bool, err error) {
 	switch {
 	case err == sql.ErrNoRows:
 		err = &customErrors.NotFoundError{Message: fmt.Sprintf("No subscription with id: %s", ID)}
-		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
 		log.Debugf("No subscription with id: %s", ID)
 		return true, err
 	case err != nil:

@@ -7,6 +7,7 @@ import (
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/backend/db"
+	"github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
@@ -79,7 +80,6 @@ func (worker *Worker) processSynchronization(event api.EventManager) {
 	for _, toSync := range event.GetRelations() {
 		err := toSync.GetCalendar().GetAccount().Refresh()
 		go worker.database.UpdateAccount(toSync.GetCalendar().GetAccount())
-		api.Convert(event, toSync)
 		err = worker.synchronizeEvents(event, toSync)
 		if err != nil && reflect.TypeOf(err).Kind() != reflect.TypeOf(SynchronizeError{}).Kind() {
 			go func() {
@@ -117,6 +117,7 @@ func (worker *Worker) synchronizeEvents(from api.EventManager, to api.EventManag
 }
 
 func (worker *Worker) updateEvent(from api.EventManager, to api.EventManager) (err error) {
+	convert.Convert(from, to)
 	err = to.Update()
 	if err != nil {
 		log.Errorf("error updating event: %s, from event: %s", to.GetID(), from.GetID())
@@ -126,6 +127,7 @@ func (worker *Worker) updateEvent(from api.EventManager, to api.EventManager) (e
 
 }
 func (worker *Worker) createEvent(from api.EventManager, to api.EventManager) (err error) {
+	convert.Convert(from, to)
 	err = to.Create()
 	if err != nil {
 		log.Errorf("error updating event: %s, from event: %s", to.GetID(), from.GetID())

@@ -155,16 +155,13 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 	err = json.Unmarshal(contents, &eventList)
 
 	//events = new([]EventManager)
-	for _, s := range eventList.Events {
-		s.SetCalendar(calendar)
+	for _, event := range eventList.Events {
+		event.SetCalendar(calendar)
 		// ignore cancelled events
-		if s.Status != "cancelled" {
-
-			err := s.extractTime()
-			if err != nil {
-				return nil, err
-			}
-			events = append(events, s)
+		if event.Status != "cancelled" {
+			event.setAllDay()
+			//TODO: this status
+			events = append(events, event)
 		}
 	}
 	return events, err
@@ -207,13 +204,9 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 	log.Warningf("GOOGLE EVENT: %s", contents)
 	//TODO: this part
 	if eventResponse.Status != "cancelled" {
-		err = eventResponse.extractTime()
-		if err != nil {
-			return
-		}
-
 		eventResponse.SetCalendar(calendar)
 		event = eventResponse
+		event.setAllDay()
 	} else {
 		return nil, &customErrors.NotFoundError{Message: fmt.Sprintf("event with id: %s not found", eventID)}
 	}

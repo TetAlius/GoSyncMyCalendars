@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
+	"github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/getsentry/raven-go"
 	"github.com/google/uuid"
@@ -93,7 +94,7 @@ func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (e
 			case *api.OutlookCalendar:
 				toEvent = &api.OutlookEvent{}
 			}
-			api.Convert(event, toEvent)
+			convert.Convert(event, toEvent)
 			err = toEvent.SetCalendar(cal)
 			if err != nil {
 				data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})

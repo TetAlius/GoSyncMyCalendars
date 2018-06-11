@@ -10,6 +10,7 @@ import (
 
 	"strings"
 
+	"github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -93,7 +94,7 @@ func (calendar *OutlookCalendar) Update() error {
 		if err != nil {
 			return err
 		}
-		convert(cal, calendar)
+		convert.Convert(cal, calendar)
 	}
 
 	calendarResponse := OutlookCalendarResponse{OdataContext: "", OutlookCalendar: calendar}
@@ -166,10 +167,10 @@ func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err erro
 
 	for _, s := range eventListResponse.Events {
 		s.SetCalendar(calendar)
-		err = s.extractTime()
 		if err != nil {
 			return
 		}
+		s.setAllDay()
 		events = append(events, s)
 	}
 	return
@@ -211,14 +212,13 @@ func (calendar *OutlookCalendar) GetEvent(ID string) (event EventManager, err er
 		return
 	}
 
-	eventResponse.SetCalendar(calendar)
-	err = eventResponse.OutlookEvent.extractTime()
+	err = eventResponse.SetCalendar(calendar)
 	if err != nil {
 		return
 	}
-	event = eventResponse.OutlookEvent
-
-	return
+	e := eventResponse.OutlookEvent
+	e.setAllDay()
+	return e, nil
 }
 
 func (calendar *OutlookCalendar) SetAccount(a AccountManager) (err error) {

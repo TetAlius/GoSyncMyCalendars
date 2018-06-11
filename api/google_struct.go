@@ -48,7 +48,7 @@ type GoogleCalendar struct {
 	calendars []CalendarManager
 	//From CalendarLIST resource
 	ID              string `json:"id"`
-	Name            string `json:"summary" sync:"Name"`
+	Name            string `json:"summary" convert:"Name"`
 	Description     string `json:"description,omitempty"`
 	Location        string `json:"location,omitempty"`
 	TmeZone         string `json:"timeZone,omitempty"`
@@ -98,13 +98,11 @@ type GoogleEvent struct {
 
 	ID string `json:"id"`
 
-	Subject     string      `json:"summary,omitempty" sync:"Subject"`
-	Description string      `json:"description,omitempty" sync:"Description"`
-	StartsAt    time.Time   `json:"-" sync:"StartsAt"`
-	EndsAt      time.Time   `json:"-" sync:"EndsAt"`
-	IsAllDay    bool        `json:"-" sync:"IsAllDay"`
-	Start       *GoogleTime `json:"start,omitempty"`
-	End         *GoogleTime `json:"end,omitempty"`
+	Subject     string      `json:"summary,omitempty" convert:"Subject"`
+	Description string      `json:"description,omitempty" convert:"Description"`
+	Start       *GoogleTime `json:"start,omitempty"convert:"start"`
+	End         *GoogleTime `json:"end,omitempty"convert:"end"`
+	IsAllDay    bool        `json:"-"convert:"allDay"`
 
 	Status             string   `json:"status,omitempty"`
 	ColorID            string   `json:"colorId,omitempty"`
@@ -154,12 +152,13 @@ type GooglePerson struct {
 }
 
 type GoogleTime struct {
-	Date string `json:"date,omitempty"`
+	Date time.Time `json:"date,omitempty"`
 	//time.RFC3339 gives TimeZone inside string
-	DateTime string `json:"dateTime,omitempty"`
+	DateTime time.Time `json:"dateTime,omitempty"convert:"dateTime"`
 	//Ignore TimeZone as the json returns the original TimeZon
 	//Although it is always asked in UTC it may cause confusion
-	TimeZone string `json:"-"` //`json:"timeZone,omitempty"`
+	TimeZone *time.Location `json:"-"convert:"timeZone"`
+	IsAllDay bool           `json:"-" convert:"isAllDay"`
 }
 
 type GoogleConferenceData struct {

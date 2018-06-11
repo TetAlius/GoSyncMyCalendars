@@ -10,6 +10,9 @@ import (
 
 	"time"
 
+	"reflect"
+
+	conv "github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -43,11 +46,11 @@ func (event *GoogleEvent) Create() (err error) {
 	}
 	err = createGoogleResponseError(contents)
 	if err != nil {
+		log.Errorf("error creating event: %s", err.Error())
 		return err
 	}
 
 	err = json.Unmarshal(contents, &event)
-	err = event.extractTime()
 	return
 }
 
@@ -84,7 +87,6 @@ func (event *GoogleEvent) Update() (err error) {
 	}
 
 	err = json.Unmarshal(contents, &event)
-	err = event.extractTime()
 	return
 }
 
@@ -130,18 +132,6 @@ func (event *GoogleEvent) GetCalendar() CalendarManager {
 
 func (event *GoogleEvent) GetRelations() []EventManager {
 	return event.relations
-}
-
-func (event *GoogleEvent) PrepareFields() {
-	var startDate, endDate string
-	if event.IsAllDay {
-		startDate = event.StartsAt.Format("2006-01-02")
-		endDate = event.EndsAt.Format("2006-01-02")
-	}
-
-	event.Start = &GoogleTime{startDate, event.StartsAt.Format(time.RFC3339), "UTC"}
-	event.End = &GoogleTime{endDate, event.EndsAt.Format(time.RFC3339), "UTC"}
-	return
 }
 
 func (event *GoogleEvent) CanProcessAgain() bool {
@@ -196,35 +186,113 @@ func (event *GoogleEvent) GetUpdatedAt() (t time.Time, err error) {
 	return t.UTC(), nil
 }
 
-func (event *GoogleEvent) extractTime() (err error) {
-	var start, end, format string
-	sentry := sentryClient()
-	recoveredPanic, sentryID := sentry.CapturePanicAndWait(func() {
-		if len(event.Start.Date) != 0 && len(event.End.Date) != 0 {
-			event.IsAllDay = true
-			start = event.Start.Date
-			end = event.End.Date
-			format = "2006-01-02"
-
-		} else {
-			event.IsAllDay = false
-			start = event.Start.DateTime
-			end = event.End.DateTime
-			format = time.RFC3339
+func (date *GoogleTime) UnmarshalJSON(b []byte) error {
+	var s map[string]string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	for key, value := range s {
+		switch key {
+		case "date":
+			date.IsAllDay = true
+			t, err := time.Parse("2006-01-02", value)
+			if err != nil {
+				return err
+			}
+			date.Date = t.UTC()
+		case "dateTime":
+			date.IsAllDay = false
+			t, err := time.Parse(time.RFC3339, value)
+			if err != nil {
+				return err
+			}
+			date.DateTime = t.UTC()
 		}
-	}, map[string]string{"api": "google"})
-	if recoveredPanic != nil {
-		log.Errorf("panic recovered with sentry ID: %s", sentryID)
-		return fmt.Errorf("panic was launched")
+	}
+	date.TimeZone = time.UTC
+
+	return nil
+}
+
+func (date *GoogleTime) MarshalJSON() ([]byte, error) {
+	if date.DateTime.IsZero() && date.Date.IsZero() {
+		return bytes.NewBufferString("{}").Bytes(), nil
+	}
+	var jsonValue string
+	var name string
+	if date.IsAllDay {
+		name = "Date"
+		jsonValue = date.Date.UTC().Format("2006-01-02")
+	} else {
+		name = "DateTime"
+		jsonValue = date.DateTime.UTC().Format(time.RFC3339)
+	}
+	field, ok := reflect.TypeOf(date).Elem().FieldByName(name)
+	if !ok {
+		return nil, fmt.Errorf("could not retrieve field %s", name)
+	}
+	tag, _ := parseTag(field.Tag.Get("json"))
+	buffer := bytes.NewBufferString("{")
+	_, err := buffer.WriteString(fmt.Sprintf(`"%s":"%s"}`, tag, jsonValue))
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+func (date *GoogleTime) Deconvert() interface{} {
+	m := make(map[string]interface{})
+	var value time.Time
+	if date.IsAllDay {
+		value = date.Date.UTC()
+	} else {
+		value = date.DateTime.UTC()
+	}
+	field, ok := reflect.TypeOf(date).Elem().FieldByName("DateTime")
+	if !ok {
+		return nil
+	}
+	tag, _ := parseTag(field.Tag.Get("convert"))
+	m[tag] = value
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("IsAllDay")
+	if !ok {
+		return nil
+	}
+	tag, _ = parseTag(field.Tag.Get("convert"))
+	m[tag] = date.IsAllDay
+
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("TimeZone")
+	if !ok {
+		return nil
+	}
+	tag, _ = parseTag(field.Tag.Get("convert"))
+	m[tag] = date.TimeZone
+	return m
+}
+
+func (*GoogleTime) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
+	d := m.(map[string]interface{})
+
+	dateTime, ok := d["dateTime"].(time.Time)
+	if !ok {
+		return nil, errors.New("incorrect type of field dateTime")
+	}
+	isAllDay, ok := d["isAllDay"].(bool)
+	if !ok {
+		return nil, errors.New("incorrect type of field isAllDay")
+	}
+	timeZone, ok := d["timeZone"].(*time.Location)
+	if !ok {
+		return nil, errors.New("incorrect type of field timeZone")
 	}
 
-	event.StartsAt, err = time.Parse(format, start)
-	if err != nil {
-		return errors.New(fmt.Sprintf("error parsing start time: %s %s", start, err.Error()))
+	return &GoogleTime{DateTime: dateTime, Date: dateTime, TimeZone: timeZone, IsAllDay: isAllDay}, nil
+}
+
+func (event *GoogleEvent) setAllDay() {
+	if event.Start == nil && event.End == nil {
+		event.IsAllDay = false
+		return
 	}
-	event.EndsAt, err = time.Parse(format, end)
-	if err != nil {
-		return errors.New(fmt.Sprintf("error parsing end time: %s %s", end, err.Error()))
-	}
-	return
+	event.IsAllDay = event.Start.IsAllDay
 }

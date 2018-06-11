@@ -10,6 +10,9 @@ import (
 
 	"time"
 
+	"reflect"
+
+	conv "github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
@@ -47,8 +50,10 @@ func (event *OutlookEvent) Create() (err error) {
 
 	eventResponse := OutlookEventResponse{OdataContext: "", OutlookEvent: event}
 	err = json.Unmarshal(contents, &eventResponse)
-
-	err = event.extractTime()
+	if err != nil {
+		return err
+	}
+	event.setAllDay()
 	return
 }
 
@@ -87,10 +92,10 @@ func (event *OutlookEvent) Update() (err error) {
 
 	eventResponse := OutlookEventResponse{OdataContext: "", OutlookEvent: event}
 	err = json.Unmarshal(contents, &eventResponse)
-
-	log.Warningf("OUTLOOK HERE:%s", contents)
-
-	err = event.extractTime()
+	if err != nil {
+		return err
+	}
+	event.setAllDay()
 	return
 }
 
@@ -141,13 +146,6 @@ func (event *OutlookEvent) GetRelations() []EventManager {
 	return event.relations
 }
 
-func (event *OutlookEvent) PrepareFields() {
-	event.Start = &OutlookDateTimeTimeZone{event.StartsAt.Format(time.RFC3339Nano), "UTC"}
-	event.End = &OutlookDateTimeTimeZone{event.EndsAt.Format(time.RFC3339Nano), "UTC"}
-	event.Body = &OutlookItemBody{"Text", event.Description}
-	return
-}
-
 func (event *OutlookEvent) SetCalendar(calendar CalendarManager) (err error) {
 	switch x := calendar.(type) {
 	case *OutlookCalendar:
@@ -191,63 +189,6 @@ func (event *OutlookEvent) GetState() int {
 	return event.state
 }
 
-func (event *OutlookEvent) extractTime() (err error) {
-	format := "2006-01-02T15:04:05.999999999"
-	var location *time.Location
-	sentry := sentryClient()
-	recoveredPanic, sentryID := sentry.CapturePanicAndWait(func() {
-		location, err = time.LoadLocation(event.Start.TimeZone)
-	}, map[string]string{"api": "outlook"})
-	if recoveredPanic != nil {
-		log.Errorf("panic recovered with sentry ID: %s", sentryID)
-		return fmt.Errorf("panic was launched")
-	}
-	if err != nil {
-		log.Errorf("error getting start location: %s", event.Start.TimeZone)
-		return err
-	}
-	var date time.Time
-	recoveredPanic, sentryID = sentry.CapturePanicAndWait(func() {
-		date, err = time.ParseInLocation(format, event.Start.DateTime, location)
-	}, map[string]string{"api": "outlook"})
-	if recoveredPanic != nil {
-		log.Errorf("panic recovered with sentry ID: %s", sentryID)
-		return fmt.Errorf("panic was launched")
-	}
-	if err != nil {
-		log.Errorf("error parsing start time: %s %s", event.Start.DateTime, err.Error())
-		return
-	}
-	event.StartsAt = date.UTC()
-	recoveredPanic, sentryID = sentry.CapturePanicAndWait(func() {
-		location, err = time.LoadLocation(event.End.TimeZone)
-	}, map[string]string{"api": "outlook"})
-
-	if recoveredPanic != nil {
-		log.Errorf("panic recovered with sentry ID: %s", sentryID)
-		return fmt.Errorf("panic was launched")
-	}
-
-	if err != nil {
-		log.Errorf("error getting end location: %s", event.End.TimeZone)
-		return err
-	}
-	recoveredPanic, sentryID = sentry.CapturePanicAndWait(func() {
-		event.EndsAt, err = time.ParseInLocation(format, event.Start.DateTime, location)
-	}, map[string]string{"api": "outlook"})
-
-	if recoveredPanic != nil {
-		log.Errorf("panic recovered with sentry ID: %s", sentryID)
-		return fmt.Errorf("panic was launched")
-	}
-	if err != nil {
-		log.Errorf("error parsing end time: %s %s", event.Start.DateTime, err.Error())
-		return
-	}
-	event.EndsAt = date.UTC()
-	return
-}
-
 func (event *OutlookEvent) GetUpdatedAt() (t time.Time, err error) {
 	//format := time.RFC3339Nano
 	//format := "2006-01-02T15:04:05.999999999"
@@ -257,4 +198,133 @@ func (event *OutlookEvent) GetUpdatedAt() (t time.Time, err error) {
 		return
 	}
 	return t.UTC(), nil
+}
+
+func (date *OutlookDateTimeTimeZone) UnmarshalJSON(b []byte) error {
+	var s map[string]string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	field, ok := reflect.TypeOf(date).Elem().FieldByName("TimeZone")
+	if !ok {
+		return fmt.Errorf("could not retrieve field TimeZone")
+	}
+	tag, _ := parseTag(field.Tag.Get("json"))
+
+	location, err := time.LoadLocation(s[tag])
+	date.TimeZone = location
+	if err != nil {
+		log.Errorf("error getting location: %s")
+		return err
+	}
+
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("DateTime")
+	if !ok {
+		return fmt.Errorf("could not retrieve field DateTime")
+	}
+	tag, _ = parseTag(field.Tag.Get("json"))
+	t, err := time.ParseInLocation("2006-01-02T15:04:05.999999999", s[tag], location)
+	if err != nil {
+		log.Errorf("error parsing time: %s", err.Error())
+	}
+	date.DateTime = t.UTC()
+	return nil
+}
+
+func (date *OutlookDateTimeTimeZone) MarshalJSON() (b []byte, err error) {
+	if date.DateTime.IsZero() {
+		return bytes.NewBufferString("{}").Bytes(), nil
+	}
+	field, ok := reflect.TypeOf(date).Elem().FieldByName("DateTime")
+	if !ok {
+		return nil, fmt.Errorf("could not retrieve field DateTime")
+	}
+	tag, _ := parseTag(field.Tag.Get("json"))
+	buffer := bytes.NewBufferString("{")
+	//RFC3339Nano = "2006-01-02T15:04:05.999999999Z07:00"
+	_, err = buffer.WriteString(fmt.Sprintf(`"%s":"%s"`, tag, date.DateTime.UTC().Format("2006-01-02T15:04:05.999999999")))
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = buffer.WriteString(",")
+	if err != nil {
+		return nil, err
+	}
+
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("TimeZone")
+	if !ok {
+		return nil, fmt.Errorf("could not retrieve field TimeZone")
+	}
+	tag, _ = parseTag(field.Tag.Get("json"))
+	_, err = buffer.WriteString(fmt.Sprintf(`"%s":"%s"`, tag, date.TimeZone))
+	if err != nil {
+		return nil, err
+	}
+	_, err = buffer.WriteString("}")
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+func (date *OutlookDateTimeTimeZone) Deconvert() interface{} {
+	m := make(map[string]interface{})
+	field, ok := reflect.TypeOf(date).Elem().FieldByName("DateTime")
+	if !ok {
+		return nil
+	}
+	tag, _ := parseTag(field.Tag.Get("convert"))
+	m[tag] = date.DateTime.UTC()
+
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("IsAllDay")
+	if !ok {
+		return nil
+	}
+	tag, _ = parseTag(field.Tag.Get("convert"))
+	m[tag] = date.IsAllDay
+
+	field, ok = reflect.TypeOf(date).Elem().FieldByName("TimeZone")
+	if !ok {
+		return nil
+	}
+	tag, _ = parseTag(field.Tag.Get("convert"))
+	m[tag] = date.TimeZone
+	return m
+}
+
+func (body *OutlookItemBody) Deconvert() interface{} {
+	return body.Description
+}
+
+func (*OutlookItemBody) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
+	desc, ok := m.(string)
+	if !ok {
+		return nil, errors.New("incorrect type of field description")
+	}
+	return &OutlookItemBody{Description: desc}, nil
+}
+
+func (*OutlookDateTimeTimeZone) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
+	d := m.(map[string]interface{})
+
+	dateTime, ok := d["dateTime"].(time.Time)
+	if !ok {
+		return nil, errors.New("incorrect type of field dateTime")
+	}
+	isAllDay, ok := d["isAllDay"].(bool)
+	if !ok {
+		return nil, errors.New("incorrect type of field isAllDay")
+	}
+	timeZone, ok := d["timeZone"].(*time.Location)
+	if !ok {
+		return nil, errors.New("incorrect type of field timeZone")
+	}
+
+	return &OutlookDateTimeTimeZone{DateTime: dateTime, TimeZone: timeZone, IsAllDay: isAllDay}, nil
+}
+
+func (event *OutlookEvent) setAllDay() {
+	event.Start.IsAllDay = event.IsAllDay
+	event.End.IsAllDay = event.IsAllDay
 }

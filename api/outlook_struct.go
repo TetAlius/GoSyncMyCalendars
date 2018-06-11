@@ -60,7 +60,7 @@ type OutlookCalendar struct {
 	Color               OutlookCalendarColor `json:"Color,omitempty"`
 	Events              []OutlookEvent       `json:"-"`
 	ID                  string               `json:"Id"`
-	Name                string               `json:"Name,omitempty" sync:"Name"`
+	Name                string               `json:"Name,omitempty" convert:"Name"`
 	Owner               OutlookEmailAddress  `json:"Owner,omitempty"`
 
 	//	IsDefaultCalendar             bool         `json:"IsDefaultCalendar,omitempty"`
@@ -76,8 +76,8 @@ type OutlookCalendar struct {
 type OutlookCalendarColor string
 
 type OutlookEmailAddress struct {
-	Address string `json:"Address,omitempty" sync:"Email"`
-	Name    string `json:"Name,omitempty" sync:"Name"`
+	Address string `json:"Address,omitempty"`
+	Name    string `json:"Name,omitempty"`
 }
 
 type OutlookEventResponse struct {
@@ -99,14 +99,13 @@ type OutlookEvent struct {
 
 	ID string `json:"Id"`
 
-	Subject     string    `json:"Subject,omitempty" sync:"Subject"`
-	Description string    `json:"BodyPreview,omitempty" sync:"Description"`
-	StartsAt    time.Time `json:"-" sync:"StartsAt"`
-	EndsAt      time.Time `json:"-" sync:"EndsAt"`
-	IsAllDay    bool      `json:"IsAllDay,omitempty"`
+	Subject     string           `json:"Subject,omitempty" convert:"Subject"`
+	Description string           `json:"BodyPreview,omitempty"`
+	IsAllDay    bool             `json:"IsAllDay,omitempty"convert:"allDay"`
+	Body        *OutlookItemBody `json:"Body,omitempty"convert:"Description"`
 
-	Start                      *OutlookDateTimeTimeZone `json:"Start,omitempty"`
-	End                        *OutlookDateTimeTimeZone `json:"End,omitempty"`
+	Start                      *OutlookDateTimeTimeZone `json:"Start,omitempty" convert:"start"`
+	End                        *OutlookDateTimeTimeZone `json:"End,omitempty" convert:"end"`
 	Categories                 []string                 `json:"Categories,omitempty"`
 	ChangeKey                  string                   `json:"ChangeKey,omitempty"`
 	OnlineMeetingUrl           string                   `json:"OnlineMeetingUrl,omitempty"`
@@ -121,7 +120,6 @@ type OutlookEvent struct {
 	//Don't update
 	//This will go to Body to have a list
 	Attendees []OutlookAttendee `json:"Attendees,omitempty"`
-	Body      *OutlookItemBody  `json:"Body,omitempty"`
 	Instances []OutlookEvent    `json:"Instances,omitempty"`
 
 	Importance OutlookImportance `json:"Importance,omitempty"`
@@ -170,12 +168,13 @@ type OutlookStatus struct {
 
 type OutlookItemBody struct {
 	ContentType string `json:"ContentType,omitempty"`
-	Description string `json:"Content,omitempty" sync:"Description"`
+	Description string `json:"Content,omitempty"`
 }
 
 type OutlookDateTimeTimeZone struct {
-	DateTime string `json:"DateTime,omitempty"`
-	TimeZone string `json:"TimeZone,omitempty"`
+	DateTime time.Time      `json:"DateTime,omitempty"convert:"dateTime"`
+	TimeZone *time.Location `json:"TimeZone,omitempty"convert:"timeZone"`
+	IsAllDay bool           `json:"-"convert:"isAllDay"`
 }
 
 // The importance of the event: Low, Normal, High.
