@@ -21,7 +21,7 @@ func (s *Server) manageSynchronizationOutlook(notifications []api.OutlookSubscri
 		calendar.GetAccount().Refresh()
 		go s.database.UpdateAccount(calendar.GetAccount())
 		tags["event"] = subscription.ChangeType
-		if subscription.ChangeType == "missed" {
+		if subscription.ChangeType == "Missed" {
 			err = s.manageByCalendar(calendar, subscription.SubscriptionID, tags)
 			if err != nil {
 				return err

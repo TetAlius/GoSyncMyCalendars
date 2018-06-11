@@ -46,6 +46,7 @@ func (event *GoogleEvent) Create() (err error) {
 	}
 	err = createGoogleResponseError(contents)
 	if err != nil {
+		log.Errorf("error creating event: %s", err.Error())
 		return err
 	}
 
