@@ -213,17 +213,17 @@ type OutlookPatternedRecurrence struct {
 }
 
 type OutlookRecurrencePattern struct {
-	Type           OutlookRecurrencePatternType `json:"Type,omitempty"`
-	Interval       int32                        `json:"Interval,omitempty"`
-	DayOfMonth     int32                        `json:"DayOfMonth,omitempty"`
-	Month          int32                        `json:"Month,omitempty"`
-	DaysOfWeek     []OutlookDayOfWeek           `json:"DaysOfWeek,omitempty"`
-	FirstDayOfWeek OutlookDayOfWeek             `json:"DayOfWeek,omitempty"`
-	Index          OutlookWeekIndex             `json:"Index,omitempty"`
+	Type           string             `json:"Type,omitempty"`
+	Interval       int                `json:"Interval,omitempty"`
+	DayOfMonth     int                `json:"DayOfMonth,omitempty"`
+	Month          int                `json:"Month,omitempty"`
+	DaysOfWeek     []OutlookDayOfWeek `json:"DaysOfWeek,omitempty"`
+	FirstDayOfWeek OutlookDayOfWeek   `json:"DayOfWeek,omitempty"`
+	Index          string             `json:"Index,omitempty"`
 }
 
 // The recurrence pattern type: Daily = 0, Weekly = 1, AbsoluteMonthly = 2, RelativeMonthly = 3, AbsoluteYearly = 4, RelativeYearly = 5.
-type OutlookRecurrencePatternType int32
+type OutlookRecurrencePatternType string
 
 // The day of the week: Sunday = 0, Monday = 1, Tuesday = 2, Wednesday = 3, Thursday = 4, Friday = 5, Saturday = 6.
 type OutlookDayOfWeek int32
@@ -232,10 +232,10 @@ type OutlookDayOfWeek int32
 type OutlookWeekIndex int32
 
 type OutlookRecurrenceRange struct {
-	Type                OutlookRecurrenceRangeType `json:"Type,omitempty"`
-	StartDate           string                     `json:"StartDate,omitempty"` //"2014-10-19T23:13:47.3959685Z" TODO
-	EndDate             string                     `json:"EndDate,omitempty"`   //"2014-10-19T23:13:47.3959685Z" TODO
-	NumberOfOccurrences int32                      `json:"NumberOfOccurrences,omitempty"`
+	Type                string `json:"Type,omitempty"`
+	StartDate           string `json:"StartDate,omitempty"` //"2014-10-19T23:13:47.3959685Z" TODO
+	EndDate             string `json:"EndDate,omitempty"`   //"2014-10-19T23:13:47.3959685Z" TODO
+	NumberOfOccurrences int32  `json:"NumberOfOccurrences,omitempty"`
 }
 
 // The recurrence range: EndDate = 0, NoEnd = 1, Numbered = 2.
