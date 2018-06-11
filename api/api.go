@@ -100,6 +100,8 @@ type EventManager interface {
 	IncrementBackoff()
 	SetInternalID(int)
 	GetInternalID() int
+
+	setAllDay()
 }
 
 type SubscriptionManager interface {

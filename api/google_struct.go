@@ -102,6 +102,7 @@ type GoogleEvent struct {
 	Description string      `json:"description,omitempty" convert:"Description"`
 	Start       *GoogleTime `json:"start,omitempty"convert:"start"`
 	End         *GoogleTime `json:"end,omitempty"convert:"end"`
+	IsAllDay    bool        `json:"-"convert:"allDay"`
 
 	Status             string   `json:"status,omitempty"`
 	ColorID            string   `json:"colorId,omitempty"`

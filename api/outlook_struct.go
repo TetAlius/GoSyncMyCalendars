@@ -101,7 +101,7 @@ type OutlookEvent struct {
 
 	Subject     string           `json:"Subject,omitempty" convert:"Subject"`
 	Description string           `json:"BodyPreview,omitempty"`
-	IsAllDay    bool             `json:"IsAllDay,omitempty"`
+	IsAllDay    bool             `json:"IsAllDay,omitempty"convert:"allDay"`
 	Body        *OutlookItemBody `json:"Body,omitempty"convert:"Description"`
 
 	Start                      *OutlookDateTimeTimeZone `json:"Start,omitempty" convert:"start"`

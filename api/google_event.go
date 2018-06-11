@@ -288,3 +288,7 @@ func (*GoogleTime) Convert(m interface{}, tag string, opts string) (conv.Convert
 
 	return &GoogleTime{DateTime: dateTime, Date: dateTime, TimeZone: timeZone, IsAllDay: isAllDay}, nil
 }
+
+func (event *GoogleEvent) setAllDay() {
+	event.IsAllDay = event.Start.IsAllDay || event.End.IsAllDay
+}
