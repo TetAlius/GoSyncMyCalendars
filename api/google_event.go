@@ -240,6 +240,14 @@ func (date *GoogleTime) MarshalJSON() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
+func (recurrences *GoogleRecurrence) MarshalJSON() ([]byte, error) {
+	return bytes.NewBufferString("").Bytes(), nil
+}
+
+func (recurrences *GoogleRecurrence) UnmarshalJSON(b []byte) error {
+	return nil
+}
+
 func (date *GoogleTime) Deconvert() interface{} {
 	m := make(map[string]interface{})
 	var value time.Time

@@ -12,6 +12,22 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/convert"
 )
 
+var contGoogle = []byte(`{
+"created": "2018-06-11T15:28:21.000Z",
+"updated": "2018-06-11T15:29:23.438Z",
+"summary": "REPEATS",
+"description": "This is a description",
+"start": {
+ "date": "2018-06-14"
+},
+"end": {
+ "date": "2018-06-15"
+},
+"recurrence": [
+ "RRULE:FREQ=WEEKLY;UNTIL=20180928;BYDAY=MO,TU,WE,TH,FR"
+]
+}`)
+
 func TestGoogleTime_JSON(t *testing.T) {
 	var event api.GoogleEvent
 	start := new(api.GoogleTime)
@@ -71,6 +87,15 @@ func TestGoogleTime_JSON(t *testing.T) {
 		t.Fatalf("end times does not match: %s vs json %s", end.Date.UTC().Format("2006-01-02"), event.End.Date.UTC().Format("2006-01-02"))
 	}
 
+	eventUn := new(api.GoogleEvent)
+	err = json.Unmarshal(contGoogle, &eventUn)
+	if err != nil {
+		t.Fatalf("something happened: %s", err.Error())
+	}
+	contents, err = json.Marshal(eventUn)
+	if err != nil {
+		t.Fatalf("something happened: %s", err.Error())
+	}
 }
 
 func TestGoogleEventCalendar_EventLifeCycle(t *testing.T) {
