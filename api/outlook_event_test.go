@@ -7,7 +7,59 @@ import (
 	"time"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
+	"github.com/TetAlius/GoSyncMyCalendars/logger"
 )
+
+var contOutlook = []byte(` {
+  "CreatedDateTime": "2018-06-11T18:05:01.2183293Z",
+  "LastModifiedDateTime": "2018-06-11T18:05:01.2495814Z",
+  "ChangeKey": "7Tv+UgXJaEmg/mpJO213QQACVRFjeg==",
+  "Categories": [],
+  "ReminderMinutesBeforeStart": 15,
+  "IsReminderOn": true,
+  "HasAttachments": false,
+  "Subject": "RECURRENCE OUTLOOK",
+  "BodyPreview": "",
+  "Importance": "Normal",
+  "Sensitivity": "Normal",
+  "IsAllDay": false,
+  "IsCancelled": false,
+  "IsOrganizer": true,
+  "ResponseRequested": true,
+  "ResponseStatus": {
+    "Response": "Organizer",
+    "Time": "0001-01-01T00:00:00Z"
+  },
+  "Body": {
+    "ContentType": "Text",
+    "Content": "\r\n"
+  },
+  "Start": {
+    "DateTime": "2018-06-14T15:00:00.0000000",
+    "TimeZone": "UTC"
+  },
+  "End": {
+    "DateTime": "2018-06-14T15:30:00.0000000",
+    "TimeZone": "UTC"
+  },
+  "Recurrence": {
+    "Pattern": {
+      "Type": "Daily",
+      "Interval": 1,
+      "Month": 0,
+      "DayOfMonth": 0,
+      "FirstDayOfWeek": "Sunday",
+      "Index": "First"
+    },
+    "Range": {
+      "Type": "EndDate",
+      "StartDate": "2018-06-14",
+      "EndDate": "2018-09-06",
+      "RecurrenceTimeZone": "Romance Standard Time",
+      "NumberOfOccurrences": 0
+    }
+  }
+}`)
 
 func TestOutlookTime_JSON(t *testing.T) {
 	var event api.OutlookEvent
@@ -45,6 +97,18 @@ func TestOutlookTime_JSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error marshaling empty dates: %s", err.Error())
 	}
+
+	eventUn := new(api.OutlookEvent)
+	err = json.Unmarshal(contOutlook, &eventUn)
+	if err != nil {
+		t.Fatalf("something happened: %s", err.Error())
+	}
+
+	contents, err = json.Marshal(eventUn)
+	if err != nil {
+		t.Fatalf("something happened: %s", err.Error())
+	}
+	logger.Debugf("%s", contents)
 }
 
 func TestOutlookEventCalendar_EventLifeCycle(t *testing.T) {
