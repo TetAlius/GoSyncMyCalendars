@@ -104,23 +104,23 @@ type GoogleEvent struct {
 	End         *GoogleTime `json:"end,omitempty"convert:"end"`
 	IsAllDay    bool        `json:"-"convert:"allDay"`
 
-	Status             string   `json:"status,omitempty"`
-	ColorID            string   `json:"colorId,omitempty"`
-	EndTimeUnspecified bool     `json:"endTimeUnspecified,omitempty"`
-	Recurrence         []string `json:"recurrence,omitempty"`
-	RecurringEventId   string   `json:"recurringEventId,omitempty"`
-	Transparency       string   `json:"transparency,omitempty"`
-	Visibility         string   `json:"visibility,omitempty"`
-	ICalUID            string   `json:"iCalUID,omitempty"`
-	Sequence           int32    `json:"sequence,omitempty"`
-	HangoutLink        string   `json:"hangoutLink,omitempty"`
-	Locked             bool     `json:"locked,omitempty"`
+	Status             string           `json:"status,omitempty"`
+	ColorID            string           `json:"colorId,omitempty"`
+	EndTimeUnspecified bool             `json:"endTimeUnspecified,omitempty"`
+	Recurrences        GoogleRecurrence `json:"recurrence,omitempty"`
+	RecurringEventId   string           `json:"recurringEventId,omitempty"`
+	Transparency       string           `json:"transparency,omitempty"`
+	Visibility         string           `json:"visibility,omitempty"`
+	ICalUID            string           `json:"iCalUID,omitempty"`
+	Sequence           int32            `json:"sequence,omitempty"`
+	HangoutLink        string           `json:"hangoutLink,omitempty"`
+	Locked             bool             `json:"locked,omitempty"`
 
 	OriginalStartTime *GoogleTime           `json:"originalStartTime,omitempty"`
 	Attendees         []GooglePerson        `json:"attendees,omitempty"`
 	Gadget            *GoogleGadget         `json:"gadget,omitempty"`
 	ConferenceData    *GoogleConferenceData `json:"conferenceData,omitempty"`
-	Reminders         GoogleEventReminder   `json:"reminders,omitempty"`
+	Reminders         *GoogleEventReminder  `json:"reminders,omitempty"`
 	Source            *GoogleSource         `json:"source,omitempty"`
 	Attachments       []GoogleAttachment    `json:"attachments,omitempty"`
 	Organizer         *GooglePerson         `json:"organizer,omitempty"`
@@ -150,6 +150,7 @@ type GooglePerson struct {
 	Comment          string `json:"comment,omitempty"`
 	AdditionalGuests int32  `json:"additionalGuests,omitempty"`
 }
+type GoogleRecurrence []string
 
 type GoogleTime struct {
 	Date time.Time `json:"date,omitempty"`
