@@ -205,8 +205,8 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 	//TODO: this part
 	if eventResponse.Status != "cancelled" {
 		eventResponse.SetCalendar(calendar)
-		event.setAllDay()
 		event = eventResponse
+		event.setAllDay()
 	} else {
 		return nil, &customErrors.NotFoundError{Message: fmt.Sprintf("event with id: %s not found", eventID)}
 	}
