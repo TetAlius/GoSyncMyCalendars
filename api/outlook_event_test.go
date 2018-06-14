@@ -44,17 +44,24 @@ var contOutlook = []byte(` {
   },
   "Recurrence": {
     "Pattern": {
-      "Type": "Daily",
+      "Type": "Weekly",
       "Interval": 1,
       "Month": 0,
       "DayOfMonth": 0,
-      "FirstDayOfWeek": "Sunday",
+      "DaysOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+      ],
+      "FirstDayOfWeek": "Monday",
       "Index": "First"
     },
     "Range": {
       "Type": "EndDate",
-      "StartDate": "2018-06-14",
-      "EndDate": "2018-09-06",
+      "StartDate": "2018-06-15",
+      "EndDate": "2018-11-30",
       "RecurrenceTimeZone": "Romance Standard Time",
       "NumberOfOccurrences": 0
     }
