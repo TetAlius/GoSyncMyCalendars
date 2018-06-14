@@ -213,33 +213,25 @@ type OutlookPatternedRecurrence struct {
 }
 
 type OutlookRecurrencePattern struct {
-	Type           string             `json:"Type,omitempty"`
-	Interval       int                `json:"Interval,omitempty"`
-	DayOfMonth     int                `json:"DayOfMonth,omitempty"`
-	Month          int                `json:"Month,omitempty"`
-	DaysOfWeek     []OutlookDayOfWeek `json:"DaysOfWeek,omitempty"`
-	FirstDayOfWeek OutlookDayOfWeek   `json:"DayOfWeek,omitempty"`
-	Index          string             `json:"Index,omitempty"`
+	// The recurrence pattern type: Daily, Weekly, AbsoluteMonthly, RelativeMonthly, AbsoluteYearly, RelativeYearly.
+	Type       string `json:"Type,omitempty"`
+	Interval   int    `json:"Interval,omitempty"`
+	DayOfMonth int    `json:"DayOfMonth,omitempty"`
+	Month      int    `json:"Month,omitempty"`
+	// The day of the week: Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday.
+	DaysOfWeek     []string `json:"DaysOfWeek,omitempty"`
+	FirstDayOfWeek string   `json:"FirstDayOfWeek,omitempty"`
+	// The week index: First, Second, Third, Fourth, Last.
+	Index string `json:"Index,omitempty"`
 }
 
-// The recurrence pattern type: Daily = 0, Weekly = 1, AbsoluteMonthly = 2, RelativeMonthly = 3, AbsoluteYearly = 4, RelativeYearly = 5.
-type OutlookRecurrencePatternType string
-
-// The day of the week: Sunday = 0, Monday = 1, Tuesday = 2, Wednesday = 3, Thursday = 4, Friday = 5, Saturday = 6.
-type OutlookDayOfWeek int32
-
-// The week index: First = 0, Second = 1, Third = 2, Fourth = 3, Last = 4.
-type OutlookWeekIndex int32
-
 type OutlookRecurrenceRange struct {
+	// The recurrence range: EndDate, NoEnd, Numbered.
 	Type                string `json:"Type,omitempty"`
 	StartDate           string `json:"StartDate,omitempty"` //"2014-10-19T23:13:47.3959685Z" TODO
 	EndDate             string `json:"EndDate,omitempty"`   //"2014-10-19T23:13:47.3959685Z" TODO
-	NumberOfOccurrences int32  `json:"NumberOfOccurrences,omitempty"`
+	NumberOfOccurrences int    `json:"NumberOfOccurrences,omitempty"`
 }
-
-// The recurrence range: EndDate = 0, NoEnd = 1, Numbered = 2.
-type OutlookRecurrenceRangeType int32
 
 type OutlookResponseStatus struct {
 	Response OutlookResponseType `json:"Response,omitempty"`
