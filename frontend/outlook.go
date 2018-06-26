@@ -23,7 +23,7 @@ func (s *Server) outlookSignInHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, route, http.StatusFound)
 }
 
-func (s *Server) OutlookTokenHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) outlookTokenHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	if len(query.Get("error")) > 0 {
 		log.Errorf("google authorization with error: %s", query.Get("error"))

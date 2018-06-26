@@ -8,18 +8,27 @@ import (
 	"github.com/google/uuid"
 )
 
+// Calendar mapped from db
 type Calendar struct {
-	UUID             uuid.UUID
-	AccountEmail     string
-	Account          Account
-	Name             string
-	ID               string
-	ParentUUID       uuid.UUID
-	Events           []Event
+	// UUID of the calendar
+	UUID uuid.UUID
+	// Email associated to the account
+	AccountEmail string
+	// Account which the calendar belongs to
+	Account Account
+	// Name of the calendar
+	Name string
+	// ID of the calendar
+	ID string
+	// Parent calendar of the calendar
+	ParentUUID uuid.UUID
+	// Subscription uuid of the calendar
 	SubscriptionUUID uuid.UUID
-	Calendars        []Calendar
+	// List of calendars that are related to this one
+	Calendars []Calendar
 }
 
+// Function that creates a new instance of the calendar given specific info
 func newCalendar(id string, name string, uid uuid.UUID, accountEmail string, account Account, subscriptionUUID uuid.UUID) Calendar {
 	return Calendar{
 		ID:               id,
@@ -32,6 +41,7 @@ func newCalendar(id string, name string, uid uuid.UUID, accountEmail string, acc
 
 }
 
+// Method that finds all calendars related to an account
 func (data Database) findCalendars(account *Account) (err error) {
 	rows, err := data.client.Query("select calendars.id, calendars.name, calendars.uuid, s2.uuid from calendars join accounts a on calendars.account_email = a.email left outer join subscriptions s2 on calendars.uuid = s2.calendar_uuid where a.id=$1 order by calendars.name ASC", account.ID)
 	if err != nil {
@@ -63,6 +73,7 @@ func (data Database) findCalendars(account *Account) (err error) {
 
 }
 
+// Method that deletes a calendar from user
 func (data Database) deleteFromUser(calendar Calendar, user *User) (err error) {
 	stmt, err := data.client.Prepare("delete from calendars using accounts where calendars.account_email = accounts.email and accounts.user_uuid = $1 and calendars.uuid = $2")
 	defer stmt.Close()
@@ -89,6 +100,7 @@ func (data Database) deleteFromUser(calendar Calendar, user *User) (err error) {
 
 }
 
+// Method that updates a calendar from user
 func (data Database) updateCalendarFromUser(user *User, calendarUUID string, parentUUID string) (err error) {
 	stmt, err := data.client.Prepare("update calendars set parent_calendar_uuid = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid = $2 and calendars.uuid = $3;")
 	if err != nil {
@@ -123,6 +135,7 @@ func (data Database) updateCalendarFromUser(user *User, calendarUUID string, par
 	return
 }
 
+// Method that retrieves all related calendar to a given one
 func (data Database) setSynchronizedCalendars(calendar *Calendar, principal bool) (err error) {
 	var query string
 	if principal {

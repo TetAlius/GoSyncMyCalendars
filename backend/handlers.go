@@ -11,6 +11,7 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
+// Method that process the request of a google notification to our server
 func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	if s.worker.IsClosed() {
 		serverError(w)
@@ -19,9 +20,6 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		header := r.Header
-		//TODO: look here what was the change of the resource
-		//Google does not give the change of resource
-		//Possible changes include the creation of a new resource, or the modification or deletion of an existing resource.
 		channelID := header.Get("X-Goog-Channel-ID")
 		resourceID := header.Get("X-Goog-Resource-ID")
 		resourceState := header.Get("X-Goog-Resource-State")
@@ -46,6 +44,7 @@ func (s *Server) GoogleWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Method that process the request of a outlook notification to our server
 func (s *Server) OutlookWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	if s.worker.IsClosed() {
 		serverError(w)

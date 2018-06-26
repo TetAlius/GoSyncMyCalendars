@@ -12,6 +12,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+// Function that parses the JSON of the request to a OutlookAccount
 func NewOutlookAccount(contents []byte) (a *OutlookAccount, err error) {
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
@@ -27,6 +28,7 @@ func NewOutlookAccount(contents []byte) (a *OutlookAccount, err error) {
 	return
 }
 
+// Function that returns a OutlookAccount given specific info
 func RetrieveOutlookAccount(tokenType string, refreshToken string, email string, kind int, accessToken string) (a *OutlookAccount) {
 	a = new(OutlookAccount)
 	a.TokenType = tokenType
@@ -37,6 +39,7 @@ func RetrieveOutlookAccount(tokenType string, refreshToken string, email string,
 	return
 }
 
+// Method to refresh the access to the outlook account
 func (a *OutlookAccount) Refresh() (err error) {
 	client := http.Client{}
 	//check if token is DEAD!!!
@@ -95,6 +98,9 @@ func (a *OutlookAccount) Refresh() (err error) {
 	return
 }
 
+// Method that retrieves all calendars from account
+//
+// GET https://outlook.office.com/api/v2.0/me/calendars
 func (a *OutlookAccount) GetAllCalendars() (calendars []CalendarManager, err error) {
 	log.Debugln("getAllCalendars outlook")
 
@@ -132,6 +138,9 @@ func (a *OutlookAccount) GetAllCalendars() (calendars []CalendarManager, err err
 	return
 }
 
+// Method that retrieves one calendar given an ID
+//
+// GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 func (a *OutlookAccount) GetCalendar(calendarID string) (calendar CalendarManager, err error) {
 	if len(calendarID) == 0 {
 		return calendar, errors.New("no ID for calendar was given")
@@ -168,6 +177,9 @@ func (a *OutlookAccount) GetCalendar(calendarID string) (calendar CalendarManage
 	return
 }
 
+// Method that returns the principal calendar from the account
+//
+// GET https://outlook.office.com/api/v2.0/me/calendar
 func (a *OutlookAccount) GetPrimaryCalendar() (calendar CalendarManager, err error) {
 	log.Debugln("getPrimaryCalendar outlook")
 
@@ -203,42 +215,52 @@ func (a *OutlookAccount) GetPrimaryCalendar() (calendar CalendarManager, err err
 	return
 }
 
+// Method that format the authorization request
 func (a *OutlookAccount) AuthorizationRequest() (auth string) {
 	return fmt.Sprintf("%s %s", a.TokenType, a.AccessToken)
 }
 
+// Method that returns the mail associated with the account
 func (a *OutlookAccount) Mail() string {
 	return a.AnchorMailbox
 }
 
+// Method that sets which kind of account is
 func (a *OutlookAccount) SetKind(kind int) {
 	a.Kind = kind
 }
 
+// Method that returns the token type
 func (a *OutlookAccount) GetTokenType() string {
 	return a.TokenType
 }
 
+// Method that returns the refresh token
 func (a *OutlookAccount) GetRefreshToken() string {
 	return a.RefreshToken
 }
 
+// Method that returns the kind of the account
 func (a *OutlookAccount) GetKind() int {
 	return a.Kind
 }
 
+// Method that returns the access token
 func (a *OutlookAccount) GetAccessToken() string {
 	return a.AccessToken
 }
 
+// Method that returns the internal ID given to the account on DB
 func (a *OutlookAccount) GetInternalID() int {
 	return a.InternID
 }
 
+// Method that sets all synced calendars associated with the account
 func (a *OutlookAccount) SetCalendars(calendars []CalendarManager) {
 	a.calendars = calendars
 }
 
+// Method that returns all synced calendars associated with the account
 func (a *OutlookAccount) GetSyncCalendars() []CalendarManager {
 	return a.calendars
 }

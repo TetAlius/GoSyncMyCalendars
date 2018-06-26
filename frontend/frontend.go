@@ -28,9 +28,11 @@ import (
 	"github.com/google/uuid"
 )
 
-//Frontend object
+// FrontEnd server
 type Server struct {
-	IP       net.IP
+	// IP of the server
+	IP net.IP
+	// Port of the server
 	Port     int
 	server   *http.Server
 	mux      http.Handler
@@ -38,6 +40,8 @@ type Server struct {
 	sentry   *raven.Client
 }
 
+// Struct in which the different info that must be showed to the user
+// is stored
 type PageInfo struct {
 	PageTitle string
 	User      db.User
@@ -65,11 +69,12 @@ var funcMap = template.FuncMap{
 	},
 }
 
+// Method that process a requests to the server
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
 
-//NewFrontend creates a frontend
+// Function that creates a new frontend given specific info
 func NewServer(ip string, port int, dir string, database *sql.DB, sentry *raven.Client) *Server {
 	mux := http.NewServeMux()
 	root = dir
@@ -88,7 +93,7 @@ func NewServer(ip string, port int, dir string, database *sql.DB, sentry *raven.
 	mux.HandleFunc("/google", server.googleTokenHandler)
 
 	mux.HandleFunc("/SignInWithOutlook", server.outlookSignInHandler)
-	mux.HandleFunc("/outlook", server.OutlookTokenHandler)
+	mux.HandleFunc("/outlook", server.outlookTokenHandler)
 
 	mux.HandleFunc("/calendars", server.calendarListHandler)
 	mux.HandleFunc("/calendars/", server.calendarHandler)
@@ -100,6 +105,7 @@ func NewServer(ip string, port int, dir string, database *sql.DB, sentry *raven.
 	return &server
 }
 
+// Function that adds context to the requests, sending the session cookie inside
 func AddContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, _ := r.Cookie("session")
@@ -112,7 +118,7 @@ func AddContext(next http.Handler) http.Handler {
 	})
 }
 
-//Start the frontend
+// Method that starts the frontend
 func (s *Server) Start() (err error) {
 	log.Debugln("Start frontend")
 
@@ -132,7 +138,6 @@ func (s *Server) Start() (err error) {
 	return
 }
 
-//indexHandler load the index.html web page
 func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// 404 page
 	if r.URL.Path != "/" {
@@ -389,7 +394,7 @@ func (s *Server) manageSession(w http.ResponseWriter, r *http.Request) (*db.User
 	return user, true
 }
 
-//Stop the frontend
+// Method that stops the frontend
 func (s *Server) Stop() (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 	log.Debugf("Stopping frontend with ctx: %s", ctx)
@@ -406,6 +411,8 @@ func (s *Server) Stop() (err error) {
 	}
 	return returnErr
 }
+
+// Creates a user from a token
 func userFromToken(tokens []string) (user *db.User, err error) {
 	if len(tokens) < 2 {
 		return nil, errors.New("TokenID was not parsed correctly")

@@ -12,11 +12,13 @@ import (
 
 	"reflect"
 
-	conv "github.com/TetAlius/GoSyncMyCalendars/convert"
+	"github.com/TetAlius/GoSyncMyCalendars/convert"
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+// Method that creates the event
+//
 // POST https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
 func (event *GoogleEvent) Create() (err error) {
 	a := event.GetCalendar().GetAccount()
@@ -54,6 +56,8 @@ func (event *GoogleEvent) Create() (err error) {
 	return
 }
 
+// Method that updates the event
+//
 // PUT https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
 func (event *GoogleEvent) Update() (err error) {
 	a := event.GetCalendar().GetAccount()
@@ -90,6 +94,8 @@ func (event *GoogleEvent) Update() (err error) {
 	return
 }
 
+// Method that deletes the event
+//
 // DELETE https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
 func (event *GoogleEvent) Delete() (err error) {
 	a := event.GetCalendar().GetAccount()
@@ -122,22 +128,27 @@ func (event *GoogleEvent) Delete() (err error) {
 	return
 }
 
+// Method that returns the ID of the event
 func (event *GoogleEvent) GetID() string {
 	return event.ID
 }
 
+// Method that returns the calendar which have this event
 func (event *GoogleEvent) GetCalendar() CalendarManager {
 	return event.calendar
 }
 
+// Method that returns the syncing events with this
 func (event *GoogleEvent) GetRelations() []EventManager {
 	return event.relations
 }
 
+// Method that checks if the event can try sync again
 func (event *GoogleEvent) CanProcessAgain() bool {
 	return event.exponentialBackoff < maxBackoff
 }
 
+// Method that returns the calendar which have this event
 func (event *GoogleEvent) SetCalendar(calendar CalendarManager) (err error) {
 	switch x := calendar.(type) {
 	case *GoogleCalendar:
@@ -148,34 +159,37 @@ func (event *GoogleEvent) SetCalendar(calendar CalendarManager) (err error) {
 	return
 }
 
+// Method that sets the events syncing with this
 func (event *GoogleEvent) SetRelations(relations []EventManager) {
 	event.relations = relations
 }
 
-func (event *GoogleEvent) MarkWrong() {
-	//	TODO: Implement marking to db
-	log.Fatalf("not implemented yet. ID: %s", event.GetID())
-}
-
+// Method that increments the number of failed attempts to sync
 func (event *GoogleEvent) IncrementBackoff() {
 	event.exponentialBackoff += 1
 }
 
+// Method that sets the state of the event
 func (event *GoogleEvent) SetState(stateInformed int) {
 	event.state = stateInformed
 }
 
+// Method that returns the state of the event
 func (event *GoogleEvent) GetState() int {
 	return event.state
 }
 
+// Method that sets the internal ID generated on db
 func (event *GoogleEvent) SetInternalID(internalID int) {
 	event.internalID = internalID
 }
+
+// Method that gets the internal ID of the event
 func (event *GoogleEvent) GetInternalID() int {
 	return event.internalID
 }
 
+// Method that returns the last update date
 func (event *GoogleEvent) GetUpdatedAt() (t time.Time, err error) {
 	t, err = time.Parse(time.RFC3339, event.Updated)
 	if err != nil {
@@ -186,6 +200,8 @@ func (event *GoogleEvent) GetUpdatedAt() (t time.Time, err error) {
 	return t.UTC(), nil
 }
 
+// Method that converts from a JSON to a GoogleTime struct.
+// This method implements Unmarshaler interface
 func (date *GoogleTime) UnmarshalJSON(b []byte) error {
 	var s map[string]string
 	if err := json.Unmarshal(b, &s); err != nil {
@@ -214,6 +230,8 @@ func (date *GoogleTime) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// Method that converts from GoogleTime struct to a json.
+// This method implements Marshaler interface
 func (date *GoogleTime) MarshalJSON() ([]byte, error) {
 	if date.DateTime.IsZero() && date.Date.IsZero() {
 		return bytes.NewBufferString("{}").Bytes(), nil
@@ -240,14 +258,20 @@ func (date *GoogleTime) MarshalJSON() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
+// Method that converts from a JSON to a GoogleRecurrence struct.
+// This method implements Unmarshaler interface
 func (recurrences *GoogleRecurrence) MarshalJSON() ([]byte, error) {
 	return bytes.NewBufferString("").Bytes(), nil
 }
 
+// Method that converts from GoogleRecurrence struct to a json.
+// This method implements Marshaler interface
 func (recurrences *GoogleRecurrence) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// Method that converts a GoogleTime struct to a interface{}.
+// This method implements Deconverter interface
 func (date *GoogleTime) Deconvert() interface{} {
 	m := make(map[string]interface{})
 	var value time.Time
@@ -278,7 +302,9 @@ func (date *GoogleTime) Deconvert() interface{} {
 	return m
 }
 
-func (*GoogleTime) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
+// Method that converts an interface{} ti a GoogleTime struct.
+// This method implements Converter interface
+func (*GoogleTime) Convert(m interface{}, tag string, opts string) (convert.Converter, error) {
 	d := m.(map[string]interface{})
 
 	dateTime, ok := d["dateTime"].(time.Time)
@@ -297,6 +323,7 @@ func (*GoogleTime) Convert(m interface{}, tag string, opts string) (conv.Convert
 	return &GoogleTime{DateTime: dateTime, Date: dateTime, TimeZone: timeZone, IsAllDay: isAllDay}, nil
 }
 
+// Method that sets all day to the necessary attributes
 func (event *GoogleEvent) setAllDay() {
 	if event.Start == nil && event.End == nil {
 		event.IsAllDay = false

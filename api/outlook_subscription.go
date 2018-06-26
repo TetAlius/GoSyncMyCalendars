@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Function that creates a new GoogleSubscription given specific info
 func NewOutlookSubscription() (subscription *OutlookSubscription) {
 	subscription = new(OutlookSubscription)
 	subscription.NotificationURL = fmt.Sprintf("%s:8081/outlook/watcher", os.Getenv("ENDPOINT"))
@@ -25,6 +26,8 @@ func NewOutlookSubscription() (subscription *OutlookSubscription) {
 	subscription.Uuid = uuid.New()
 	return
 }
+
+// Function that returns a GoogleSubscription given specific info
 func RetrieveOutlookSubscription(ID string, uid uuid.UUID, calendar CalendarManager, typ string) (subscription *OutlookSubscription) {
 	subscription = new(OutlookSubscription)
 	subscription.ID = ID
@@ -34,6 +37,7 @@ func RetrieveOutlookSubscription(ID string, uid uuid.UUID, calendar CalendarMana
 	return
 }
 
+// Method that manages the data for a renewal
 func manageRenewalData(subscription *OutlookSubscription) (data []byte, err error) {
 	renewal := new(OutlookSubscription)
 	renewal.Type = subscription.Type
@@ -42,6 +46,8 @@ func manageRenewalData(subscription *OutlookSubscription) (data []byte, err erro
 	return
 }
 
+// Method that subscribes calendar for notifications
+//
 // POST https://outlook.office.com/api/v2.0/me/subscriptions
 func (subscription *OutlookSubscription) Subscribe(calendar CalendarManager) (err error) {
 	if err = subscription.setCalendar(calendar); err != nil {
@@ -89,7 +95,9 @@ func (subscription *OutlookSubscription) Subscribe(calendar CalendarManager) (er
 	return
 }
 
-//PATCH https://outlook.office.com/api/v2.0/me/subscriptions/{subscriptionId}
+// Method that renews subscription.
+//
+// PATCH https://outlook.office.com/api/v2.0/me/subscriptions/{subscriptionId}
 func (subscription *OutlookSubscription) Renew() (err error) {
 	a := subscription.calendar.GetAccount()
 
@@ -122,7 +130,9 @@ func (subscription *OutlookSubscription) Renew() (err error) {
 	return
 }
 
-//DELETE https://outlook.office.com/api/v2.0/me/subscriptions('{subscriptionId}')
+// Method that deletes subscription
+//
+// DELETE https://outlook.office.com/api/v2.0/me/subscriptions('{subscriptionId}')
 func (subscription *OutlookSubscription) Delete() (err error) {
 	a := subscription.calendar.GetAccount()
 	log.Debugln("Delete outlook subscription")
@@ -148,26 +158,27 @@ func (subscription *OutlookSubscription) Delete() (err error) {
 	return
 }
 
+// Method that returns the ID of the subscription
 func (subscription *OutlookSubscription) GetID() string {
 	return subscription.ID
 }
 
+// Method that returns the UUID of the subscription
 func (subscription *OutlookSubscription) GetUUID() uuid.UUID {
 	return subscription.Uuid
 }
 
+// Method that returns the account of the subscription
 func (subscription *OutlookSubscription) GetAccount() AccountManager {
 	return subscription.calendar.account
 }
 
+// Method that returns the type of the subscription
 func (subscription *OutlookSubscription) GetType() string {
 	return subscription.Type
 }
-func (subscription *OutlookSubscription) SetCalendar(calendar *OutlookCalendar) {
-	subscription.calendar = calendar
-}
 
-//TODO improve this
+// Method that sets the expiration time to the subscription
 func (subscription *OutlookSubscription) setTime() {
 	expiration, err := time.Parse(time.RFC3339Nano, subscription.ExpirationDateTime)
 	if err != nil {
@@ -177,6 +188,7 @@ func (subscription *OutlookSubscription) setTime() {
 	subscription.expirationDate = expiration
 }
 
+// Method that sets the calendar to be watched by subscription
 func (subscription *OutlookSubscription) setCalendar(calendar CalendarManager) (err error) {
 	switch calendar.(type) {
 	case *OutlookCalendar:
@@ -188,10 +200,12 @@ func (subscription *OutlookSubscription) setCalendar(calendar CalendarManager) (
 	return
 }
 
+// Method that returns the expiration date of the subscription
 func (subscription *OutlookSubscription) GetExpirationDate() time.Time {
 	return subscription.expirationDate
 }
 
+// Method that returns the resourceID of the subscription
 func (subscription *OutlookSubscription) GetResourceID() string {
 	return ""
 }

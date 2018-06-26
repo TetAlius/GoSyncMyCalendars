@@ -18,6 +18,7 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
+// Function that retrieves an email from a JSON token
 func MailFromToken(tokens []string) (email string, preferred bool, err error) {
 	if len(tokens) < 2 {
 		return "", false, errors.New("TokenID was not parsed correctly")
@@ -63,6 +64,7 @@ func MailFromToken(tokens []string) (email string, preferred bool, err error) {
 	return
 }
 
+// Function that calls AWS API Gateway in order to retrieve the request URI
 func CallAPIRoot(route string) (apiRoute string, err error) {
 	root := os.Getenv("API_ROOT")
 	if len(root) == 0 {
@@ -91,9 +93,7 @@ func CallAPIRoot(route string) (apiRoute string, err error) {
 	return strings.Replace(string(contents[:]), "\"", "", -1), nil
 }
 
-//DoRequest TODO Creates and executes the request for all petitions
-//TODO return responseCode
-//and returns the JSON so that it can be parsed into the correct struct
+// Function that manages all requests by the info given
 func DoRequest(method string, url string, body io.Reader, headers map[string]string, params map[string]string) (contents []byte, err error) {
 	client := &http.Client{
 		Timeout: time.Second * 30,
@@ -103,7 +103,6 @@ func DoRequest(method string, url string, body io.Reader, headers map[string]str
 		return contents, errors.New(fmt.Sprintf("error creating new request: %s", err.Error()))
 	}
 
-	//Set all headers for request
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}

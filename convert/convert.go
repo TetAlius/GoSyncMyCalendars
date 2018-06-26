@@ -7,6 +7,7 @@ import (
 )
 
 type Converter interface {
+	// Method use to convert from an interface{} to a struct
 	Convert(interface{}, string, string) (Converter, error)
 }
 
@@ -19,6 +20,7 @@ func parseTag(tag string) (string, string) {
 	return tag, string("")
 }
 
+// Function that starts a conversion between to different models
 func Convert(from interface{}, to interface{}) error {
 	v := reflect.ValueOf(to)
 	if v.Kind() == reflect.Ptr && v.IsNil() {
@@ -29,6 +31,7 @@ func Convert(from interface{}, to interface{}) error {
 	return conversion(v, m)
 }
 
+// function that loops in all attributes and sets the deconverted info
 func conversion(val reflect.Value, from map[string]interface{}) (err error) {
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()

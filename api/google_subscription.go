@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Function that creates a new GoogleSubscription given specific info
 func NewGoogleSubscription(ID string) (subscription *GoogleSubscription) {
 	subscription = new(GoogleSubscription)
 	subscription.NotificationURL = fmt.Sprintf("%s:8081/google/watcher", os.Getenv("ENDPOINT"))
@@ -25,6 +26,7 @@ func NewGoogleSubscription(ID string) (subscription *GoogleSubscription) {
 	return
 }
 
+// Function that returns a GoogleSubscription given specific info
 func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManager, resourceID string) (subscription *GoogleSubscription) {
 	subscription = new(GoogleSubscription)
 	subscription.ID = ID
@@ -34,13 +36,15 @@ func RetrieveGoogleSubscription(ID string, uid uuid.UUID, calendar CalendarManag
 	return
 }
 
+// Method that manages the data for a renewal
 func (subscription *GoogleSubscription) manageRenewalData() {
 	subscription.ID = uuid.New().String()
 	subscription.NotificationURL = fmt.Sprintf("%s:8081/google/watcher", os.Getenv("ENDPOINT"))
 	subscription.Type = "web_hook"
 }
 
-// POST https://www.googleapis.com/apiName/apiVersion/resourcePath/watch
+// Method that subscribes calendar for notifications
+//
 // POST https://www.googleapis.com/calendar/v3/calendars/calendarId/events/watch
 func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err error) {
 	if err = subscription.setCalendar(calendar); err != nil {
@@ -82,19 +86,22 @@ func (subscription *GoogleSubscription) Subscribe(calendar CalendarManager) (err
 	return
 }
 
-//Google does not let subscription be renewed
-//A new subscription must be request
+// Method that renews subscription.
+// Google does not let a subscription be renewed so
+// a new subscription must be request
 func (subscription *GoogleSubscription) Renew() (err error) {
 	log.Debugln("Renew google subscription")
 	subscription.manageRenewalData()
 	return subscription.Subscribe(subscription.calendar)
 }
 
-//POST https://www.googleapis.com/calendar/v3/channels/stop
+// Method that deletes subscription
+//
+// POST https://www.googleapis.com/calendar/v3/channels/stop
 func (subscription *GoogleSubscription) Delete() (err error) {
 	a := subscription.calendar.GetAccount()
 	log.Debugln("Delete google subscription")
-	//TODO: this URL
+
 	route, err := util.CallAPIRoot("google/calendars/subscription/stop")
 	if err != nil {
 		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
@@ -121,25 +128,32 @@ func (subscription *GoogleSubscription) Delete() (err error) {
 	return
 }
 
+// Method that returns the ID of the subscription
 func (subscription *GoogleSubscription) GetID() string {
 	return subscription.ID
 }
+
+// Method that returns the UUID of the subscription
 func (subscription *GoogleSubscription) GetUUID() uuid.UUID {
 	return subscription.Uuid
 }
+
+// Method that returns the account of the subscription
 func (subscription *GoogleSubscription) GetAccount() AccountManager {
 	return subscription.calendar.account
 }
 
+// Method that returns the type of the subscription
 func (subscription *GoogleSubscription) GetType() string {
 	return subscription.Type
 }
 
-//TODO improve this
+// Method that sets the expiration time to the subscription
 func (subscription *GoogleSubscription) setTime() {
 	subscription.expirationDate = time.Unix(subscription.Expiration/1000, 0)
 }
 
+// Method that sets the calendar to be watched by subscription
 func (subscription *GoogleSubscription) setCalendar(calendar CalendarManager) (err error) {
 	switch calendar.(type) {
 	case *GoogleCalendar:
@@ -151,10 +165,12 @@ func (subscription *GoogleSubscription) setCalendar(calendar CalendarManager) (e
 	return
 }
 
+// Method that returns the expiration date of the subscription
 func (subscription *GoogleSubscription) GetExpirationDate() time.Time {
 	return subscription.expirationDate
 }
 
+// Method that returns the resourceID of the subscription
 func (subscription *GoogleSubscription) GetResourceID() string {
 	return subscription.ResourceID
 }

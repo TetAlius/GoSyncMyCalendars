@@ -13,6 +13,7 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
+// Method that retrieves an AccountManager from the DB
 func (data Database) RetrieveAccount(userUUID string, ID string) (account api.AccountManager, err error) {
 	account, err = data.findAccountFromUser(userUUID, ID)
 	if err != nil {
@@ -22,6 +23,7 @@ func (data Database) RetrieveAccount(userUUID string, ID string) (account api.Ac
 	return
 }
 
+// Returns account from user given the internal id
 func (data Database) findAccountFromUser(userUUID string, internalID string) (account api.AccountManager, err error) {
 	var email string
 	var kind int
@@ -54,6 +56,7 @@ func (data Database) findAccountFromUser(userUUID string, internalID string) (ac
 
 }
 
+// Method that updates the account info of a subscription
 func (data Database) UpdateAccountFromSubscription(account api.AccountManager, subscription api.SubscriptionManager) (err error) {
 	stmt, err := data.client.Prepare("update accounts set token_type = $1, refresh_token = $2, access_token = $3 from subscriptions, calendars where subscriptions.uuid = $4 and subscriptions.calendar_uuid = calendars.uuid and calendars.account_email = accounts.email and accounts.email=$5")
 	if err != nil {
@@ -83,6 +86,7 @@ func (data Database) UpdateAccountFromSubscription(account api.AccountManager, s
 
 }
 
+// Method that updates the account info of a user
 func (data Database) UpdateAccountFromUser(account api.AccountManager, userUUID string) (err error) {
 	stmt, err := data.client.Prepare("update accounts set (token_type,refresh_token,access_token) = ($1,$2,$3) where accounts.email = $4 and accounts.user_uuid =$5;")
 	if err != nil {
@@ -112,6 +116,7 @@ func (data Database) UpdateAccountFromUser(account api.AccountManager, userUUID 
 
 }
 
+// Method that updates the account info
 func (data Database) UpdateAccount(account api.AccountManager) {
 	stmt, err := data.client.Prepare("update accounts set (token_type,refresh_token,access_token) = ($1,$2,$3) where accounts.email = $4;")
 	if err != nil {

@@ -25,9 +25,11 @@ import (
 	"github.com/getsentry/raven-go"
 )
 
-//Backend object
+// Backend server
 type Server struct {
-	IP       net.IP
+	// IP of the server
+	IP net.IP
+	// Port of the server
 	Port     int
 	server   *http.Server
 	mux      *http.ServeMux
@@ -37,11 +39,12 @@ type Server struct {
 	sentry   *raven.Client
 }
 
+// Method that process a requests to the server
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
 
-//NewBackend creates a backend
+// Function that creates a new backend given specific info
 func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry *raven.Client) *Server {
 	data := db.New(database, sentry)
 	server := Server{IP: net.ParseIP(ip), Port: port, mux: http.NewServeMux(), worker: worker.New(maxWorker, data), database: data, sentry: sentry}
@@ -53,7 +56,7 @@ func NewServer(ip string, port int, maxWorker int, database *sql.DB, sentry *rav
 	return &server
 }
 
-//Start the backend
+// Method that starts the backend
 func (s *Server) Start() (err error) {
 	go s.worker.Start()
 	log.Debugln("Start backend")
@@ -73,7 +76,7 @@ func (s *Server) Start() (err error) {
 	return
 }
 
-//Stop the backend
+// Method that stops the backend
 func (s *Server) Stop() (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 	log.Debugf("Stopping backend with ctx: %s", ctx)

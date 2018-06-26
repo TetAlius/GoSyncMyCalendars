@@ -16,23 +16,30 @@ const (
 	stateQuit
 )
 
+// Object that manages the different kinds of synchronization
 type Worker struct {
 	Events   chan api.EventManager
 	state    int
 	database db.Database
 }
 
+// Function that returns a new worker from given info
 func New(maxWorkers int, database db.Database) (worker *Worker) {
 	worker = &Worker{Events: make(chan api.EventManager), state: stateInitial, database: database}
 	return
 }
+
+// Method that returns whether the channel is closed
 func (worker *Worker) IsClosed() bool {
 	return worker.state == stateQuit
 }
+
+// Method that starts the processing of the worker
 func (worker *Worker) Start() {
 	worker.Process()
 }
 
+// Method that stops the processing of the worker
 func (worker *Worker) Stop() (err error) {
 	worker.state = stateQuit
 	log.Debugln("closing workers")
@@ -41,6 +48,7 @@ func (worker *Worker) Stop() (err error) {
 	return
 }
 
+// Method that process all requests of sync
 func (worker *Worker) Process() {
 	var event api.EventManager
 	for worker.state != stateQuit {
@@ -53,15 +61,18 @@ func (worker *Worker) Process() {
 	}
 }
 
+// Specific synchronization error
 type SynchronizeError struct {
 	State int
 	ID    string
 }
 
+// Method to implement the interface error
 func (err SynchronizeError) Error() string {
 	return fmt.Sprintf("state: %d not suported for event with ID: %s", err.State, err.ID)
 }
 
+// Method that process a specific request of sync
 func (worker *Worker) processSynchronization(event api.EventManager) {
 	if event.GetState() == api.Updated && worker.database.EventAlreadyUpdated(event) {
 		return
@@ -94,14 +105,13 @@ func (worker *Worker) processSynchronization(event api.EventManager) {
 					}
 				}
 			}()
-		} else if err != nil {
-			event.MarkWrong()
 		}
 
 	}
 	return
 }
 
+// Method that synchronize to events. If the request gets here, all database checks have passed
 func (worker *Worker) synchronizeEvents(from api.EventManager, to api.EventManager) (err error) {
 	switch from.GetState() {
 	case api.Created:
@@ -116,6 +126,7 @@ func (worker *Worker) synchronizeEvents(from api.EventManager, to api.EventManag
 	return
 }
 
+// Method that manages an update
 func (worker *Worker) updateEvent(from api.EventManager, to api.EventManager) (err error) {
 	convert.Convert(from, to)
 	err = to.Update()
@@ -126,6 +137,8 @@ func (worker *Worker) updateEvent(from api.EventManager, to api.EventManager) (e
 	return worker.database.UpdateModificationDate(to)
 
 }
+
+// Method that manages a creation
 func (worker *Worker) createEvent(from api.EventManager, to api.EventManager) (err error) {
 	convert.Convert(from, to)
 	err = to.Create()
@@ -138,6 +151,7 @@ func (worker *Worker) createEvent(from api.EventManager, to api.EventManager) (e
 
 }
 
+// Method that manages a deletion
 func (worker *Worker) deleteEvent(from api.EventManager, to api.EventManager) (err error) {
 	if !worker.database.ExistsEvent(to) {
 		return nil

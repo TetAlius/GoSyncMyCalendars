@@ -18,6 +18,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+// Method that returns a GoogleCalendar given specific info
 func RetrieveGoogleCalendar(ID string, uid string, account *GoogleAccount) *GoogleCalendar {
 	cal := new(GoogleCalendar)
 	cal.ID = ID
@@ -26,6 +27,8 @@ func RetrieveGoogleCalendar(ID string, uid string, account *GoogleAccount) *Goog
 	return cal
 }
 
+// Method that updates the calendar
+//
 // PUT https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
 func (calendar *GoogleCalendar) Update() (err error) {
 	log.Debugln("updateCalendar google")
@@ -62,9 +65,10 @@ func (calendar *GoogleCalendar) Update() (err error) {
 	return
 }
 
+// Method that deletes the calendar
+//
 // DELETE https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarId}
 func (calendar *GoogleCalendar) Delete() (err error) {
-	//return
 	log.Debugln("Delete calendar")
 	route, err := util.CallAPIRoot("google/calendars/id")
 	if err != nil {
@@ -91,6 +95,8 @@ func (calendar *GoogleCalendar) Delete() (err error) {
 	return
 }
 
+// Method that creates the calendar
+//
 // POST https://www.googleapis.com/calendar/v3/calendars
 func (calendar *GoogleCalendar) Create() (err error) {
 	log.Debugln("createCalendar google")
@@ -125,6 +131,8 @@ func (calendar *GoogleCalendar) Create() (err error) {
 	return
 }
 
+// Method that returns all events inside the calendar
+//
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events
 func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error) {
 	log.Debugln("getAllEvents google")
@@ -167,6 +175,8 @@ func (calendar *GoogleCalendar) GetAllEvents() (events []EventManager, err error
 	return events, err
 }
 
+// Method that returns a single event given the ID
+//
 // GET https://www.googleapis.com/calendar/v3/calendars/{calendarID}/events/{eventID}
 func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, err error) {
 	log.Debugln("getEvent google")
@@ -214,38 +224,7 @@ func (calendar *GoogleCalendar) GetEvent(eventID string) (event EventManager, er
 	return
 }
 
-func (calendar *GoogleCalendar) Subscribe(a AccountManager) (err error) {
-	log.Debugln("subscribe calendar google")
-
-	route, err := util.CallAPIRoot("google/calendars/subscription")
-	log.Debugln(route)
-	if err != nil {
-		return errors.New(fmt.Sprintf("error generating URL: %s", err.Error()))
-	}
-
-	data := []byte(`{
-	  "id": "01234567-89ab-cdef-0123456789ab",
-	  "type": "web_hook",
-	  "address": "https://mcbjyngjgh.execute-api.eu-west-1.amazonaws.com/prod/testing"
-	}`)
-
-	headers := make(map[string]string)
-	headers["Authorization"] = a.AuthorizationRequest()
-	headers["X-AnchorMailbox"] = a.Mail()
-
-	contents, err := util.DoRequest(http.MethodPost,
-		route,
-		bytes.NewBuffer(data),
-		headers, nil)
-
-	err = createGoogleResponseError(contents)
-	if err != nil {
-		return err
-	}
-
-	return
-}
-
+// Method that sets the account which the calendar belongs
 func (calendar *GoogleCalendar) SetAccount(a AccountManager) (err error) {
 	switch x := a.(type) {
 	case *GoogleAccount:
@@ -256,41 +235,48 @@ func (calendar *GoogleCalendar) SetAccount(a AccountManager) (err error) {
 	return
 }
 
+// Method that returns the ID formatted for a query request
 func (calendar *GoogleCalendar) GetQueryID() string {
 	return url.QueryEscape(calendar.GetID())
 }
 
+// Method that returns the ID of the calendar
 func (calendar *GoogleCalendar) GetID() string {
 	return calendar.ID
 }
 
+// Method that returns the name of the calendar
 func (calendar *GoogleCalendar) GetName() string {
 	return calendar.Name
 }
 
+// Method that returns the account
 func (calendar *GoogleCalendar) GetAccount() AccountManager {
 	return calendar.account
 }
 
+// Method that returns the internal UUID given to the calendar
 func (calendar *GoogleCalendar) GetUUID() string {
 	return calendar.uuid
 }
 
+// Method that sets the internal UUID for the calendar
 func (calendar *GoogleCalendar) SetUUID(id string) {
 	calendar.uuid = id
 }
-func (calendar *GoogleCalendar) SetName(name string) {
-	calendar.Name = name
-}
 
+// Method that sets the synced calendars
 func (calendar *GoogleCalendar) SetCalendars(calendars []CalendarManager) {
 	calendar.calendars = calendars
 
 }
+
+// Method that returns the synced calendar
 func (calendar *GoogleCalendar) GetCalendars() []CalendarManager {
 	return calendar.calendars
 }
 
+// Method that creates an empty event
 func (calendar *GoogleCalendar) CreateEmptyEvent(ID string) EventManager {
 	return &GoogleEvent{ID: ID, calendar: calendar}
 }

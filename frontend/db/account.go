@@ -12,18 +12,29 @@ import (
 	"github.com/lib/pq"
 )
 
+// Account mapped from db
 type Account struct {
-	User         *User
-	TokenType    string
+	// User that account belongs to
+	User *User
+	// TokenType of the account
+	TokenType string
+	// Refresh token of the account
 	RefreshToken string
-	Email        string
-	Kind         int
-	AccessToken  string
-	ID           int
-	Principal    bool
-	Calendars    []Calendar
+	// Email associated to the account
+	Email string
+	// Kind of the account
+	Kind int
+	// AccessToken of the account
+	AccessToken string
+	// InternalID of the account
+	ID int
+	// Whether if the account is the principal one
+	Principal bool
+	// List of all calendars associated to the account on DB
+	Calendars []Calendar
 }
 
+// Gets accounts given a user UUID
 func (data Database) getAccountsByUser(userUUID uuid.UUID) (principalAccount Account, accounts []Account, err error) {
 	rows, err := data.client.Query("SELECT accounts.token_type, accounts.refresh_token,accounts.email,accounts.kind,accounts.access_token,accounts.id, accounts.principal FROM accounts where user_uuid = $1 order by accounts.principal DESC, lower(accounts.email) ASC", userUUID)
 	if err != nil {
@@ -71,11 +82,13 @@ func (data Database) getAccountsByUser(userUUID uuid.UUID) (principalAccount Acc
 	return
 }
 
+// Gets calendars from an account
 func (data Database) FindCalendars(account *Account) (err error) {
 	return data.findCalendars(account)
 
 }
 
+// Saves an account to the db
 func (data Database) save(account Account) (id int, err error) {
 	err = data.client.QueryRow("insert into accounts(user_uuid,token_type,refresh_token,email,kind,access_token, principal) values ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
 		account.User.UUID, account.TokenType, account.RefreshToken, account.Email, account.Kind, account.AccessToken, account.Principal).Scan(&id)
@@ -94,6 +107,7 @@ func (data Database) save(account Account) (id int, err error) {
 
 }
 
+// Finds an Account from a db
 func (data Database) findAccount(account *Account) (err error) {
 	var email string
 	var kind int
@@ -117,6 +131,7 @@ func (data Database) findAccount(account *Account) (err error) {
 
 }
 
+// Stores a calendar from an account on db
 func (data Database) addCalendar(account Account, calendar Calendar) (err error) {
 	stmt, err := data.client.Prepare("insert into calendars(uuid, account_email, name, id) values ($1,$2,$3,$4);")
 	if err != nil {
@@ -146,6 +161,7 @@ func (data Database) addCalendar(account Account, calendar Calendar) (err error)
 	return
 }
 
+// Updates an account from a given user
 func (data Database) updateAccountFromUser(account Account, user *User) (id int, err error) {
 	stmt, err := data.client.Prepare("update accounts set (token_type,refresh_token,access_token) = ($1,$2,$3) where accounts.email = $4 and accounts.user_uuid =$5;")
 	if err != nil {
