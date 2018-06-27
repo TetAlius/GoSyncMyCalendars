@@ -17,6 +17,9 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+// Method that creates the event
+//
+// POST https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
 func (event *OutlookEvent) Create() (err error) {
 	a := event.GetCalendar().GetAccount()
 	log.Debugln("createEvent outlook")
@@ -57,6 +60,9 @@ func (event *OutlookEvent) Create() (err error) {
 	return
 }
 
+// Method that updates the event
+//
+// PATCH https://outlook.office.com/api/v2.0/me/events/{eventID}
 func (event *OutlookEvent) Update() (err error) {
 	a := event.GetCalendar().GetAccount()
 	log.Debugln("updateEvent outlook")
@@ -99,6 +105,8 @@ func (event *OutlookEvent) Update() (err error) {
 	return
 }
 
+// Method that deletes the event
+//
 // DELETE https://outlook.office.com/api/v2.0/me/events/{eventID}
 func (event *OutlookEvent) Delete() (err error) {
 	a := event.GetCalendar().GetAccount()
@@ -134,61 +142,68 @@ func (event *OutlookEvent) Delete() (err error) {
 	return
 }
 
+// Method that returns the ID of the event
 func (event *OutlookEvent) GetID() string {
 	return event.ID
 }
 
+// Method that returns the calendar which have this event
 func (event *OutlookEvent) GetCalendar() CalendarManager {
 	return event.calendar
 }
 
+// Method that returns the syncing events with this
 func (event *OutlookEvent) GetRelations() []EventManager {
 	return event.relations
 }
 
+// Method that returns the calendar which have this event
 func (event *OutlookEvent) SetCalendar(calendar CalendarManager) (err error) {
 	switch x := calendar.(type) {
 	case *OutlookCalendar:
 		event.calendar = x
 	default:
-		return errors.New(fmt.Sprintf("type of calendar not valid for google: %T", x))
+		return errors.New(fmt.Sprintf("type of calendar not valid for outlook: %T", x))
 	}
 	return
 }
 
+// Method that checks if the event can try sync again
 func (event *OutlookEvent) CanProcessAgain() bool {
 	return event.exponentialBackoff < maxBackoff
 }
 
+// Method that sets the events syncing with this
 func (event *OutlookEvent) SetRelations(relations []EventManager) {
 	event.relations = relations
 }
 
-func (event *OutlookEvent) MarkWrong() {
-	//	TODO: Implement marking to db
-	log.Fatalf("not implemented yet. ID: %s", event.GetID())
-}
-
+// Method that increments the number of failed attempts to sync
 func (event *OutlookEvent) IncrementBackoff() {
 	event.exponentialBackoff += 1
 }
 
+// Method that sets the state of the event
 func (event *OutlookEvent) SetState(stateInformed int) {
 	event.state = stateInformed
 }
 
+// Method that sets the internal ID generated on db
 func (event *OutlookEvent) SetInternalID(internalID int) {
 	event.internalID = internalID
 }
 
+// Method that gets the internal ID of the event
 func (event *OutlookEvent) GetInternalID() int {
 	return event.internalID
 }
 
+// Method that returns the state of the event
 func (event *OutlookEvent) GetState() int {
 	return event.state
 }
 
+// Method that returns the last update date
 func (event *OutlookEvent) GetUpdatedAt() (t time.Time, err error) {
 	//format := time.RFC3339Nano
 	//format := "2006-01-02T15:04:05.999999999"
@@ -200,6 +215,8 @@ func (event *OutlookEvent) GetUpdatedAt() (t time.Time, err error) {
 	return t.UTC(), nil
 }
 
+// Method that converts from a JSON to a OutlookDateTimeTimeZone struct.
+// This method implements Unmarshaler interface
 func (date *OutlookDateTimeTimeZone) UnmarshalJSON(b []byte) error {
 	var s map[string]string
 	if err := json.Unmarshal(b, &s); err != nil {
@@ -231,6 +248,8 @@ func (date *OutlookDateTimeTimeZone) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// Method that converts from OutlookDateTimeTimeZone struct to a json.
+// This method implements Marshaler interface
 func (date *OutlookDateTimeTimeZone) MarshalJSON() (b []byte, err error) {
 	if date.DateTime.IsZero() {
 		return bytes.NewBufferString("{}").Bytes(), nil
@@ -268,6 +287,8 @@ func (date *OutlookDateTimeTimeZone) MarshalJSON() (b []byte, err error) {
 	return buffer.Bytes(), nil
 }
 
+// Method that converts a OutlookDateTimeTimeZone struct to a interface{}.
+// This method implements Deconverter interface
 func (date *OutlookDateTimeTimeZone) Deconvert() interface{} {
 	m := make(map[string]interface{})
 	field, ok := reflect.TypeOf(date).Elem().FieldByName("DateTime")
@@ -293,10 +314,14 @@ func (date *OutlookDateTimeTimeZone) Deconvert() interface{} {
 	return m
 }
 
+// Method that converts a OutlookItemBody struct to a interface{}.
+// This method implements Deconverter interface
 func (body *OutlookItemBody) Deconvert() interface{} {
 	return body.Description
 }
 
+// Method that converts an interface{} ti a OutlookItemBody struct.
+// This method implements Converter interface
 func (*OutlookItemBody) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
 	desc, ok := m.(string)
 	if !ok {
@@ -305,6 +330,8 @@ func (*OutlookItemBody) Convert(m interface{}, tag string, opts string) (conv.Co
 	return &OutlookItemBody{Description: desc}, nil
 }
 
+// Method that converts an interface{} ti a OutlookDateTimeTimeZone struct.
+// This method implements Converter interface
 func (*OutlookDateTimeTimeZone) Convert(m interface{}, tag string, opts string) (conv.Converter, error) {
 	d := m.(map[string]interface{})
 
@@ -324,6 +351,7 @@ func (*OutlookDateTimeTimeZone) Convert(m interface{}, tag string, opts string) 
 	return &OutlookDateTimeTimeZone{DateTime: dateTime, TimeZone: timeZone, IsAllDay: isAllDay}, nil
 }
 
+// Method that sets all day to the necessary attributes
 func (event *OutlookEvent) setAllDay() {
 	event.Start.IsAllDay = event.IsAllDay
 	event.End.IsAllDay = event.IsAllDay

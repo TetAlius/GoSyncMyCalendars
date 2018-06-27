@@ -14,6 +14,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+// Function that parses the JSON of the request to a GoogleAccount
 func NewGoogleAccount(contents []byte) (a *GoogleAccount, err error) {
 	err = json.Unmarshal(contents, &a)
 	if err != nil {
@@ -32,6 +33,7 @@ func NewGoogleAccount(contents []byte) (a *GoogleAccount, err error) {
 	return
 }
 
+// Function that returns a GoogleAccount given specific info
 func RetrieveGoogleAccount(tokenType string, refreshToken string, email string, kind int, accessToken string) (a *GoogleAccount) {
 	a = new(GoogleAccount)
 	a.TokenType = tokenType
@@ -42,6 +44,7 @@ func RetrieveGoogleAccount(tokenType string, refreshToken string, email string, 
 	return
 }
 
+// Method to refresh the access to the google account
 func (a *GoogleAccount) Refresh() (err error) {
 	client := http.Client{}
 
@@ -97,7 +100,9 @@ func (a *GoogleAccount) Refresh() (err error) {
 
 }
 
-//GET https://www.googleapis.com/calendar/v3/users/me/calendarList
+// Method that retrieves all calendars from account
+//
+// GET https://www.googleapis.com/calendar/v3/users/me/calendarList
 func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err error) {
 
 	log.Debugln("getAllCalendars google")
@@ -134,6 +139,8 @@ func (a *GoogleAccount) GetAllCalendars() (calendars []CalendarManager, err erro
 	return
 }
 
+// Method that retrieves one calendar given an ID
+//
 // GET https://www.googleapis.com/calendar/v3/users/me/calendarList/{calendarID}
 func (a *GoogleAccount) GetCalendar(calendarID string) (calendar CalendarManager, err error) {
 	log.Debugln("getCalendar google")
@@ -168,8 +175,9 @@ func (a *GoogleAccount) GetCalendar(calendarID string) (calendar CalendarManager
 
 }
 
+// Method that returns the principal calendar from the account
+//
 // GET https://www.googleapis.com/calendar/v3/calendars/primary
-// GET https://www.googleapis.com/calendar/v3/users/me/calendarList/primary This is the one used
 func (a *GoogleAccount) GetPrimaryCalendar() (calendar CalendarManager, err error) {
 	log.Debugln("getPrimaryCalendar google")
 	route, err := util.CallAPIRoot("google/calendars/primary")
@@ -202,42 +210,52 @@ func (a *GoogleAccount) GetPrimaryCalendar() (calendar CalendarManager, err erro
 	return
 }
 
+// Method that format the authorization request
 func (a *GoogleAccount) AuthorizationRequest() string {
 	return fmt.Sprintf("%s %s", a.TokenType, a.AccessToken)
 }
 
+// Method that returns the mail associated with the account
 func (a *GoogleAccount) Mail() string {
 	return a.Email
 }
 
+// Method that sets which kind of account is
 func (a *GoogleAccount) SetKind(kind int) {
 	a.Kind = kind
 }
 
+// Method that returns the token type
 func (a *GoogleAccount) GetTokenType() string {
 	return a.TokenType
 }
 
+// Method that returns the refresh token
 func (a *GoogleAccount) GetRefreshToken() string {
 	return a.RefreshToken
 }
 
+// Method that returns the kind of the account
 func (a *GoogleAccount) GetKind() int {
 	return a.Kind
 }
 
+// Method that returns the access token
 func (a *GoogleAccount) GetAccessToken() string {
 	return a.AccessToken
 }
 
+// Method that returns the internal ID given to the account on DB
 func (a *GoogleAccount) GetInternalID() int {
 	return a.InternID
 }
 
+// Method that sets all synced calendars associated with the account
 func (a *GoogleAccount) SetCalendars(calendars []CalendarManager) {
 	a.calendars = calendars
 }
 
+// Method that returns all synced calendars associated with the account
 func (a *GoogleAccount) GetSyncCalendars() []CalendarManager {
 	return a.calendars
 }

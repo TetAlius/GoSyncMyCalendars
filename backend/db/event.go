@@ -11,6 +11,8 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
+// Retrieves all the events that are syncing with the given one, if no event is
+// found on db, it creates empty events for every calendar relation
 func (data Database) RetrieveSyncedEventsWithSubscription(eventID string, subscriptionID string, calendar api.CalendarManager) (events []api.EventManager, found bool, err error) {
 	var principalEventID int
 	found = true
@@ -43,6 +45,7 @@ func (data Database) RetrieveSyncedEventsWithSubscription(eventID string, subscr
 	return
 }
 
+// Returns all events related to a given event
 func (data Database) getSynchronizedEventsFromEvent(principalEventID int, eventID string) (events []api.EventManager, err error) {
 	stmt, err := data.client.Prepare("select events.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token, c2.id, c2.uuid from events join calendars c2 on events.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email where events.internal_id = $1 or events.parent_event_internal_id=$1 and events.id!=$2")
 	if err != nil {
@@ -99,28 +102,7 @@ func (data Database) getSynchronizedEventsFromEvent(principalEventID int, eventI
 	return
 }
 
-func (data Database) prepareEventsToSync(subscriptionID string) (events []api.EventManager, err error) {
-
-	stmt, err := data.client.Prepare("select a.kind, a.token_type, a.refresh_token, a.email, a.access_token, c2.id from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email where subs")
-	if err != nil {
-		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-		log.Errorf("error preparing events to sync from subscriptionID: %s", subscriptionID)
-		return nil, err
-	}
-	defer stmt.Close()
-	rows, err := stmt.Query(subscriptionID)
-	if err != nil {
-		data.sentry.CaptureErrorAndWait(err, map[string]string{"database": "backend"})
-		log.Errorf("error preparing events to sync from subscriptionID: %s", subscriptionID)
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-
-	}
-	return
-}
-
+// Saves principal event to db. Principal event is the event which was first created
 func (data Database) SavePrincipalEvent(event api.EventManager) (err error) {
 	transaction, err := data.client.Begin()
 	if err != nil {
@@ -140,6 +122,7 @@ func (data Database) SavePrincipalEvent(event api.EventManager) (err error) {
 
 }
 
+// Saves all principal events
 func (data Database) savePrincipalEvents(transaction *sql.Tx, events []api.EventManager) (err error) {
 	for _, event := range events {
 		err = data.savePrincipalEvent(transaction, event)
@@ -153,6 +136,8 @@ func (data Database) savePrincipalEvents(transaction *sql.Tx, events []api.Event
 	return
 
 }
+
+// Saves principal event to db
 func (data Database) savePrincipalEvent(transaction *sql.Tx, event api.EventManager) (err error) {
 	lastInsertId := 0
 	updatedAt, err := event.GetUpdatedAt()
@@ -177,6 +162,7 @@ func (data Database) savePrincipalEvent(transaction *sql.Tx, event api.EventMana
 	return
 }
 
+// Saves a relation between two events
 func (data Database) SaveEventsRelation(from api.EventManager, to api.EventManager) (err error) {
 	transaction, err := data.client.Begin()
 	if err != nil {
@@ -194,6 +180,8 @@ func (data Database) SaveEventsRelation(from api.EventManager, to api.EventManag
 	return
 
 }
+
+// Saves a relation between two events
 func (data Database) saveEventsRelation(transaction *sql.Tx, from api.EventManager, to api.EventManager) (err error) {
 	updatedAt, err := to.GetUpdatedAt()
 	if err != nil {
@@ -230,6 +218,7 @@ func (data Database) saveEventsRelation(transaction *sql.Tx, from api.EventManag
 	return
 }
 
+// Deletes all events from a subscription
 func (data Database) deleteEventsFromSubscription(transaction *sql.Tx, subscription api.SubscriptionManager) (err error) {
 	stmt, err := transaction.Prepare("delete from events using subscriptions, calendars where subscriptions.uuid = $1 and subscriptions.calendar_uuid = calendars.uuid and events.calendar_uuid = calendars.uuid")
 	if err != nil {
@@ -256,6 +245,9 @@ func (data Database) deleteEventsFromSubscription(transaction *sql.Tx, subscript
 
 }
 
+// Returns if an event is already updated. This is because when we create/update/delete
+// an event because a notification of other calendar was sent, we receive a notification
+// for our request, so we store the last update date as not to enter in an infinite loop
 func (data Database) EventAlreadyUpdated(event api.EventManager) bool {
 	var exists bool
 	updatedAt, err := event.GetUpdatedAt()
@@ -276,6 +268,7 @@ func (data Database) EventAlreadyUpdated(event api.EventManager) bool {
 	return false
 }
 
+// Updates modification date on a given event
 func (data Database) UpdateModificationDate(event api.EventManager) error {
 	updatedAt, err := event.GetUpdatedAt()
 	if err != nil {
@@ -313,6 +306,7 @@ func (data Database) UpdateModificationDate(event api.EventManager) error {
 	return nil
 }
 
+// Deletes event from database
 func (data Database) DeleteEvent(event api.EventManager) error {
 	stmt, err := data.client.Prepare("delete from events where events.id =$1")
 	if err != nil {
@@ -344,6 +338,7 @@ func (data Database) DeleteEvent(event api.EventManager) error {
 
 }
 
+// Returns if an event exists in our db
 func (data Database) ExistsEvent(event api.EventManager) bool {
 	var exists bool
 	err := data.client.QueryRow("select true from events join calendars c2 on events.calendar_uuid = c2.uuid where events.id = $1 and c2.id=$2", event.GetID(), event.GetCalendar().GetID()).Scan(&exists)
@@ -360,6 +355,7 @@ func (data Database) ExistsEvent(event api.EventManager) bool {
 	return exists
 }
 
+// Returns all event IDs that are associated with a subscription
 func (data Database) GetEventIDs(subscriptionID string) (eventIDs []string, err error) {
 	stmt, err := data.client.Prepare("select events.id from events join calendars c2 on events.calendar_uuid = c2.uuid join subscriptions s2 on c2.uuid = s2.calendar_uuid where s2.id=$1")
 	if err != nil {

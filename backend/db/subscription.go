@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Returns all subscriptions from a user
 func (data Database) RetrieveAllSubscriptionsFromUser(principalSubscriptionUUID string, userEmail string, userUUID string) (subscriptions []api.SubscriptionManager, err error) {
 	subscription, err := data.getSubscription(principalSubscriptionUUID, userEmail, userUUID)
 	if err != nil {
@@ -49,6 +50,7 @@ func (data Database) RetrieveAllSubscriptionsFromUser(principalSubscriptionUUID 
 	return
 }
 
+// Deletes a subscription
 func (data Database) deleteSubscription(transaction *sql.Tx, subscription api.SubscriptionManager) (err error) {
 	stmt, err := transaction.Prepare("delete from subscriptions where subscriptions.uuid = $1")
 	if err != nil {
@@ -78,6 +80,7 @@ func (data Database) deleteSubscription(transaction *sql.Tx, subscription api.Su
 	return
 }
 
+// Retrieves all subscription that are expiring or are expired
 func (data Database) GetExpiredSubscriptions() (subscriptions []api.SubscriptionManager, err error) {
 	rows, err := data.client.Query("select subscriptions.uuid, u.email, u.uuid from subscriptions join calendars c2 on subscriptions.calendar_uuid = c2.uuid join accounts a on c2.account_email = a.email join users u on a.user_uuid = u.uuid where subscriptions.expiration_date <= current_date")
 	if err != nil {
@@ -109,6 +112,7 @@ func (data Database) GetExpiredSubscriptions() (subscriptions []api.Subscription
 
 }
 
+// Method that updates the info of a subscription
 func (data Database) UpdateSubscription(subscription api.SubscriptionManager) (err error) {
 	stmt, err := data.client.Prepare("update subscriptions set id = $1, type = $2, expiration_date = $3, resource_id = $4 where uuid = $5")
 	if err != nil {
@@ -138,6 +142,7 @@ func (data Database) UpdateSubscription(subscription api.SubscriptionManager) (e
 	return
 }
 
+// Method that retrieves a subscription
 func (data Database) getSubscription(subscriptionUUID string, userEmail string, userUUID string) (subscription api.SubscriptionManager, err error) {
 	var id string
 	var uid uuid.UUID
@@ -169,6 +174,7 @@ func (data Database) getSubscription(subscriptionUUID string, userEmail string, 
 	return
 }
 
+// Method that returns if a subscription is stored on DB
 func (data Database) ExistsSubscriptionFromID(ID string) (ok bool, err error) {
 	err = data.client.QueryRow("SELECT true FROM subscriptions where subscriptions.id = $1", ID).Scan(&ok)
 	switch {

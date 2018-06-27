@@ -1,9 +1,7 @@
 package db
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"fmt"
 
 	"github.com/TetAlius/GoSyncMyCalendars/api"
 	"github.com/TetAlius/GoSyncMyCalendars/convert"
@@ -13,11 +11,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Database object for the backend
 type Database struct {
 	sentry *raven.Client
 	client *sql.DB
 }
 
+// Function that creates a new database instance
 func New(client *sql.DB, sentry *raven.Client) Database {
 	return Database{
 		client: client,
@@ -26,17 +26,13 @@ func New(client *sql.DB, sentry *raven.Client) Database {
 
 }
 
+// Method that closes the database
 func (data Database) Close() error {
 	return data.client.Close()
 }
 
-func randToken() string {
-	b := make([]byte, 10)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)
-}
-
-//TODO: raven this
+// Method that starts the sync of a calendar, creating the events and storing them
+// on DB. Also creating subscription and storing them
 func (data Database) StartSync(calendar api.CalendarManager, userUUID string) (err error) {
 	var subscriptions []api.SubscriptionManager
 	var subs api.SubscriptionManager
@@ -150,6 +146,8 @@ End:
 	return
 }
 
+// Method that stops the sync from a calendar, deleting all events on db and stopping
+// subscription and deleting them
 func (data Database) StopSync(principalSubscriptionUUID string, userEmail string, userUUID string) (err error) {
 	subscriptions, err := data.RetrieveAllSubscriptionsFromUser(principalSubscriptionUUID, userEmail, userUUID)
 	transaction, err := data.client.Begin()

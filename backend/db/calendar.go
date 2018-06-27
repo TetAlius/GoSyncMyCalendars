@@ -11,6 +11,7 @@ import (
 	log "github.com/TetAlius/GoSyncMyCalendars/logger"
 )
 
+// Method that retrieves a CalendarManager from the DB
 func (data Database) RetrieveCalendars(userEmail string, userUUID string, calendarUUID string) (calendar api.CalendarManager, err error) {
 	calendar, err = data.findCalendarFromUser(userEmail, userUUID, calendarUUID)
 	if err != nil {
@@ -19,6 +20,7 @@ func (data Database) RetrieveCalendars(userEmail string, userUUID string, calend
 	return
 }
 
+// Method that updates all calendars from a user
 func (data Database) UpdateAllCalendarsFromUser(userUUID string, userEmail string) (err error) {
 	rows, err := data.client.Query("SELECT calendars.id, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email join users u on a.user_uuid = u.uuid where u.uuid = $1 and u.email=$2", userUUID, userEmail)
 	if err != nil {
@@ -60,6 +62,7 @@ func (data Database) UpdateAllCalendarsFromUser(userUUID string, userEmail strin
 	return
 }
 
+// Method that retrieves a CalendarManager from a subscription
 func (data Database) RetrieveCalendarFromSubscription(subscriptionID string) (calendar api.CalendarManager, err error) {
 	var tokenType string
 	var refreshToken string
@@ -95,6 +98,7 @@ func (data Database) RetrieveCalendarFromSubscription(subscriptionID string) (ca
 	return
 }
 
+// Returns calendar from user given its uuid
 func (data Database) findCalendarFromUser(userEmail string, userUUID string, calendarUUID string) (calendar api.CalendarManager, err error) {
 	var id string
 	var tokenType string
@@ -136,6 +140,7 @@ func (data Database) findCalendarFromUser(userEmail string, userUUID string, cal
 	return
 }
 
+// Returns all calendars that are related to given one
 func (data Database) getSynchronizedCalendars(calendar api.CalendarManager) (calendars []api.CalendarManager, err error) {
 	rows, err := data.client.Query("select calendars.id, calendars.uuid, a.kind, a.token_type, a.refresh_token, a.email, a.access_token from calendars join accounts a on calendars.account_email = a.email where (calendars.parent_calendar_uuid = (Select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.uuid = (select calendars.parent_calendar_uuid from calendars where calendars.uuid = $1) OR calendars.parent_calendar_uuid = $1) AND calendars.uuid != $1", calendar.GetUUID())
 	if err != nil {
@@ -169,11 +174,13 @@ func (data Database) getSynchronizedCalendars(calendar api.CalendarManager) (cal
 	return
 }
 
+// Method that updates a calendar from a user
 func (data Database) UpdateCalendarFromUser(calendar api.CalendarManager, userUUID string) (err error) {
 	err = data.updateCalendarFromUser(calendar, userUUID)
 	return
 }
 
+// Method that updates a calendar from a user
 func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUUID string) (err error) {
 	stmt, err := data.client.Prepare("update calendars set name = $1 from accounts where calendars.account_email = accounts.email and accounts.user_uuid =$2 and calendars.id =$3;")
 	if err != nil {
@@ -205,6 +212,7 @@ func (data Database) updateCalendarFromUser(calendar api.CalendarManager, userUU
 
 }
 
+// Method that saves a subscription to DB
 func (data Database) saveSubscription(transaction *sql.Tx, subscription api.SubscriptionManager, calendar api.CalendarManager) (err error) {
 	stmt, err := transaction.Prepare("insert into subscriptions(uuid,calendar_uuid,id, type, expiration_date, resource_id) values ($1,$2,$3,$4,$5,$6)")
 	if err != nil {

@@ -14,14 +14,21 @@ import (
 	"github.com/google/uuid"
 )
 
+// User mapped from db
 type User struct {
-	UUID             uuid.UUID
-	Email            string
-	Name             string
+	// UUID of the user
+	UUID uuid.UUID
+	// Email of the user
+	Email string
+	// Name of the user
+	Name string
+	// Principal Account of the user
 	PrincipalAccount Account
-	Accounts         []Account
+	// Accounts associated with user that are not principal
+	Accounts []Account
 }
 
+// Method that retrieves the user from the db
 func (data Database) RetrieveUser(uuid string) (user *User, err error) {
 	user, err = data.findUserByID(uuid)
 	if err != nil {
@@ -32,6 +39,7 @@ func (data Database) RetrieveUser(uuid string) (user *User, err error) {
 	return
 }
 
+// Method that finds an user or creates one if it is not stored
 func (data Database) FindOrCreateUser(user *User) (err error) {
 	err = data.findUserByMail(user)
 	if _, ok := err.(*customErrors.NotFoundError); ok {
@@ -55,6 +63,7 @@ func (data Database) FindOrCreateUser(user *User) (err error) {
 
 }
 
+// Method that creates a user on the db
 func (data Database) createUser(user *User) (err error) {
 	user.UUID = uuid.New()
 	stmt, err := data.client.Prepare("insert into users(uuid,email,name) values ($1,$2,$3);")
@@ -84,6 +93,7 @@ func (data Database) createUser(user *User) (err error) {
 
 }
 
+// Method that retrieves a user by its email
 func (data Database) findUserByMail(user *User) (err error) {
 	var uid uuid.UUID
 	var name string
@@ -104,6 +114,7 @@ func (data Database) findUserByMail(user *User) (err error) {
 	return
 }
 
+// Method that saves an account to the user on db
 func (data Database) AddAccount(user *User, account Account) (id int, err error) {
 	var accounts int
 	err = data.client.QueryRow("SELECT count(accounts.id) FROM accounts where accounts.user_uuid = $1", user.UUID).Scan(&accounts)
@@ -132,6 +143,7 @@ func (data Database) AddAccount(user *User, account Account) (id int, err error)
 	return
 }
 
+// Method that retrieves all accounts of the user
 func (data Database) SetUserAccounts(user *User) (err error) {
 	principal, accounts, err := data.getAccountsByUser(user.UUID)
 	if err != nil {
@@ -143,6 +155,7 @@ func (data Database) SetUserAccounts(user *User) (err error) {
 
 }
 
+// Method that finds an account by its id that belongs to a user
 func (data Database) FindAccount(user *User, ID int) (account Account, err error) {
 	account = Account{User: user, ID: ID}
 	err = data.findAccount(&account)
@@ -156,6 +169,7 @@ func (data Database) FindAccount(user *User, ID int) (account Account, err error
 
 }
 
+// Method that saves calendars to an account
 func (data Database) AddCalendarsToAccount(user *User, account Account, values []string) (err error) {
 	for _, value := range values {
 		decodedToken, err := base64.StdEncoding.DecodeString(value)
@@ -180,6 +194,7 @@ func (data Database) AddCalendarsToAccount(user *User, account Account, values [
 
 }
 
+// Method that removes a calendar from the db
 func (data Database) DeleteCalendar(user *User, id string) (err error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
@@ -190,6 +205,7 @@ func (data Database) DeleteCalendar(user *User, id string) (err error) {
 	return data.deleteFromUser(calendar, user)
 }
 
+// Method that creates the relations between calendars
 func (data Database) AddCalendarsRelation(user *User, parentCalendarUUID string, calendarIDs []string) (err error) {
 	stmt, err := data.client.Prepare("update calendars set (parent_calendar_uuid) = ($1) from accounts as a where calendars.uuid = $2 and calendars.account_email = a.email and a.user_uuid = $3")
 	if err != nil {
@@ -226,11 +242,13 @@ func (data Database) AddCalendarsRelation(user *User, parentCalendarUUID string,
 
 }
 
+// Method that updates a calendar
 func (data Database) UpdateCalendar(user *User, calendarID string, parentID string) (err error) {
 	return data.updateCalendarFromUser(user, calendarID, parentID)
 
 }
 
+// Method that looks for a user by its ID
 func (data Database) findUserByID(id string) (user *User, err error) {
 	var uid uuid.UUID
 	var name string

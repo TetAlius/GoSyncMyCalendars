@@ -6,9 +6,11 @@ import (
 )
 
 type Deconverter interface {
+	// Method use to deconvert as struct to an interface{}
 	Deconvert() interface{}
 }
 
+// Function that deconverts a model to an interface{}
 func deconvert(i interface{}) (values map[string]interface{}) {
 	values = make(map[string]interface{})
 	iVal := reflect.ValueOf(i)

@@ -15,6 +15,7 @@ import (
 	"github.com/TetAlius/GoSyncMyCalendars/util"
 )
 
+// Method that returns a OutlookCalendar given specific info
 func RetrieveOutlookCalendar(ID string, uid string, account *OutlookAccount) *OutlookCalendar {
 	cal := new(OutlookCalendar)
 	cal.ID = ID
@@ -22,6 +23,10 @@ func RetrieveOutlookCalendar(ID string, uid string, account *OutlookAccount) *Ou
 	cal.uuid = uid
 	return cal
 }
+
+// Method that creates the calendar
+//
+// POST https://outlook.office.com/api/v2.0/me/calendars
 func (calendar *OutlookCalendar) Create() (err error) {
 	log.Debugln("createCalendars outlook")
 
@@ -58,6 +63,9 @@ func (calendar *OutlookCalendar) Create() (err error) {
 	return err
 }
 
+// Method that updates the calendar
+//
+// PUT https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 func (calendar *OutlookCalendar) Update() error {
 	log.Debugln("updateCalendar outlook")
 
@@ -104,8 +112,10 @@ func (calendar *OutlookCalendar) Update() error {
 
 }
 
+// Method that deletes the calendar
+//
+// DELETE https://outlook.office.com/api/v2.0/me/calendars/{calendarID}
 func (calendar *OutlookCalendar) Delete() (err error) {
-	//return
 	log.Debugln("deleteCalendar outlook")
 	if len(calendar.GetID()) == 0 {
 		return errors.New("no ID for calendar was given")
@@ -137,6 +147,9 @@ func (calendar *OutlookCalendar) Delete() (err error) {
 
 }
 
+// Method that returns all events inside the calendar
+//
+// GET https://outlook.office.com/api/v2.0/me/calendars/{calendarID}/events
 func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err error) {
 	log.Debugln("getAllEvents outlook")
 	route, err := util.CallAPIRoot("outlook/calendars/id/events")
@@ -176,6 +189,8 @@ func (calendar *OutlookCalendar) GetAllEvents() (events []EventManager, err erro
 	return
 }
 
+// Method that returns a single event given the ID
+//
 // GET https://outlook.office.com/api/v2.0/me/events/{eventID}
 func (calendar *OutlookCalendar) GetEvent(ID string) (event EventManager, err error) {
 	log.Debugln("getEvent outlook")
@@ -221,6 +236,7 @@ func (calendar *OutlookCalendar) GetEvent(ID string) (event EventManager, err er
 	return e, nil
 }
 
+// Method that sets the account which the calendar belongs
 func (calendar *OutlookCalendar) SetAccount(a AccountManager) (err error) {
 	switch x := a.(type) {
 	case *OutlookAccount:
@@ -231,42 +247,48 @@ func (calendar *OutlookCalendar) SetAccount(a AccountManager) (err error) {
 	return
 }
 
+// Method that returns the ID of the calendar
 func (calendar *OutlookCalendar) GetID() string {
 	return calendar.ID
 }
 
+// Method that returns the ID formatted for a query request
 func (calendar *OutlookCalendar) GetQueryID() string {
 	return calendar.ID
 }
 
+// Method that returns the account
 func (calendar *OutlookCalendar) GetAccount() AccountManager {
 	return calendar.account
 }
 
+// Method that returns the name of the calendar
 func (calendar *OutlookCalendar) GetName() string {
 	return calendar.Name
 }
 
+// Method that returns the internal UUID given to the calendar
 func (calendar *OutlookCalendar) GetUUID() string {
 	return calendar.uuid
 }
 
+// Method that sets the internal UUID for the calendar
 func (calendar *OutlookCalendar) SetUUID(id string) {
 	calendar.uuid = id
 }
 
+// Method that sets the synced calendars
 func (calendar *OutlookCalendar) SetCalendars(calendars []CalendarManager) {
 	calendar.calendars = calendars
 
 }
+
+// Method that returns the synced calendar
 func (calendar *OutlookCalendar) GetCalendars() []CalendarManager {
 	return calendar.calendars
 }
 
-func (calendar *OutlookCalendar) SetName(name string) {
-	calendar.Name = name
-}
-
+// Method that creates an empty event
 func (calendar *OutlookCalendar) CreateEmptyEvent(ID string) EventManager {
 	return &OutlookEvent{ID: ID, calendar: calendar}
 }
