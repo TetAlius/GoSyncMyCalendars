@@ -6,7 +6,7 @@ language: go
 #    on_failure: always
 
 go:
-  - 1.x
+  - 1.10.x
 
 before_install:
   # Download ngrok
