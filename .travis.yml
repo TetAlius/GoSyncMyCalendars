@@ -8,6 +8,10 @@ language: go
 go:
   - 1.10.x
 
+addons:
+  sonarcloud:
+    organization: "tetalius-github"
+
 before_install:
   # Download ngrok
 #  - curl -sO https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
@@ -24,3 +28,4 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+  - sonar-scanner
